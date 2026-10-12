@@ -113,15 +113,17 @@ export function productionRates(buildings: Record<string, number>, composition: 
   return out;
 }
 
+/** x, y: light-years from Sol in the galactic plane */
 export type SystemDTO = { id: number; name: string; x: number; y: number; seed: number };
 
 type Placed = { systemId: number; orbit: number };
-/** Seconds to fly between two planets: short inside a system, longer across the galaxy. */
+const SECONDS_PER_LY = 4;
+/** Seconds to fly between two planets: short inside a system, longer between stars. */
 export const flightSeconds = (a: Placed, b: Placed, systems: { id: number; x: number; y: number }[]) => {
   if (a.systemId === b.systemId) return Math.max(5, Math.round(5 + Math.abs(a.orbit - b.orbit) * 6));
   const sa = systems.find((s) => s.id === a.systemId)!;
   const sb = systems.find((s) => s.id === b.systemId)!;
-  return Math.round(15 + Math.hypot(sa.x - sb.x, sa.y - sb.y) + (a.orbit + b.orbit) * 3);
+  return Math.round(15 + Math.hypot(sa.x - sb.x, sa.y - sb.y) * SECONDS_PER_LY + (Math.min(a.orbit, 12) + Math.min(b.orbit, 12)) * 3);
 };
 
 export type PlanetDTO = {
@@ -135,6 +137,7 @@ export type PlanetDTO = {
   ships: Record<string, number>;
   defense: number;
   seed: number;
+  shared: boolean; // safe haven: everyone can have a base here and it can't be attacked
 };
 export type QueueDTO = { id: string; planetId: number; kind: "building" | "ship"; type: string; startAt: number; finishAt: number };
 export type FleetDTO = {

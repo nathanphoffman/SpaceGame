@@ -1,7 +1,8 @@
 import PlanetView from "@/components/PlanetView";
 import { describePlanet, equilibriumTempK, planetParams, planetStats, starParams } from "@/lib/planetGen";
 import type { FleetDTO, PlanetDTO } from "@/lib/defs";
-import { ShipList, elementColor } from "./ui";
+import { bodyNote } from "@/lib/data/catalog";
+import { ShipList, elementColor, fmtAU } from "./ui";
 
 type Props = { planet: PlanetDTO; systemSeed: number; guards: FleetDTO[] };
 
@@ -30,9 +31,11 @@ export default function PlanetPanel({ planet, systemSeed, guards }: Props) {
         <div className="dim">
           {planet.kind === "player" ? "Your planet" : planet.kind === "npc" ? `Enemy · defense ${planet.defense}` : "Unclaimed"} · seed {planet.seed}
         </div>
+        <div className="dim">{bodyNote(planet.seed)}</div>
+        {planet.shared && <div className="good">Safe haven · everyone can have a base here, and it can never be attacked</div>}
         <div className="stats">
           <div><span className="dim">Diameter</span> <b>{stats.diameterKm.toLocaleString()} km</b> <span className="dim">({stats.earths.toFixed(2)} × Earth)</span></div>
-          <div><span className="dim">Orbit</span> <b>{planet.orbit.toFixed(1)} AU</b> <span className="dim">· ~{Math.round(equilibriumTempK(starParams(systemSeed), planet.orbit) - 273.15)} °C</span></div>
+          <div><span className="dim">Orbit</span> <b>{fmtAU(planet.orbit)}</b> <span className="dim">· ~{Math.round(equilibriumTempK(starParams(systemSeed), planet.orbit) - 273.15)} °C</span></div>
         </div>
         {guards.map((f) => (
           <div key={f.id} className="good">Guarded by your fleet: <ShipList ships={f.ships} /></div>

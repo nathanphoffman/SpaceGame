@@ -1,4 +1,6 @@
 import { ELEMENTS, type Element } from "./defs";
+import { BODY_BY_SEED, STAR_BY_SEED } from "./data/catalog";
+import { applyLook, parseComposition } from "./data/realBodies";
 
 // Deterministic planet generation: the same seed always gives the same world.
 // Pure functions only (no three.js) so it can be used on the server or in scripts.
@@ -23,6 +25,7 @@ export type PlanetParams = {
   rings: { inner: number; outer: number; tilt: number; color: RGB; seed: number } | null;
   tilt: number;          // axial tilt (radians)
   spin: number;          // radians per second
+  label?: string;        // overrides the generic kind name, e.g. "Ice giant"
 };
 
 export function mulberry32(seed: number) {
@@ -73,12 +76,13 @@ export function fbm(x: number, y: number, z: number, s: number, octaves = 5) {
 // ---- parameters ----
 
 export function planetParams(seed: number): PlanetParams {
+  const real = BODY_BY_SEED.get(seed); // real bodies pin kind, size and (if known) look to the data
   const r = mulberry32(seed * 7919 + 17);
   const range = (a: number, b: number) => a + (b - a) * r();
   const jitter = (c: RGB, amt = 0.08): RGB => c.map((v) => Math.min(1, Math.max(0, v + (r() - 0.5) * amt * 2))) as RGB;
 
   const roll = r();
-  const kind: PlanetKind = roll < 0.25 ? "rocky" : roll < 0.5 ? "moon" : roll < 0.7 ? "gas" : roll < 0.85 ? "ice" : "desert";
+  const kind: PlanetKind = real?.kind ?? (roll < 0.25 ? "rocky" : roll < 0.5 ? "moon" : roll < 0.7 ? "gas" : roll < 0.85 ? "ice" : "desert");
 
   const radius = {
     moon: range(0.45, 0.8), rocky: range(0.7, 1.15), desert: range(0.7, 1.1), ice: range(0.65, 1.1), gas: range(1.1, 1.45),
@@ -86,7 +90,7 @@ export function planetParams(seed: number): PlanetParams {
   const bumpMax = { moon: 0.08, rocky: 0.13, desert: 0.12, ice: 0.06, gas: 0 }[kind];
   const bump = bumpMax * Math.pow(r(), 0.8);
   const craterMax = { moon: 80, rocky: 20, desert: 30, ice: 25, gas: 0 }[kind];
-  const craterCount = Math.floor(craterMax * Math.pow(r(), 1.2));
+  const craterCount = real?.look?.craters ?? Math.floor(craterMax * Math.pow(r(), 1.2));
 
   const craters = Array.from({ length: craterCount }, () => {
     const z = r() * 2 - 1, a = r() * Math.PI * 2, s = Math.sqrt(1 - z * z);
@@ -113,7 +117,7 @@ export function planetParams(seed: number): PlanetParams {
   const hasRings = r() < ringChance;
   const inner = radius * range(1.25, 1.5);
 
-  return {
+  const params: PlanetParams = {
     kind,
     radius,
     bump,
@@ -133,10 +137,11 @@ export function planetParams(seed: number): PlanetParams {
     tilt: range(-0.45, 0.45),
     spin: range(0.08, 0.3),
   };
+  return real ? applyLook(params, real) : params;
 }
 
 export function describePlanet(p: PlanetParams) {
-  const type = { rocky: "Rocky world", moon: "Moon", gas: "Gas giant", ice: "Ice world", desert: "Desert world" }[p.kind];
+  const type = p.label ?? { rocky: "Rocky world", moon: "Moon", gas: "Gas giant", ice: "Ice world", desert: "Desert world" }[p.kind];
   const size = p.radius < 0.75 ? "Small" : p.radius < 1.1 ? "Medium" : "Large";
   const surface = p.kind === "gas" ? "Gaseous" : p.bump < 0.025 ? "Smooth" : p.bump < 0.06 ? "Rolling" : p.bump < 0.1 ? "Rugged" : "Mountainous";
   return { type, size, surface, craters: p.craters.length, rings: !!p.rings, atmosphere: !!p.atmosphere };
@@ -202,9 +207,30 @@ const STAR_KINDS: StarKind[] = [
   { weight: 3, classes: ["D"], lum: "D" },        // white dwarfs
 ];
 
+const CLASS_LABEL: Record<string, string> = {
+  O: "Blue star", B: "Blue-white star", A: "White star", F: "Yellow-white star", G: "Yellow dwarf", K: "Orange dwarf", M: "Red dwarf",
+};
+
+/** display size and glare from radius (solar radii) and temperature (K); luminosity ~ R^2 T^4 */
+function starLook(radius: number, temp: number) {
+  const size = Math.min(1.8, Math.max(0.5, 0.6 + 0.35 * Math.log10(radius / 0.1)));
+  const lum = radius * radius * Math.pow(temp / 5772, 4);
+  const bright = Math.min(1, Math.max(0.2, 0.35 + 0.12 * Math.log10(Math.max(lum, 1e-3)) + 0.2));
+  return { size, bright };
+}
+
 const lerpRgb = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
 export function starParams(seed: number): StarParams {
+  const real = STAR_BY_SEED.get(seed);
+  if (real) {
+    const cls = real.spec[0], sub = Number(real.spec[1]);
+    const next = CLASS_ORDER[Math.min(CLASS_ORDER.indexOf(cls) + 1, CLASS_ORDER.length - 1)];
+    return {
+      spectral: real.spec, label: CLASS_LABEL[cls], temp: real.tempK, radius: real.radius,
+      color: lerpRgb(CLASS_COLOR[cls], CLASS_COLOR[next], (sub / 10) * 0.6), ...starLook(real.radius, real.tempK),
+    };
+  }
   const r = mulberry32(seed * 31 + 7);
   for (let i = 0; i < 3; i++) r();
 
@@ -234,14 +260,9 @@ export function starParams(seed: number): StarParams {
   const label =
     kind.lum === "I" ? (cls === "M" ? "Red supergiant" : "Blue supergiant")
     : kind.lum === "III" ? (cls === "M" ? "Red giant" : "Orange giant")
-    : { O: "Blue star", B: "Blue-white star", A: "White star", F: "Yellow-white star", G: "Yellow dwarf", K: "Orange dwarf", M: "Red dwarf" }[cls]!;
+    : CLASS_LABEL[cls];
 
-  const size = Math.min(1.8, Math.max(0.5, 0.6 + 0.35 * Math.log10(radius / 0.1)));
-  // luminosity ~ R^2 T^4 (solar units) -> glare
-  const lum = radius * radius * Math.pow(temp / 5772, 4);
-  const bright = Math.min(1, Math.max(0.2, 0.35 + 0.12 * Math.log10(Math.max(lum, 1e-3)) + 0.2));
-
-  return { spectral: `${cls}${sub}${kind.lum}`, label, temp, radius, color, size, bright };
+  return { spectral: `${cls}${sub}${kind.lum}`, label, temp, radius, color, ...starLook(radius, temp) };
 }
 
 const GREEK = ["Alpha", "Beta", "Gamma", "Delta", "Sigma", "Tau", "Omega", "Kappa"];
@@ -292,13 +313,17 @@ export function planetStats(seed: number): PlanetStats {
 }
 
 function computePlanetStats(seed: number): PlanetStats {
+  const real = BODY_BY_SEED.get(seed);
+  if (real?.composition) {
+    return { diameterKm: real.diameterKm, earths: real.diameterKm / 12742, composition: parseComposition(real.composition) };
+  }
   const p = planetParams(seed);
   const r = mulberry32(seed * 2246822519 + 97);
   for (let i = 0; i < 4; i++) r();
 
   // game radius -> kilometres (Earth 12,742, Mars 6,779, Moon 3,474, Jupiter 139,820)
   const perUnit = { rocky: 11000, desert: 10500, ice: 10000, moon: 5000, gas: 95000 }[p.kind];
-  const diameterKm = Math.round((p.radius * perUnit * (0.92 + r() * 0.16)) / (p.kind === "gas" ? 100 : 10)) * (p.kind === "gas" ? 100 : 10);
+  const diameterKm = real ? real.diameterKm : Math.round((p.radius * perUnit * (0.92 + r() * 0.16)) / (p.kind === "gas" ? 100 : 10)) * (p.kind === "gas" ? 100 : 10);
 
   // very rarely the whole planet is one rare element: a jackpot world
   if (r() < WHOLE_PLANET_RARE_CHANCE) {

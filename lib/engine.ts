@@ -10,7 +10,7 @@ import { planetStats } from "./planetGen";
 type Planet = {
   id: number; name: string; system_id: number; orbit: number; kind: "player" | "npc" | "empty";
   resources: Res; buildings: Record<string, number>; ships: Record<string, number>;
-  defense: number; seed: number; updated_at: Date;
+  defense: number; seed: number; shared: boolean; updated_at: Date;
 };
 type QueueItem = { id: string; planet_id: number; kind: "building" | "ship"; type: string; start_at: Date; finish_at: Date };
 type Fleet = {
@@ -221,7 +221,7 @@ function toState(w: World, now: Date): GameState {
     systems: w.systems,
     planets: w.planets.map((p) => ({
       id: p.id, name: p.name, systemId: p.system_id, orbit: p.orbit, kind: p.kind,
-      resources: p.resources, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed,
+      resources: p.resources, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed, shared: p.shared,
     })),
     queue: w.queue.map((q) => ({
       id: q.id, planetId: q.planet_id, kind: q.kind, type: q.type,

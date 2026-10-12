@@ -5,6 +5,9 @@ export const fmtTime = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
+/** orbit distance: more decimals for the tight orbits of red-dwarf planets */
+export const fmtAU = (au: number) => `${au < 0.1 ? au.toFixed(3) : au < 10 ? au.toFixed(2) : au.toFixed(1)} AU`;
+
 export const elementColor = (sym: string) => ELEMENTS[sym as Element]?.color ?? "#777";
 
 export const SHIP_TYPES = Object.keys(SHIPS) as ShipType[];

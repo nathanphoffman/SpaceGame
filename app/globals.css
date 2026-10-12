@@ -139,3 +139,7 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .tile-icon-box { display:flex; align-items:center; justify-content:center; height:60px; }
 .tile-icon-box .tile-icon { margin:0; }
 .ship-info .icon-box { width:60px; display:flex; justify-content:center; }
+/* with many stars, only show names for the hovered/selected/home ones */
+.map.galaxy.crowded .gnode .label { display:none; }
+.map.galaxy.crowded .gnode:hover .label, .map.galaxy.crowded .gnode.sel .label, .map.galaxy.crowded .gnode.home .label { display:block; z-index:2; background:#070b14cc; padding:1px 4px; border-radius:4px; }
+.map.galaxy.crowded .gnode:hover { z-index:3; }

@@ -2,7 +2,7 @@ import { planetThumb, thumbDisplaySize } from "@/components/planetThumb";
 import { planetParams, starParams } from "@/lib/planetGen";
 import { SHIPS, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
 import { flightOf, flyingFleets, isCrossSystem } from "@/lib/flight";
-import { fleetIcon } from "./ui";
+import { fleetIcon, fmtAU } from "./ui";
 
 type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (p: PlanetDTO) => void };
 
@@ -21,10 +21,10 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
   const slots = planets.length;
   const slotX = (i: number) => 12 + ((i + 0.5) * 86) / slots;
   const slotById = new Map(planets.map((p, i) => [p.id, slotX(i)]));
-  const maxOrbit = Math.max(1, ...planets.map((p) => p.orbit));
-  const auStep = [0.5, 1, 2, 5, 10, 20].find((st) => maxOrbit / st <= 6) ?? 20;
+  const maxOrbit = Math.max(0.01, ...planets.map((p) => p.orbit));
+  const auStep = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20].find((st) => maxOrbit / st <= 6) ?? 50;
   const auMax = Math.ceil(maxOrbit / auStep) * auStep;
-  const auTicks = Array.from({ length: Math.round(auMax / auStep) + 1 }, (_, i) => i * auStep);
+  const auTicks = Array.from({ length: Math.round(auMax / auStep) + 1 }, (_, i) => Math.round(i * auStep * 1000) / 1000);
   const axisX = (au: number) => 6 + (au / auMax) * 92; // % across the map; 0 AU is the star's surface
 
   // the star is a big circle mostly off the left edge: small stars show a tight arch, big stars look nearly flat
@@ -64,11 +64,11 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
           return (
             <button key={p.id} className={`snode ${p.id === viewed.id ? "sel" : ""} ${i % 2 ? "below" : "above"}`}
               style={{ left: `${slotX(i)}%`, top: `${SOLAR_Y}%`, ["--body" as string]: `${body}px` }}
-              onClick={() => onSelect(p)} title={`${p.name} · ${p.orbit.toFixed(1)} AU`}>
+              onClick={() => onSelect(p)} title={`${p.name} · ${fmtAU(p.orbit)}`}>
               <img className="thumb" src={planetThumb(p.seed)} alt="" style={{ width: size, height: size }} />
               <span className={`dot ${p.kind}`} />
               {guarded.has(p.id) && <img className="guard" src={SHIPS.fighter.icon} alt="guarded" />}
-              <span className="label">{p.name}<small>{p.orbit.toFixed(1)} AU</small></span>
+              <span className="label">{p.name}<small>{fmtAU(p.orbit)}</small></span>
             </button>
           );
         })}
