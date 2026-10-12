@@ -50,19 +50,30 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 
 .map.galaxy { aspect-ratio: 16 / 10; }
 .gnode { position:absolute; transform:translate(-50%,-50%); background:none; border:0; padding:0; color:var(--text); font-weight:400; cursor:pointer; text-align:center; }
-.gnode .star { display:block; border-radius:50%; margin:0 auto; }
+.gnode .star { position:relative; display:block; border-radius:50%; margin:0 auto; width:var(--d); height:var(--d);
+  background: radial-gradient(circle, #fff 0, #fff 22%, var(--c) 58%, color-mix(in srgb, var(--c) 0%, transparent) 100%);
+  box-shadow: 0 0 calc(var(--d) * 0.9) calc(var(--d) * 0.2) color-mix(in srgb, var(--c) 45%, transparent); }
+/* diffraction spikes, longer and brighter for more luminous stars */
+.gnode .star::before, .gnode .star::after { content:""; position:absolute; left:50%; top:50%; height:1px;
+  width: calc(var(--d) * (1.5 + 3 * var(--b))); transform: translate(-50%, -50%);
+  background: linear-gradient(90deg, transparent, var(--c), #fff 50%, var(--c), transparent); opacity: calc(0.25 + var(--b) * 0.6); }
+.gnode .star::after { transform: translate(-50%, -50%) rotate(90deg); }
+.gnode .label small { display:block; font-size:9px; opacity:.7; }
 .gnode .label { display:block; font-size:11px; color:var(--dim); white-space:nowrap; margin-top:6px; }
 .gnode.sel .label { color:var(--text); }
 .gnode.sel .star { outline:2px solid var(--accent); outline-offset:3px; }
 .mine { color:var(--good); font-weight:600; }
 
-.solar { position:relative; width:100%; aspect-ratio: 3.4 / 1; border-radius:10px; border:1px solid var(--line); overflow:hidden;
+.solar { position:relative; width:100%; aspect-ratio: 2.8 / 1; border-radius:10px; border:1px solid var(--line); overflow:hidden;
   background: radial-gradient(circle at 80% 30%, #1a1740 0, transparent 50%), #070b14; }
-.solar .sun { position:absolute; top:50%; transform:translateY(-50%); border-radius:50%; }
-.solar .plane { position:absolute; left:0; right:0; top:50%; height:1px; background:linear-gradient(90deg, #4cc2ff55, #4cc2ff11); }
-.solar .tick { position:absolute; top:0; bottom:0; width:1px; background:#ffffff12; }
-.solar .tick span { position:absolute; bottom:2px; left:3px; font-size:9px; color:#4b5878; white-space:nowrap; }
-.snode { position:absolute; top:50%; transform:translate(-50%,-50%); background:none; border:0; padding:0; color:var(--text); font-weight:400; cursor:pointer; text-align:center; }
+.solar .sun { position:absolute; border-radius:50%; }
+.solar .plane { position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg, #4cc2ff55, #4cc2ff11); }
+.solar .ruler { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.solar .tick { position:absolute; width:1px; height:7px; margin-top:-3px; background:#4b5878; }
+.solar .tick span { position:absolute; top:100%; left:50%; transform:translateX(-50%); font-size:9px; color:#6f7ea3; white-space:nowrap; margin-top:2px; }
+.solar .ruler-dot { position:absolute; width:7px; height:7px; margin:-3px 0 0 -3px; border-radius:50%; background:#8794b5; }
+.solar .ruler-dot.sel { background:var(--accent); box-shadow:0 0 6px var(--accent); }
+.snode { position:absolute; transform:translate(-50%,-50%); background:none; border:0; padding:0; color:var(--text); font-weight:400; cursor:pointer; text-align:center; }
 .snode img { display:block; margin:0 auto; }
 .snode .label { position:absolute; left:50%; transform:translateX(-50%); font-size:10px; line-height:1.15; white-space:nowrap; color:var(--dim); }
 .snode .label small { display:block; font-size:9px; opacity:.7; }
@@ -88,3 +99,7 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .snode .dot.npc { background:var(--bad); }
 .snode .dot.empty { display:none; }
 .foe { color:var(--bad); font-weight:600; }
+/* with many planets, only show names for the hovered/selected one */
+.solar.crowded .snode .label { display:none; }
+.solar.crowded .snode:hover .label, .solar.crowded .snode.sel .label { display:block; z-index:2; background:#070b14cc; padding:1px 4px; border-radius:4px; }
+.solar.crowded .snode:hover { z-index:3; }

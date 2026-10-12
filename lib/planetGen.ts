@@ -160,22 +160,86 @@ export function planetName(seed: number) {
 }
 
 // ---- stars ----
+// Real stellar classification (Morgan-Keenan): spectral class O B A F G K M from hot to cool,
+// a 0-9 subtype, and a luminosity class (V main sequence, III giant, I supergiant, D white dwarf).
 
-export type StarParams = { label: string; color: RGB; size: number };
+export type StarParams = {
+  spectral: string;   // e.g. "G2V"
+  label: string;      // e.g. "Yellow dwarf"
+  temp: number;       // surface temperature in K
+  radius: number;     // in solar radii
+  color: RGB;         // 0..1, the colour the star appears in a dark sky
+  size: number;       // display scale, ~0.5 (white dwarf) .. ~1.8 (supergiant)
+  bright: number;     // 0..1, how much glare/spikes to draw
+};
 
-const STAR_TYPES: StarParams[] = [
-  { label: "Red dwarf", color: [1, 0.45, 0.3], size: 0.7 },
-  { label: "Orange dwarf", color: [1, 0.65, 0.3], size: 0.85 },
-  { label: "Yellow dwarf", color: [1, 0.9, 0.5], size: 1 },
-  { label: "White star", color: [0.95, 0.97, 1], size: 1.15 },
-  { label: "Blue giant", color: [0.55, 0.7, 1], size: 1.5 },
+// apparent colour per class (the standard "blackbody as seen by eye" table)
+const CLASS_COLOR: Record<string, RGB> = {
+  O: [0.608, 0.69, 1], B: [0.667, 0.749, 1], A: [0.792, 0.843, 1], F: [0.973, 0.969, 1],
+  G: [1, 0.957, 0.918], K: [1, 0.824, 0.631], M: [1, 0.8, 0.435],
+};
+const CLASS_ORDER = ["O", "B", "A", "F", "G", "K", "M"];
+// [hot end K, cool end K, main-sequence radius at subtype 0, at subtype 9]
+const CLASS_DATA: Record<string, [number, number, number, number]> = {
+  O: [50000, 30000, 12, 6.6], B: [30000, 10000, 6.6, 1.8], A: [10000, 7500, 1.8, 1.4],
+  F: [7500, 6000, 1.4, 1.15], G: [6000, 5200, 1.1, 0.85], K: [5200, 3700, 0.8, 0.6], M: [3700, 2400, 0.55, 0.1],
+};
+
+type StarKind = { weight: number; classes: string[]; lum: "V" | "III" | "I" | "D" };
+const STAR_KINDS: StarKind[] = [
+  { weight: 24, classes: ["M"], lum: "V" },
+  { weight: 16, classes: ["K"], lum: "V" },
+  { weight: 18, classes: ["G"], lum: "V" },
+  { weight: 12, classes: ["F"], lum: "V" },
+  { weight: 8, classes: ["A"], lum: "V" },
+  { weight: 5, classes: ["B"], lum: "V" },
+  { weight: 2, classes: ["O"], lum: "V" },
+  { weight: 7, classes: ["K", "M"], lum: "III" }, // red giants
+  { weight: 3, classes: ["M"], lum: "I" },        // red supergiants
+  { weight: 2, classes: ["B", "A"], lum: "I" },   // blue supergiants
+  { weight: 3, classes: ["D"], lum: "D" },        // white dwarfs
 ];
+
+const lerpRgb = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
 export function starParams(seed: number): StarParams {
   const r = mulberry32(seed * 31 + 7);
   for (let i = 0; i < 3; i++) r();
-  const t = STAR_TYPES[Math.floor(r() * STAR_TYPES.length)];
-  return { ...t, size: t.size * (0.9 + r() * 0.2) };
+
+  let roll = r() * STAR_KINDS.reduce((s, k) => s + k.weight, 0);
+  const kind = STAR_KINDS.find((k) => (roll -= k.weight) < 0) ?? STAR_KINDS[0];
+  const cls = kind.classes[Math.floor(r() * kind.classes.length)];
+  const sub = Math.floor(r() * 10);
+  const jitter = r();
+
+  if (kind.lum === "D") {
+    // white dwarf: hot, tiny, bluish-white
+    const temp = Math.round(8000 + jitter * 25000);
+    const idx = Math.min(9, Math.max(1, Math.round(50400 / temp))); // DA temperature index = 50400 / T
+    return { spectral: `DA${idx}`, label: "White dwarf", temp, radius: 0.012, color: [0.82, 0.88, 1], size: 0.5, bright: 0.35 };
+  }
+
+  const [hot, cool, rHot, rCool] = CLASS_DATA[cls];
+  const temp = Math.round(hot + (cool - hot) * (sub / 9));
+  let radius = rHot + (rCool - rHot) * (sub / 9);
+  if (kind.lum === "III") radius = 12 + jitter * 40 + (cls === "M" ? 20 : 0);
+  if (kind.lum === "I") radius = cls === "M" ? 250 + jitter * 600 : 30 + jitter * 60;
+
+  // colour: class colour blended toward the next (cooler) class by subtype
+  const next = CLASS_ORDER[Math.min(CLASS_ORDER.indexOf(cls) + 1, CLASS_ORDER.length - 1)];
+  const color = lerpRgb(CLASS_COLOR[cls], CLASS_COLOR[next], (sub / 10) * 0.6);
+
+  const label =
+    kind.lum === "I" ? (cls === "M" ? "Red supergiant" : "Blue supergiant")
+    : kind.lum === "III" ? (cls === "M" ? "Red giant" : "Orange giant")
+    : { O: "Blue star", B: "Blue-white star", A: "White star", F: "Yellow-white star", G: "Yellow dwarf", K: "Orange dwarf", M: "Red dwarf" }[cls]!;
+
+  const size = Math.min(1.8, Math.max(0.5, 0.6 + 0.35 * Math.log10(radius / 0.1)));
+  // luminosity ~ R^2 T^4 (solar units) -> glare
+  const lum = radius * radius * Math.pow(temp / 5772, 4);
+  const bright = Math.min(1, Math.max(0.2, 0.35 + 0.12 * Math.log10(Math.max(lum, 1e-3)) + 0.2));
+
+  return { spectral: `${cls}${sub}${kind.lum}`, label, temp, radius, color, size, bright };
 }
 
 const GREEK = ["Alpha", "Beta", "Gamma", "Delta", "Sigma", "Tau", "Omega", "Kappa"];

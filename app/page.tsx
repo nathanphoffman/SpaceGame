@@ -100,7 +100,7 @@ export default function Page() {
   const sysOf = (id: number) => game.systems.find((x) => x.id === id)!;
   const shownSystem = sysOf(systemId ?? viewed.systemId);
   const star = starParams(shownSystem.seed);
-  const systemPlanets = game.planets.filter((p) => p.systemId === shownSystem.id);
+  const systemPlanets = game.planets.filter((p) => p.systemId === shownSystem.id).sort((a, b) => a.orbit - b.orbit);
 
   // flight progress 0..1 and the planets it is currently travelling between
   const flight = (f: GameState["fleets"][number]) => {
@@ -113,11 +113,22 @@ export default function Page() {
   const crossFleets = flying.filter((f) => game.planets.find((p) => p.id === f.originId)!.systemId !== game.planets.find((p) => p.id === f.targetId)!.systemId);
   const localFleets = flying.filter((f) => !crossFleets.includes(f) && game.planets.find((p) => p.id === f.originId)!.systemId === shownSystem.id);
 
-  // solar map: distance from the star in AU on a compressed (square-root) scale
-  const AU_MAX = 12;
-  const solarX = (au: number) => 12 + Math.sqrt(au / AU_MAX) * 84;
-  const starRgb = `rgb(${star.color.map((c) => Math.round(c * 255)).join(",")})`;
-  const sunSize = 70 + 40 * star.size;
+  // solar map: planets are drawn evenly spaced (NOT to scale); the ruler along the bottom shows the real distances
+  const slots = systemPlanets.length;
+  const slotX = (i: number) => 12 + ((i + 0.5) * 86) / slots;
+  const slotById = new Map(systemPlanets.map((p, i) => [p.id, slotX(i)]));
+  const maxOrbit = Math.max(1, ...systemPlanets.map((p) => p.orbit));
+  const auStep = [0.5, 1, 2, 5, 10, 20].find((st) => maxOrbit / st <= 6) ?? 20;
+  const auMax = Math.ceil(maxOrbit / auStep) * auStep;
+  const auTicks = Array.from({ length: Math.round(auMax / auStep) + 1 }, (_, i) => i * auStep);
+  const axisX = (au: number) => 6 + (au / auMax) * 92; // % across the map; 0 AU is the star's surface
+  const SOLAR_Y = 42; // % down the map where the planets sit
+  const AXIS_Y = 84;
+
+  // the star is a big circle mostly off the left edge: small stars show a tight arch, big stars look nearly flat
+  const rgba = (a: number) => `rgba(${star.color.map((c) => Math.round(c * 255)).join(",")},${a})`;
+  const starR = 40 + Math.min(1, Math.max(0, (star.size - 0.5) / 1.3)) * 560;
+  const STAR_VISIBLE = 26; // px of the star poking into the map
 
   return (
     <>
@@ -156,19 +167,37 @@ export default function Page() {
           </div>
 
           <div className="panel">
-            <h2>Solar system — {shownSystem.name} <span className="dim">({star.label})</span></h2>
-            <div className="solar">
-              <div className="sun" style={{ width: sunSize, height: sunSize, left: -sunSize * 0.55, background: `radial-gradient(circle at 70% 50%, #fff 0, ${starRgb} 35%, ${starRgb}55 70%, transparent 72%)`, boxShadow: `0 0 40px 10px ${starRgb}55` }} />
-              <div className="plane" />
-              {[1, 2, 4, 8].map((au) => (
-                <div key={au} className="tick" style={{ left: `${solarX(au)}%` }}><span>{au} AU</span></div>
+            <h2>Solar system — {shownSystem.name} <span className="dim">({star.spectral} · {star.label})</span></h2>
+            <div className={`solar ${slots > 8 ? "crowded" : ""}`}>
+              <div className="sun" style={{
+                width: starR * 2, height: starR * 2, left: STAR_VISIBLE - starR * 2, top: `calc(${SOLAR_Y}% - ${starR}px)`,
+                background: `radial-gradient(circle closest-side, ${rgba(1)} 0, ${rgba(1)} 80%, #fff 100%)`,
+                boxShadow: `0 0 6px 1px #fff, 0 0 26px 8px ${rgba(0.75)}, 0 0 70px 24px ${rgba(0.4)}, 0 0 140px 50px ${rgba(0.2)}`,
+              }} />
+              <div className="plane" style={{ top: `${SOLAR_Y}%` }} />
+
+              {/* real-distance ruler along the bottom, with a line from each planet to its true position */}
+              <svg className="ruler" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1={axisX(0)} y1={AXIS_Y} x2={axisX(auMax)} y2={AXIS_Y} stroke="#4b5878" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                {systemPlanets.map((p, i) => (
+                  <line key={p.id} x1={slotX(i)} y1={SOLAR_Y + 14} x2={axisX(p.orbit)} y2={AXIS_Y}
+                    stroke={p.id === viewed.id ? "#4cc2ff" : "#4b587866"} strokeWidth="1" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
+                ))}
+              </svg>
+              {auTicks.map((au) => (
+                <div key={au} className="tick" style={{ left: `${axisX(au)}%`, top: `${AXIS_Y}%` }}><span>{au === 0 ? "star" : `${au} AU`}</span></div>
               ))}
+              {systemPlanets.map((p) => (
+                <span key={p.id} className={`ruler-dot ${p.id === viewed.id ? "sel" : ""}`} style={{ left: `${axisX(p.orbit)}%`, top: `${AXIS_Y}%` }} />
+              ))}
+
               {systemPlanets.map((p, i) => {
-                const body = 14 + planetParams(p.seed).radius * 16; // planet diameter in px
+                const spacingPx = (440 * 86) / 100 / slots;
+                const body = Math.min(14 + planetParams(p.seed).radius * 16, spacingPx * 0.8); // planet diameter in px
                 const size = thumbDisplaySize(p.seed, body);
                 return (
                   <button key={p.id} className={`snode ${p.id === viewed.id ? "sel" : ""} ${i % 2 ? "below" : "above"}`}
-                    style={{ left: `${solarX(p.orbit)}%`, ["--body" as string]: `${body}px` }}
+                    style={{ left: `${slotX(i)}%`, top: `${SOLAR_Y}%`, ["--body" as string]: `${body}px` }}
                     onClick={() => {
                       setViewId(p.id);
                       if (p.kind === "player") setPlanetId(p.id);
@@ -186,16 +215,17 @@ export default function Page() {
               })}
               {localFleets.map((f) => {
                 const { from, to, k } = flight(f);
-                const x = solarX(from.orbit) + (solarX(to.orbit) - solarX(from.orbit)) * k;
-                const heading = solarX(to.orbit) >= solarX(from.orbit) ? 90 : -90;
+                const fx = slotById.get(from.id) ?? 12;
+                const tx = slotById.get(to.id) ?? 12;
+                const x = fx + (tx - fx) * k;
                 return (
-                  <span key={f.id} className="fleet" style={{ left: `${x}%`, top: "50%", transform: `translate(-50%,-50%) rotate(${heading}deg)` }}>
+                  <span key={f.id} className="fleet" style={{ left: `${x}%`, top: `${SOLAR_Y}%`, transform: `translate(-50%,-50%) rotate(${tx >= fx ? 90 : -90}deg)` }}>
                     <img src={f.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon} alt="" />
                   </span>
                 );
               })}
             </div>
-            <div className="dim" style={{ marginTop: 8 }}><b className="mine">●</b> yours · <b className="foe">●</b> enemy · no dot = neutral (colonize or guard). Distance from the star is compressed. Click a planet to view/target it.</div>
+            <div className="dim" style={{ marginTop: 8 }}><b className="mine">●</b> yours · <b className="foe">●</b> enemy · no dot = neutral (colonize or guard). Planets are evenly spaced for readability; the ruler along the bottom shows their real distance from the star. Click a planet to view/target it.</div>
           </div>
 
           <div className="panel">
@@ -212,12 +242,13 @@ export default function Page() {
                 const st = starParams(sy.seed);
                 const rgb = `rgb(${st.color.map((c) => Math.round(c * 255)).join(",")})`;
                 const owned = mine.filter((p) => p.systemId === sy.id).length;
-                const d = 10 + st.size * 8;
+                // diameter on a log scale of the real stellar radius: white dwarfs tiny, supergiants huge
+                const d = Math.min(38, Math.max(6, 7 + 9 * Math.log10(st.radius / 0.05)));
                 return (
                   <button key={sy.id} className={`gnode ${sy.id === shownSystem.id ? "sel" : ""}`} style={{ left: `${sy.x}%`, top: `${sy.y}%` }}
-                    onClick={() => setSystemId(sy.id)} title={`${sy.name} · ${st.label}`}>
-                    <span className="star" style={{ width: d, height: d, background: rgb, boxShadow: `0 0 ${d}px ${d / 3}px ${rgb}66` }} />
-                    <span className="label">{sy.name}{owned > 0 && <b className="mine"> ● {owned}</b>}</span>
+                    onClick={() => setSystemId(sy.id)} title={`${sy.name} · ${st.spectral} ${st.label} · ${st.temp} K · ${st.radius < 0.1 ? st.radius.toFixed(3) : st.radius.toFixed(1)} R☉`}>
+                    <span className="star" style={{ ["--c" as string]: rgb, ["--d" as string]: `${d}px`, ["--b" as string]: st.bright }} />
+                    <span className="label">{sy.name}{owned > 0 && <b className="mine"> ● {owned}</b>}<small>{st.spectral}</small></span>
                   </button>
                 );
               })}

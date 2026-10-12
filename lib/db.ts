@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { planetName, starName } from "./planetGen";
+import { layoutSystem } from "./systemGen";
 
 const g = globalThis as unknown as { __pool?: Pool; __ready?: Promise<void> };
 
@@ -64,7 +65,7 @@ const SYSTEMS: [number, number, number, number][] = [
   [1, 50, 50, 9],
   [2, 22, 30, 4],
   [3, 78, 72, 2],
-  [4, 80, 22, 13],
+  [4, 80, 22, 3],
 ];
 
 // id, system, orbit (AU), kind, metal, crystal, buildings, ships, defense, planet seed
@@ -83,6 +84,7 @@ const SEED: [number, number, number, string, number, number, object, object, num
 ];
 
 // Idempotent: only inserts what is missing, so existing games keep their progress.
+// Each system gets 2d6 planets: the hand-made ones above plus generated ones (see systemGen.ts).
 async function seed() {
   for (const [id, x, y, starSeed] of SYSTEMS) {
     await pool.query(
@@ -90,15 +92,23 @@ async function seed() {
       [id, starName(starSeed), x, y, starSeed],
     );
   }
-  for (const [id, systemId, orbit, kind, metal, crystal, b, s, def, planetSeed] of SEED) {
-    await pool.query(
-      `INSERT INTO planets (id,name,system_id,orbit,kind,metal,crystal,buildings,ships,defense,seed)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`,
-      [id, planetName(planetSeed), systemId, orbit, kind, metal, crystal, JSON.stringify(b), JSON.stringify(s), def, planetSeed],
-    );
-    // planets created before systems existed
-    await pool.query("UPDATE planets SET system_id=$1, orbit=$2 WHERE id=$3 AND system_id IS NULL", [systemId, orbit, id]);
-    await pool.query("UPDATE planets SET seed=$1 WHERE id=$2 AND seed IS NULL", [planetSeed, id]);
+  for (const [systemId, , , starSeed] of SYSTEMS) {
+    const mine = SEED.filter((row) => row[1] === systemId);
+    const layout = layoutSystem(systemId, starSeed, mine.map((row) => ({ id: row[0], orbit: row[2] })), systemId === 1);
+    for (const pl of layout) {
+      const row = mine.find((r) => r[0] === pl.id);
+      const d = row
+        ? { name: planetName(row[9]), kind: row[3], metal: row[4], crystal: row[5], buildings: row[6], ships: row[7], defense: row[8], seed: row[9] }
+        : { ...pl.fresh!, ships: {} };
+      await pool.query(
+        `INSERT INTO planets (id,name,system_id,orbit,kind,metal,crystal,buildings,ships,defense,seed)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`,
+        [pl.id, d.name, systemId, pl.orbit, d.kind, d.metal, d.crystal, JSON.stringify(d.buildings), JSON.stringify(d.ships), d.defense, d.seed],
+      );
+      // (re)place on its orbit; also covers planets created before systems/orbits existed
+      await pool.query("UPDATE planets SET system_id=$1, orbit=$2 WHERE id=$3", [systemId, pl.orbit, pl.id]);
+      await pool.query("UPDATE planets SET seed=$1 WHERE id=$2 AND seed IS NULL", [d.seed, pl.id]);
+    }
   }
 }
 
