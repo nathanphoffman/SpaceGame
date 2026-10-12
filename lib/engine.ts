@@ -3,13 +3,13 @@ import type { PoolClient } from "pg";
 import { pool, ready } from "./db";
 import {
   BUILDINGS, SHIPS, buildCost, buildSeconds, shipSeconds, rates, flightSeconds,
-  type BuildingType, type ShipType, type Res, type GameState,
+  type BuildingType, type ShipType, type Res, type GameState, type SystemDTO,
 } from "./defs";
 
 type Planet = {
-  id: number; name: string; x: number; y: number; kind: "player" | "npc" | "empty";
+  id: number; name: string; system_id: number; orbit: number; kind: "player" | "npc" | "empty";
   metal: number; crystal: number; buildings: Record<string, number>; ships: Record<string, number>;
-  defense: number; updated_at: Date;
+  defense: number; seed: number; updated_at: Date;
 };
 type QueueItem = { id: string; planet_id: number; kind: "building" | "ship"; type: string; start_at: Date; finish_at: Date };
 type Fleet = {
@@ -17,7 +17,7 @@ type Fleet = {
   ships: Record<string, number>; loot: Res; depart_at: Date; arrive_at: Date; return_at: Date;
   status: "outbound" | "returning" | "done"; report: string;
 };
-type World = { planets: Planet[]; queue: QueueItem[]; fleets: Fleet[] };
+type World = { systems: SystemDTO[]; planets: Planet[]; queue: QueueItem[]; fleets: Fleet[] };
 
 export class GameError extends Error {}
 
@@ -26,10 +26,11 @@ const NPC_RESOURCE_CAP = 3000;
 // ---------- load / save ----------
 
 async function load(c: PoolClient): Promise<World> {
+  const systems = (await c.query("SELECT * FROM systems ORDER BY id")).rows as SystemDTO[];
   const planets = (await c.query("SELECT * FROM planets ORDER BY id")).rows as Planet[];
   const queue = (await c.query("SELECT * FROM queue ORDER BY finish_at")).rows as QueueItem[];
   const fleets = (await c.query("SELECT * FROM fleets ORDER BY depart_at")).rows as Fleet[];
-  return { planets, queue, fleets };
+  return { systems, planets, queue, fleets };
 }
 
 async function save(c: PoolClient, w: World) {
@@ -93,7 +94,6 @@ function arrive(w: World, f: Fleet) {
     }
     f.ships.colony_ship -= 1;
     target.kind = "player";
-    target.name = `Colony ${target.id}`;
     target.metal = 100;
     target.crystal = 50;
     target.updated_at = f.arrive_at;
@@ -196,9 +196,10 @@ export async function withGame<T>(fn: (w: World, now: Date) => T): Promise<{ res
 function toState(w: World, now: Date): GameState {
   return {
     now: now.getTime(),
+    systems: w.systems,
     planets: w.planets.map((p) => ({
-      id: p.id, name: p.name, x: p.x, y: p.y, kind: p.kind,
-      metal: p.metal, crystal: p.crystal, buildings: p.buildings, ships: p.ships, defense: p.defense,
+      id: p.id, name: p.name, systemId: p.system_id, orbit: p.orbit, kind: p.kind,
+      metal: p.metal, crystal: p.crystal, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed,
     })),
     queue: w.queue.map((q) => ({
       id: q.id, planetId: q.planet_id, kind: q.kind, type: q.type,
@@ -272,7 +273,8 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
   const mission = target.kind === "empty" ? "colonize" : "attack";
   if (mission === "colonize" && !(sent.colony_ship > 0)) throw new GameError("Colonizing needs a Colony Ship");
   for (const [t, n] of Object.entries(sent)) origin.ships[t] -= n;
-  const flight = flightSeconds(origin, target) * 1000;
+  const flight =
+    flightSeconds({ systemId: origin.system_id, orbit: origin.orbit }, { systemId: target.system_id, orbit: target.orbit }, w.systems) * 1000;
   w.fleets.push({
     id: randomUUID(), origin_id: origin.id, target_id: target.id, mission, ships: sent,
     loot: { metal: 0, crystal: 0 }, depart_at: now, arrive_at: new Date(now.getTime() + flight),

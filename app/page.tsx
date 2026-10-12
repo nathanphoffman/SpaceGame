@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import PlanetView from "@/components/PlanetView";
+import { describePlanet, planetParams, starParams } from "@/lib/planetGen";
 import {
   BUILDINGS, SHIPS, buildCost, buildSeconds, shipSeconds, rates, flightSeconds,
   type BuildingType, type ShipType, type GameState, type PlanetDTO,
@@ -31,6 +33,8 @@ export default function Page() {
   const [clock, setClock] = useState(Date.now());
   const [planetId, setPlanetId] = useState<number | null>(null);
   const [targetId, setTargetId] = useState<number | null>(null);
+  const [viewId, setViewId] = useState<number | null>(null);
+  const [systemId, setSystemId] = useState<number | null>(null); // system shown on the solar map
   const [shipQty, setShipQty] = useState<Record<string, number>>({});
   const [sendQty, setSendQty] = useState<Record<string, number>>({});
   const [error, setError] = useState("");
@@ -69,6 +73,8 @@ export default function Page() {
   const mine = game.planets.filter((p) => p.kind === "player");
   const planet = mine.find((p) => p.id === planetId) ?? mine[0];
   const target = game.planets.find((p) => p.id === targetId && p.kind !== "player") ?? null;
+  const viewed = game.planets.find((p) => p.id === viewId) ?? planet;
+  const viewedInfo = describePlanet(planetParams(viewed.seed));
   const planetName = (id: number) => game.planets.find((p) => p.id === id)?.name ?? "?";
 
   const r = rates(planet.buildings);
@@ -83,14 +89,26 @@ export default function Page() {
   const activeFleets = game.fleets.filter((f) => f.status !== "done");
   const reports = game.fleets.filter((f) => f.report).slice(-6).reverse();
 
-  const fleetPos = (f: GameState["fleets"][number]) => {
+  const sysOf = (id: number) => game.systems.find((x) => x.id === id)!;
+  const shownSystem = sysOf(systemId ?? viewed.systemId);
+  const star = starParams(shownSystem.seed);
+  const systemPlanets = game.planets.filter((p) => p.systemId === shownSystem.id);
+
+  // flight progress 0..1 and the planets it is currently travelling between
+  const flight = (f: GameState["fleets"][number]) => {
     const o = game.planets.find((p) => p.id === f.originId)!;
     const t = game.planets.find((p) => p.id === f.targetId)!;
     const [from, to, a, b] = f.status === "outbound" ? [o, t, f.departAt, f.arriveAt] : [t, o, f.arriveAt, f.returnAt];
-    const k = Math.min(1, Math.max(0, (now - a) / (b - a)));
-    const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI + 90;
-    return { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k, angle };
+    return { from, to, k: Math.min(1, Math.max(0, (now - a) / (b - a))) };
   };
+  const crossFleets = activeFleets.filter((f) => game.planets.find((p) => p.id === f.originId)!.systemId !== game.planets.find((p) => p.id === f.targetId)!.systemId);
+  const localFleets = activeFleets.filter((f) => !crossFleets.includes(f) && game.planets.find((p) => p.id === f.originId)!.systemId === shownSystem.id);
+
+  // solar map: distance from the star in AU on a compressed (square-root) scale
+  const AU_MAX = 12;
+  const solarX = (au: number) => 12 + Math.sqrt(au / AU_MAX) * 84;
+  const starRgb = `rgb(${star.color.map((c) => Math.round(c * 255)).join(",")})`;
+  const sunSize = 70 + 40 * star.size;
 
   return (
     <>
@@ -98,7 +116,7 @@ export default function Page() {
         <h1>Space Game</h1>
         <div className="tabs">
           {mine.map((p) => (
-            <button key={p.id} className={p.id === planet.id ? "on" : ""} onClick={() => setPlanetId(p.id)}>
+            <button key={p.id} className={p.id === planet.id ? "on" : ""} onClick={() => { setPlanetId(p.id); setViewId(p.id); setSystemId(null); }}>
               <Ico src="/icons/planet_player.svg" /> {p.name}
             </button>
           ))}
@@ -112,48 +130,105 @@ export default function Page() {
       <div className="layout">
         <div>
           <div className="panel">
-            <h2>Galaxy map</h2>
-            <div className="map">
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                {activeFleets.map((f) => {
-                  const o = game.planets.find((p) => p.id === f.originId)!;
-                  const t = game.planets.find((p) => p.id === f.targetId)!;
-                  return <line key={f.id} x1={o.x} y1={o.y} x2={t.x} y2={t.y} stroke="#4cc2ff55" strokeWidth="0.3" strokeDasharray="1 1" />;
-                })}
-              </svg>
-              {game.planets.map((p) => (
-                <button
-                  key={p.id}
-                  className={`node ${p.id === target?.id || p.id === planet.id ? "sel" : ""}`}
-                  style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                  onClick={() => (p.kind === "player" ? setPlanetId(p.id) : setTargetId(p.id))}
-                  title={p.name}
-                >
-                  <span className="icon"><img src={planetIcon(p)} alt="" /></span>
-                  <span className="label">{p.kind === "empty" ? "Empty" : p.name}</span>
-                </button>
+            <h2>{viewed.name}</h2>
+            <PlanetView seed={viewed.seed} />
+            <div className="planet-info">
+              <div><b>{viewedInfo.type}</b> · {viewedInfo.size} · {viewedInfo.surface}</div>
+              <div className="dim">
+                {viewedInfo.craters > 0 ? `${viewedInfo.craters} craters` : "No craters"} · {viewedInfo.rings ? "Rings" : "No rings"} · {viewedInfo.atmosphere ? "Atmosphere" : "No atmosphere"}
+              </div>
+              <div className="dim">
+                {viewed.kind === "player" ? "Your planet" : viewed.kind === "npc" ? `Enemy · defense ${viewed.defense}` : "Unclaimed"} · seed {viewed.seed}
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <h2>Solar system — {shownSystem.name} <span className="dim">({star.label})</span></h2>
+            <div className="solar">
+              <div className="sun" style={{ width: sunSize, height: sunSize, left: -sunSize * 0.55, background: `radial-gradient(circle at 70% 50%, #fff 0, ${starRgb} 35%, ${starRgb}55 70%, transparent 72%)`, boxShadow: `0 0 40px 10px ${starRgb}55` }} />
+              <div className="plane" />
+              {[1, 2, 4, 8].map((au) => (
+                <div key={au} className="tick" style={{ left: `${solarX(au)}%` }}><span>{au} AU</span></div>
               ))}
-              {activeFleets.map((f) => {
-                const pos = fleetPos(f);
+              {systemPlanets.map((p, i) => {
+                const size = 18 + planetParams(p.seed).radius * 14;
                 return (
-                  <span key={f.id} className="fleet" style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: `translate(-50%,-50%) rotate(${pos.angle}deg)` }}>
+                  <button key={p.id} className={`snode ${p.id === viewed.id ? "sel" : ""} ${i % 2 ? "below" : "above"}`}
+                    style={{ left: `${solarX(p.orbit)}%` }}
+                    onClick={() => {
+                      setViewId(p.id);
+                      if (p.kind === "player") setPlanetId(p.id);
+                      else setTargetId(p.id);
+                    }}
+                    title={`${p.name} · ${p.orbit.toFixed(1)} AU`}>
+                    <img src={planetIcon(p)} alt="" style={{ width: size, height: size }} />
+                    <span className="label">{p.name}<small>{p.orbit.toFixed(1)} AU</small></span>
+                  </button>
+                );
+              })}
+              {localFleets.map((f) => {
+                const { from, to, k } = flight(f);
+                const x = solarX(from.orbit) + (solarX(to.orbit) - solarX(from.orbit)) * k;
+                const heading = solarX(to.orbit) >= solarX(from.orbit) ? 90 : -90;
+                return (
+                  <span key={f.id} className="fleet" style={{ left: `${x}%`, top: "50%", transform: `translate(-50%,-50%) rotate(${heading}deg)` }}>
                     <img src={f.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon} alt="" />
                   </span>
                 );
               })}
             </div>
-            <div className="dim" style={{ marginTop: 8 }}>Solid = yours · ringed = enemy · dashed = empty (colonize). Click a planet to target it.</div>
+            <div className="dim" style={{ marginTop: 8 }}>Solid = yours · ringed = enemy · dashed = empty (colonize). Distance from the star is compressed. Click a planet to view/target it.</div>
           </div>
 
           <div className="panel">
+            <h2>Galaxy map</h2>
+            <div className="map galaxy">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                {crossFleets.map((f) => {
+                  const { from, to } = flight(f);
+                  const a = sysOf(from.systemId), b = sysOf(to.systemId);
+                  return <line key={f.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#4cc2ff55" strokeWidth="0.4" strokeDasharray="1.5 1.5" />;
+                })}
+              </svg>
+              {game.systems.map((sy) => {
+                const st = starParams(sy.seed);
+                const rgb = `rgb(${st.color.map((c) => Math.round(c * 255)).join(",")})`;
+                const owned = mine.filter((p) => p.systemId === sy.id).length;
+                const d = 10 + st.size * 8;
+                return (
+                  <button key={sy.id} className={`gnode ${sy.id === shownSystem.id ? "sel" : ""}`} style={{ left: `${sy.x}%`, top: `${sy.y}%` }}
+                    onClick={() => setSystemId(sy.id)} title={`${sy.name} · ${st.label}`}>
+                    <span className="star" style={{ width: d, height: d, background: rgb, boxShadow: `0 0 ${d}px ${d / 3}px ${rgb}66` }} />
+                    <span className="label">{sy.name}{owned > 0 && <b className="mine"> ● {owned}</b>}</span>
+                  </button>
+                );
+              })}
+              {crossFleets.map((f) => {
+                const { from, to, k } = flight(f);
+                const a = sysOf(from.systemId), b = sysOf(to.systemId);
+                const angle = (Math.atan2(b.y - a.y, (b.x - a.x) * 1.6) * 180) / Math.PI + 90;
+                return (
+                  <span key={f.id} className="fleet" style={{ left: `${a.x + (b.x - a.x) * k}%`, top: `${a.y + (b.y - a.y) * k}%`, transform: `translate(-50%,-50%) rotate(${angle}deg)` }}>
+                    <img src={f.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon} alt="" />
+                  </span>
+                );
+              })}
+            </div>
+            <div className="dim" style={{ marginTop: 8 }}>Click a star to open its solar system. <b className="mine">●</b> = your bases there.</div>
+          </div>
+        </div>
+
+        <div>
+          <div className="panel">
             <h2>Fleet {target ? `→ ${target.name}` : ""}</h2>
             {!target ? (
-              <div className="dim">Click an enemy or empty planet on the map to send ships.</div>
+              <div className="dim">Click an enemy or empty planet on the solar map to send ships.</div>
             ) : (
               <>
                 <div className="dim" style={{ marginBottom: 6 }}>
                   {target.kind === "npc" ? `Attack · enemy defense ${target.defense}` : "Colonize · needs a Colony Ship"}
-                  {" · "}flight {fmtTime(flightSeconds(planet, target) * 1000)} each way
+                  {" · "}flight {fmtTime(flightSeconds(planet, target, game.systems) * 1000)} each way
                 </div>
                 {(Object.keys(SHIPS) as ShipType[]).map((t) => (
                   <div className="row" key={t}>
@@ -169,59 +244,61 @@ export default function Page() {
               </>
             )}
           </div>
-        </div>
 
-        <div>
           {error && <div className="panel err">{error}</div>}
 
-          <div className="panel">
-            <h2>{planet.name} — buildings</h2>
-            {(Object.keys(BUILDINGS) as BuildingType[]).map((t) => {
-              const q = bQueue.filter((x) => x.type === t);
-              const level = (planet.buildings[t] ?? 0) + q.length;
-              const cost = buildCost(t, level);
-              const active = q[0];
-              return (
-                <div className="row" key={t}>
-                  <span className="icon"><img src={BUILDINGS[t].icon} alt="" /></span>
-                  <div className="grow">
-                    <b>{BUILDINGS[t].name}</b> <span className="dim">Lv {planet.buildings[t] ?? 0}{q.length ? ` → ${level}` : ""}</span>
-                    <div className="sub"><Cost metal={cost.metal} crystal={cost.crystal} /> · {fmtTime(buildSeconds(t, level) * 1000)} · {BUILDINGS[t].desc}</div>
-                    {active && (
-                      <>
-                        <div className="sub good">Building… {fmtTime(active.finishAt - now)}</div>
-                        <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div>
-                      </>
-                    )}
+          {viewed.kind === "player" && (
+            <>
+            <div className="panel">
+              <h2>{planet.name} — buildings</h2>
+              {(Object.keys(BUILDINGS) as BuildingType[]).map((t) => {
+                const q = bQueue.filter((x) => x.type === t);
+                const level = (planet.buildings[t] ?? 0) + q.length;
+                const cost = buildCost(t, level);
+                const active = q[0];
+                return (
+                  <div className="row" key={t}>
+                    <span className="icon"><img src={BUILDINGS[t].icon} alt="" /></span>
+                    <div className="grow">
+                      <b>{BUILDINGS[t].name}</b> <span className="dim">Lv {planet.buildings[t] ?? 0}{q.length ? ` → ${level}` : ""}</span>
+                      <div className="sub"><Cost metal={cost.metal} crystal={cost.crystal} /> · {fmtTime(buildSeconds(t, level) * 1000)} · {BUILDINGS[t].desc}</div>
+                      {active && (
+                        <>
+                          <div className="sub good">Building… {fmtTime(active.finishAt - now)}</div>
+                          <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div>
+                        </>
+                      )}
+                    </div>
+                    <button disabled={!canAfford(cost.metal, cost.crystal)} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>Upgrade</button>
                   </div>
-                  <button disabled={!canAfford(cost.metal, cost.crystal)} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>Upgrade</button>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
-          <div className="panel">
-            <h2>Shipyard {shipyard ? `(Lv ${shipyard})` : ""}</h2>
-            {!shipyard && <div className="dim">Build a shipyard to start building ships.</div>}
-            {(Object.keys(SHIPS) as ShipType[]).map((t) => {
-              const s = SHIPS[t];
-              const qty = shipQty[t] ?? 1;
-              const inQueue = sQueue.filter((x) => x.type === t);
-              return (
-                <div className="row" key={t}>
-                  <span className="icon"><img src={s.icon} alt="" /></span>
-                  <div className="grow">
-                    <b>{s.name}</b> <span className="dim">×{planet.ships[t] ?? 0}</span>
-                    <div className="sub"><Cost metal={s.cost.metal} crystal={s.cost.crystal} /> · {fmtTime(shipSeconds(t, shipyard) * 1000)} each · Attack {s.attack} · Cargo {s.cargo}</div>
-                    {inQueue[0] && <div className="sub good">Building {inQueue.length}… next in {fmtTime(inQueue[0].finishAt - now)}</div>}
+            <div className="panel">
+              <h2>Shipyard {shipyard ? `(Lv ${shipyard})` : ""}</h2>
+              {!shipyard && <div className="dim">Build a shipyard to start building ships.</div>}
+              {(Object.keys(SHIPS) as ShipType[]).map((t) => {
+                const s = SHIPS[t];
+                const qty = shipQty[t] ?? 1;
+                const inQueue = sQueue.filter((x) => x.type === t);
+                return (
+                  <div className="row" key={t}>
+                    <span className="icon"><img src={s.icon} alt="" /></span>
+                    <div className="grow">
+                      <b>{s.name}</b> <span className="dim">×{planet.ships[t] ?? 0}</span>
+                      <div className="sub"><Cost metal={s.cost.metal} crystal={s.cost.crystal} /> · {fmtTime(shipSeconds(t, shipyard) * 1000)} each · Attack {s.attack} · Cargo {s.cargo}</div>
+                      {inQueue[0] && <div className="sub good">Building {inQueue.length}… next in {fmtTime(inQueue[0].finishAt - now)}</div>}
+                    </div>
+                    <input type="number" min={1} max={20} value={qty} onChange={(e) => setShipQty({ ...shipQty, [t]: Number(e.target.value) })} />
+                    <button disabled={!shipyard || !canAfford(s.cost.metal * qty, s.cost.crystal * qty)}
+                      onClick={() => act({ action: "ship", planetId: planet.id, type: t, qty })}>Build</button>
                   </div>
-                  <input type="number" min={1} max={20} value={qty} onChange={(e) => setShipQty({ ...shipQty, [t]: Number(e.target.value) })} />
-                  <button disabled={!shipyard || !canAfford(s.cost.metal * qty, s.cost.crystal * qty)}
-                    onClick={() => act({ action: "ship", planetId: planet.id, type: t, qty })}>Build</button>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            </>
+          )}
 
           <div className="panel">
             <h2>Fleets in flight</h2>

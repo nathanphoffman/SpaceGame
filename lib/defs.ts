@@ -32,20 +32,29 @@ export const rates = (b: Record<string, number>): Res => {
   return { metal: 0.2 + 0.4 * m * 1.1 ** m, crystal: 0.1 + 0.25 * c * 1.1 ** c };
 };
 
-export const flightSeconds = (a: { x: number; y: number }, b: { x: number; y: number }) =>
-  Math.max(5, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 1.2));
+export type SystemDTO = { id: number; name: string; x: number; y: number; seed: number };
+
+type Placed = { systemId: number; orbit: number };
+/** Seconds to fly between two planets: short inside a system, longer across the galaxy. */
+export const flightSeconds = (a: Placed, b: Placed, systems: { id: number; x: number; y: number }[]) => {
+  if (a.systemId === b.systemId) return Math.max(5, Math.round(5 + Math.abs(a.orbit - b.orbit) * 6));
+  const sa = systems.find((s) => s.id === a.systemId)!;
+  const sb = systems.find((s) => s.id === b.systemId)!;
+  return Math.round(15 + Math.hypot(sa.x - sb.x, sa.y - sb.y) + (a.orbit + b.orbit) * 3);
+};
 
 export type PlanetDTO = {
   id: number;
   name: string;
-  x: number;
-  y: number;
+  systemId: number;
+  orbit: number; // distance from the star in AU
   kind: "player" | "npc" | "empty";
   metal: number;
   crystal: number;
   buildings: Record<string, number>;
   ships: Record<string, number>;
   defense: number;
+  seed: number;
 };
 export type QueueDTO = { id: string; planetId: number; kind: "building" | "ship"; type: string; startAt: number; finishAt: number };
 export type FleetDTO = {
@@ -61,4 +70,4 @@ export type FleetDTO = {
   status: "outbound" | "returning" | "done";
   report: string;
 };
-export type GameState = { now: number; planets: PlanetDTO[]; queue: QueueDTO[]; fleets: FleetDTO[] };
+export type GameState = { now: number; systems: SystemDTO[]; planets: PlanetDTO[]; queue: QueueDTO[]; fleets: FleetDTO[] };

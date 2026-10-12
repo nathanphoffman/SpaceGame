@@ -15,7 +15,7 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .tabs button.on { background:var(--accent); color:#00121f; }
 .spacer { flex:1; }
 
-.layout { display:grid; grid-template-columns: minmax(320px, 560px) 1fr; gap:16px; padding:16px; align-items:start; }
+.layout { display:grid; grid-template-columns: 469px minmax(0,1fr); gap:16px; padding:16px; align-items:start; }
 @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:16px; }
 .panel h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:0 0 10px; }
@@ -45,3 +45,28 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .dim { color:var(--dim); }
 .ico { width:1.1em; height:1.1em; vertical-align:-0.2em; }
 .fleet img { width:100%; height:100%; }
+.planet3d { width:100%; aspect-ratio:1; border-radius:10px; overflow:hidden; background: radial-gradient(circle at 50% 50%, #101a33 0, #070b14 70%); border:1px solid var(--line); }
+.planet-info { margin-top:10px; }
+
+.map.galaxy { aspect-ratio: 16 / 10; }
+.gnode { position:absolute; transform:translate(-50%,-50%); background:none; border:0; padding:0; color:var(--text); font-weight:400; cursor:pointer; text-align:center; }
+.gnode .star { display:block; border-radius:50%; margin:0 auto; }
+.gnode .label { display:block; font-size:11px; color:var(--dim); white-space:nowrap; margin-top:6px; }
+.gnode.sel .label { color:var(--text); }
+.gnode.sel .star { outline:2px solid var(--accent); outline-offset:3px; }
+.mine { color:var(--good); font-weight:600; }
+
+.solar { position:relative; width:100%; aspect-ratio: 3.4 / 1; border-radius:10px; border:1px solid var(--line); overflow:hidden;
+  background: radial-gradient(circle at 80% 30%, #1a1740 0, transparent 50%), #070b14; }
+.solar .sun { position:absolute; top:50%; transform:translateY(-50%); border-radius:50%; }
+.solar .plane { position:absolute; left:0; right:0; top:50%; height:1px; background:linear-gradient(90deg, #4cc2ff55, #4cc2ff11); }
+.solar .tick { position:absolute; top:0; bottom:0; width:1px; background:#ffffff12; }
+.solar .tick span { position:absolute; bottom:2px; left:3px; font-size:9px; color:#4b5878; white-space:nowrap; }
+.snode { position:absolute; top:50%; transform:translate(-50%,-50%); background:none; border:0; padding:0; color:var(--text); font-weight:400; cursor:pointer; text-align:center; }
+.snode img { display:block; margin:0 auto; }
+.snode .label { position:absolute; left:50%; transform:translateX(-50%); font-size:10px; line-height:1.15; white-space:nowrap; color:var(--dim); }
+.snode .label small { display:block; font-size:9px; opacity:.7; }
+.snode.above .label { bottom:100%; margin-bottom:3px; }
+.snode.below .label { top:100%; margin-top:3px; }
+.snode.sel img { filter: drop-shadow(0 0 6px var(--accent)); }
+.snode.sel .label { color:var(--text); }
