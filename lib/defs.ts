@@ -67,7 +67,7 @@ export type FleetDTO = {
   departAt: number;
   arriveAt: number;
   returnAt: number;
-  status: "outbound" | "returning" | "done";
+  status: "outbound" | "stationed" | "returning" | "done";
   report: string;
 };
 export type GameState = { now: number; systems: SystemDTO[]; planets: PlanetDTO[]; queue: QueueDTO[]; fleets: FleetDTO[] };

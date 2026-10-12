@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import PlanetView from "@/components/PlanetView";
+import { planetThumb, thumbDisplaySize } from "@/components/planetThumb";
 import { describePlanet, planetParams, starParams } from "@/lib/planetGen";
 import {
   BUILDINGS, SHIPS, buildCost, buildSeconds, shipSeconds, rates, flightSeconds,
@@ -85,7 +86,14 @@ export default function Page() {
   const bQueue = game.queue.filter((q) => q.planetId === planet.id && q.kind === "building");
   const sQueue = game.queue.filter((q) => q.planetId === planet.id && q.kind === "ship");
   const shipyard = planet.buildings.shipyard ?? 0;
-  const canAfford = (m: number, c: number) => metal >= m && crystal >= c;
+  // why something can't be bought right now (undefined = it can), used for the disabled-button tooltips
+  const shortfall = (m: number, c: number) => {
+    const missing = [
+      metal < m && `${Math.ceil(m - metal)} more metal`,
+      crystal < c && `${Math.ceil(c - crystal)} more crystal`,
+    ].filter(Boolean);
+    return missing.length ? `Not enough resources: need ${missing.join(" and ")}` : undefined;
+  };
   const activeFleets = game.fleets.filter((f) => f.status !== "done");
   const reports = game.fleets.filter((f) => f.report).slice(-6).reverse();
 
@@ -101,8 +109,9 @@ export default function Page() {
     const [from, to, a, b] = f.status === "outbound" ? [o, t, f.departAt, f.arriveAt] : [t, o, f.arriveAt, f.returnAt];
     return { from, to, k: Math.min(1, Math.max(0, (now - a) / (b - a))) };
   };
-  const crossFleets = activeFleets.filter((f) => game.planets.find((p) => p.id === f.originId)!.systemId !== game.planets.find((p) => p.id === f.targetId)!.systemId);
-  const localFleets = activeFleets.filter((f) => !crossFleets.includes(f) && game.planets.find((p) => p.id === f.originId)!.systemId === shownSystem.id);
+  const flying = activeFleets.filter((f) => f.status !== "stationed");
+  const crossFleets = flying.filter((f) => game.planets.find((p) => p.id === f.originId)!.systemId !== game.planets.find((p) => p.id === f.targetId)!.systemId);
+  const localFleets = flying.filter((f) => !crossFleets.includes(f) && game.planets.find((p) => p.id === f.originId)!.systemId === shownSystem.id);
 
   // solar map: distance from the star in AU on a compressed (square-root) scale
   const AU_MAX = 12;
@@ -140,6 +149,9 @@ export default function Page() {
               <div className="dim">
                 {viewed.kind === "player" ? "Your planet" : viewed.kind === "npc" ? `Enemy · defense ${viewed.defense}` : "Unclaimed"} · seed {viewed.seed}
               </div>
+              {activeFleets.filter((f) => f.status === "stationed" && f.targetId === viewed.id).map((f) => (
+                <div key={f.id} className="good">Guarded by your fleet: <ShipList ships={f.ships} /></div>
+              ))}
             </div>
           </div>
 
@@ -152,17 +164,22 @@ export default function Page() {
                 <div key={au} className="tick" style={{ left: `${solarX(au)}%` }}><span>{au} AU</span></div>
               ))}
               {systemPlanets.map((p, i) => {
-                const size = 18 + planetParams(p.seed).radius * 14;
+                const body = 14 + planetParams(p.seed).radius * 16; // planet diameter in px
+                const size = thumbDisplaySize(p.seed, body);
                 return (
                   <button key={p.id} className={`snode ${p.id === viewed.id ? "sel" : ""} ${i % 2 ? "below" : "above"}`}
-                    style={{ left: `${solarX(p.orbit)}%` }}
+                    style={{ left: `${solarX(p.orbit)}%`, ["--body" as string]: `${body}px` }}
                     onClick={() => {
                       setViewId(p.id);
                       if (p.kind === "player") setPlanetId(p.id);
                       else setTargetId(p.id);
                     }}
                     title={`${p.name} · ${p.orbit.toFixed(1)} AU`}>
-                    <img src={planetIcon(p)} alt="" style={{ width: size, height: size }} />
+                    <img className="thumb" src={planetThumb(p.seed)} alt="" style={{ width: size, height: size }} />
+                    <span className={`dot ${p.kind}`} />
+                    {activeFleets.some((f) => f.status === "stationed" && f.targetId === p.id) && (
+                      <img className="guard" src={SHIPS.fighter.icon} alt="guarded" />
+                    )}
                     <span className="label">{p.name}<small>{p.orbit.toFixed(1)} AU</small></span>
                   </button>
                 );
@@ -178,7 +195,7 @@ export default function Page() {
                 );
               })}
             </div>
-            <div className="dim" style={{ marginTop: 8 }}>Solid = yours · ringed = enemy · dashed = empty (colonize). Distance from the star is compressed. Click a planet to view/target it.</div>
+            <div className="dim" style={{ marginTop: 8 }}><b className="mine">●</b> yours · <b className="foe">●</b> enemy · no dot = neutral (colonize or guard). Distance from the star is compressed. Click a planet to view/target it.</div>
           </div>
 
           <div className="panel">
@@ -227,7 +244,9 @@ export default function Page() {
             ) : (
               <>
                 <div className="dim" style={{ marginBottom: 6 }}>
-                  {target.kind === "npc" ? `Attack · enemy defense ${target.defense}` : "Colonize · needs a Colony Ship"}
+                  {target.kind === "npc"
+                    ? `Attack · enemy defense ${target.defense} · survivors guard the planet`
+                    : (sendQty.colony_ship ?? 0) > 0 ? "Colonize" : "Guard · add a Colony Ship to settle it"}
                   {" · "}flight {fmtTime(flightSeconds(planet, target, game.systems) * 1000)} each way
                 </div>
                 {(Object.keys(SHIPS) as ShipType[]).map((t) => (
@@ -238,7 +257,10 @@ export default function Page() {
                       onChange={(e) => setSendQty({ ...sendQty, [t]: Number(e.target.value) })} />
                   </div>
                 ))}
-                <button style={{ marginTop: 8 }} onClick={async () => { await act({ action: "send", originId: planet.id, targetId: target.id, ships: sendQty }); setSendQty({}); }}>
+                <button style={{ marginTop: 8 }} onClick={async () => { await act({ action: "send", originId: planet.id, targetId: target.id, ships: sendQty });
+                  setSendQty({});
+                  setViewId(planet.id); // back to your base so its buildings/shipyard show again
+                }}>
                   Send fleet
                 </button>
               </>
@@ -251,66 +273,89 @@ export default function Page() {
             <>
             <div className="panel">
               <h2>{planet.name} — buildings</h2>
-              {(Object.keys(BUILDINGS) as BuildingType[]).map((t) => {
-                const q = bQueue.filter((x) => x.type === t);
-                const level = (planet.buildings[t] ?? 0) + q.length;
-                const cost = buildCost(t, level);
-                const active = q[0];
-                return (
-                  <div className="row" key={t}>
-                    <span className="icon"><img src={BUILDINGS[t].icon} alt="" /></span>
-                    <div className="grow">
-                      <b>{BUILDINGS[t].name}</b> <span className="dim">Lv {planet.buildings[t] ?? 0}{q.length ? ` → ${level}` : ""}</span>
-                      <div className="sub"><Cost metal={cost.metal} crystal={cost.crystal} /> · {fmtTime(buildSeconds(t, level) * 1000)} · {BUILDINGS[t].desc}</div>
+              <div className="tiles">
+                {(Object.keys(BUILDINGS) as BuildingType[]).map((t) => {
+                  const q = bQueue.filter((x) => x.type === t);
+                  const level = (planet.buildings[t] ?? 0) + q.length;
+                  const cost = buildCost(t, level);
+                  const active = q[0];
+                  return (
+                    <div className="tile" key={t} title={BUILDINGS[t].desc}>
+                      <img className="tile-icon" src={BUILDINGS[t].icon} alt="" />
+                      <b>{BUILDINGS[t].name}</b>
+                      <span className="dim">Lv {planet.buildings[t] ?? 0}{q.length ? ` → ${level}` : ""}</span>
+                      <div className="sub"><Cost metal={cost.metal} crystal={cost.crystal} /></div>
+                      <div className="sub">{fmtTime(buildSeconds(t, level) * 1000)}</div>
                       {active && (
-                        <>
-                          <div className="sub good">Building… {fmtTime(active.finishAt - now)}</div>
+                        <div className="grow-fill">
+                          <div className="sub good">{fmtTime(active.finishAt - now)}</div>
                           <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div>
-                        </>
+                        </div>
                       )}
+                      {(() => {
+                        const why = shortfall(cost.metal, cost.crystal);
+                        return (
+                          <button disabled={!!why} title={why} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>Upgrade</button>
+                        );
+                      })()}
                     </div>
-                    <button disabled={!canAfford(cost.metal, cost.crystal)} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>Upgrade</button>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             <div className="panel">
               <h2>Shipyard {shipyard ? `(Lv ${shipyard})` : ""}</h2>
               {!shipyard && <div className="dim">Build a shipyard to start building ships.</div>}
-              {(Object.keys(SHIPS) as ShipType[]).map((t) => {
-                const s = SHIPS[t];
-                const qty = shipQty[t] ?? 1;
-                const inQueue = sQueue.filter((x) => x.type === t);
-                return (
-                  <div className="row" key={t}>
-                    <span className="icon"><img src={s.icon} alt="" /></span>
-                    <div className="grow">
-                      <b>{s.name}</b> <span className="dim">×{planet.ships[t] ?? 0}</span>
-                      <div className="sub"><Cost metal={s.cost.metal} crystal={s.cost.crystal} /> · {fmtTime(shipSeconds(t, shipyard) * 1000)} each · Attack {s.attack} · Cargo {s.cargo}</div>
-                      {inQueue[0] && <div className="sub good">Building {inQueue.length}… next in {fmtTime(inQueue[0].finishAt - now)}</div>}
+              <div className="tiles">
+                {(Object.keys(SHIPS) as ShipType[]).map((t) => {
+                  const s = SHIPS[t];
+                  const qty = shipQty[t] ?? 1;
+                  const inQueue = sQueue.filter((x) => x.type === t);
+                  return (
+                    <div className="tile" key={t}>
+                      <img className="tile-icon" src={s.icon} alt="" />
+                      <b>{s.name}</b>
+                      <span className="dim">×{planet.ships[t] ?? 0} · Atk {s.attack} · Cargo {s.cargo}</span>
+                      <div className="sub"><Cost metal={s.cost.metal} crystal={s.cost.crystal} /></div>
+                      <div className="sub">{fmtTime(shipSeconds(t, shipyard) * 1000)} each</div>
+                      {inQueue[0] && <div className="sub good">+{inQueue.length} · next {fmtTime(inQueue[0].finishAt - now)}</div>}
+                      <div className="tile-actions">
+                        <input type="number" min={1} max={20} value={qty} onChange={(e) => setShipQty({ ...shipQty, [t]: Number(e.target.value) })} />
+                        {(() => {
+                          const why = !shipyard
+                            ? "Build a Shipyard first"
+                            : !(qty >= 1 && qty <= 20)
+                              ? "Quantity must be between 1 and 20"
+                              : shortfall(s.cost.metal * qty, s.cost.crystal * qty);
+                          return (
+                            <button disabled={!!why} title={why} onClick={() => act({ action: "ship", planetId: planet.id, type: t, qty })}>Build</button>
+                          );
+                        })()}
+                      </div>
                     </div>
-                    <input type="number" min={1} max={20} value={qty} onChange={(e) => setShipQty({ ...shipQty, [t]: Number(e.target.value) })} />
-                    <button disabled={!shipyard || !canAfford(s.cost.metal * qty, s.cost.crystal * qty)}
-                      onClick={() => act({ action: "ship", planetId: planet.id, type: t, qty })}>Build</button>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
             </>
           )}
 
           <div className="panel">
-            <h2>Fleets in flight</h2>
+            <h2>Fleets</h2>
             {activeFleets.length === 0 && <div className="dim">None.</div>}
             {activeFleets.map((f) => (
               <div className="row" key={f.id}>
                 <span className="icon"><img src={f.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon} alt="" /></span>
                 <div className="grow">
-                  {f.status === "outbound" ? `${f.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(f.targetId)}` : `Returning to ${planetName(f.originId)}`}
+                  {f.status === "outbound" ? `${f.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(f.targetId)}`
+                    : f.status === "stationed" ? `Guarding ${planetName(f.targetId)}`
+                    : `Returning to ${planetName(f.originId)}`}
                   <div className="sub"><ShipList ships={f.ships} />{f.loot.metal + f.loot.crystal > 0 && <> · loot <Cost metal={f.loot.metal} crystal={f.loot.crystal} /></>}</div>
                 </div>
-                <b>{fmtTime((f.status === "outbound" ? f.arriveAt : f.returnAt) - now)}</b>
+                {f.status === "stationed"
+                  ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: f.id })}>Recall</button>
+                  : <b>{fmtTime((f.status === "outbound" ? f.arriveAt : f.returnAt) - now)}</b>}
               </div>
             ))}
           </div>

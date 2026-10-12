@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { resetGame } from "@/lib/db";
-import { GameError, build, buildShips, sendFleet, withGame } from "@/lib/engine";
+import { GameError, build, buildShips, recallFleet, sendFleet, withGame } from "@/lib/engine";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,7 @@ export async function POST(req: Request) {
         case "build": return build(w, now, body.planetId, body.type);
         case "ship": return buildShips(w, now, body.planetId, body.type, body.qty);
         case "send": return sendFleet(w, now, body.originId, body.targetId, body.ships ?? {});
+        case "recall": return recallFleet(w, now, body.fleetId);
         case "reset": return;
         default: throw new GameError("Unknown action");
       }

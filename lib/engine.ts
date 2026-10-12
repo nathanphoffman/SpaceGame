@@ -15,7 +15,7 @@ type QueueItem = { id: string; planet_id: number; kind: "building" | "ship"; typ
 type Fleet = {
   id: string; origin_id: number; target_id: number; mission: "attack" | "colonize";
   ships: Record<string, number>; loot: Res; depart_at: Date; arrive_at: Date; return_at: Date;
-  status: "outbound" | "returning" | "done"; report: string;
+  status: "outbound" | "stationed" | "returning" | "done"; report: string;
 };
 type World = { systems: SystemDTO[]; planets: Planet[]; queue: QueueItem[]; fleets: Fleet[] };
 
@@ -97,15 +97,26 @@ function arrive(w: World, f: Fleet) {
     target.metal = 100;
     target.crystal = 50;
     target.updated_at = f.arrive_at;
-    f.report = `Colonized a new planet (${target.name})!`;
-    if (Object.values(f.ships).every((n) => n <= 0)) {
-      f.status = "done";
-      return;
+    // the rest of this fleet, and any fleet already guarding the planet, join the new base
+    const joining = [f, ...w.fleets.filter((g) => g !== f && g.status === "stationed" && g.target_id === target.id)];
+    for (const g of joining) {
+      for (const [t, n] of Object.entries(g.ships)) target.ships[t] = (target.ships[t] ?? 0) + n;
+      target.metal += g.loot.metal;
+      target.crystal += g.loot.crystal;
+      g.status = "done";
     }
-    return goHome();
+    f.report = `Colonized ${target.name}! ${joining.length > 1 ? "The guarding fleet joined the new base." : ""}`.trim();
+    return;
   }
 
-  // attack
+  // neutral planet: nothing to fight, so the fleet just guards it
+  if (target.kind === "empty") {
+    f.status = "stationed";
+    f.report = `Your fleet arrived at ${target.name} and is guarding it.`;
+    return;
+  }
+
+  // enemy planet: fight
   const power = Object.entries(f.ships).reduce((sum, [t, n]) => sum + n * SHIPS[t as ShipType].attack, 0);
   if (target.kind !== "npc") {
     f.report = `Attack on ${target.name} aborted: nothing to attack.`;
@@ -119,14 +130,18 @@ function arrive(w: World, f: Fleet) {
       f.ships[t] -= lost[t];
     }
     const cargo = Object.entries(f.ships).reduce((s, [t, n]) => s + n * SHIPS[t as ShipType].cargo, 0);
-    const metal = Math.min(target.metal * 0.5, cargo / 2);
-    const crystal = Math.min(target.crystal * 0.5, cargo / 2);
-    target.metal -= metal;
-    target.crystal -= crystal;
-    target.defense = Math.floor(target.defense * 0.7);
+    const metal = Math.min(target.metal, cargo / 2);
+    const crystal = Math.min(target.crystal, cargo / 2);
     f.loot = { metal: Math.floor(metal), crystal: Math.floor(crystal) };
-    f.report = `Victory at ${target.name}! Looted ${f.loot.metal} metal, ${f.loot.crystal} crystal. Lost: ${shipList(lost)}.`;
-    return goHome();
+    // the enemy base is destroyed; the planet becomes neutral and the fleet guards it
+    target.kind = "empty";
+    target.buildings = {};
+    target.defense = 0;
+    target.metal = 0;
+    target.crystal = 0;
+    f.status = "stationed";
+    f.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${f.loot.metal} metal, ${f.loot.crystal} crystal. Lost: ${shipList(lost)}.`;
+    return;
   }
   target.defense = Math.max(0, target.defense - Math.floor(power * 0.5));
   f.report = `Defeat at ${target.name}. Fleet lost (${shipList(f.ships)}). Their defense is now ${target.defense}.`;
@@ -270,8 +285,8 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
     sent[t] = count;
   }
   if (Object.keys(sent).length === 0) throw new GameError("Select at least one ship");
-  const mission = target.kind === "empty" ? "colonize" : "attack";
-  if (mission === "colonize" && !(sent.colony_ship > 0)) throw new GameError("Colonizing needs a Colony Ship");
+  // a colony ship settles a neutral planet; any other fleet fights what is there and then guards it
+  const mission = target.kind === "empty" && sent.colony_ship > 0 ? "colonize" : "attack";
   for (const [t, n] of Object.entries(sent)) origin.ships[t] -= n;
   const flight =
     flightSeconds({ systemId: origin.system_id, orbit: origin.orbit }, { systemId: target.system_id, orbit: target.orbit }, w.systems) * 1000;
@@ -280,4 +295,14 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
     loot: { metal: 0, crystal: 0 }, depart_at: now, arrive_at: new Date(now.getTime() + flight),
     return_at: new Date(now.getTime() + flight * 2), status: "outbound", report: "",
   });
+}
+
+export function recallFleet(w: World, now: Date, fleetId: string) {
+  const f = w.fleets.find((x) => x.id === fleetId);
+  if (!f || f.status !== "stationed") throw new GameError("That fleet isn't guarding anything");
+  const flight = f.arrive_at.getTime() - f.depart_at.getTime();
+  f.arrive_at = now; // start of the return leg
+  f.return_at = new Date(now.getTime() + flight);
+  f.status = "returning";
+  f.report = "Fleet recalled.";
 }

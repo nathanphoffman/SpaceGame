@@ -70,3 +70,21 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .snode.below .label { top:100%; margin-top:3px; }
 .snode.sel img { filter: drop-shadow(0 0 6px var(--accent)); }
 .snode.sel .label { color:var(--text); }
+
+.tiles { display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap:10px; }
+.tile { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; text-align:center; gap:2px; padding:10px;
+  background:#0d1526; border:1px solid var(--line); border-radius:10px; }
+.tile-icon { width:48px; height:48px; margin-bottom:4px; }
+.tile .grow-fill { width:100%; }
+.tile > button, .tile-actions { margin-top:auto; }
+.tile > button { width:100%; }
+.tile-actions { display:flex; gap:6px; width:100%; }
+.tile-actions input { width:52px; }
+.tile-actions button { flex:1; }
+.snode .guard { position:absolute; right:-6px; bottom:-4px; width:14px !important; height:14px !important; }
+.snode .thumb { pointer-events:none; }
+.snode .dot { position:absolute; top:50%; left:50%; width:7px; height:7px; border-radius:50%; margin:calc(var(--body) / -2 - 4px) 0 0 calc(var(--body) / 2 - 3px); border:1px solid #070b14; }
+.snode .dot.player { background:var(--good); }
+.snode .dot.npc { background:var(--bad); }
+.snode .dot.empty { display:none; }
+.foe { color:var(--bad); font-weight:600; }
