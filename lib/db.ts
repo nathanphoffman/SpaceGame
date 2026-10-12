@@ -124,6 +124,10 @@ async function migrateToElements() {
   await pool.query(`UPDATE planets SET buildings = (buildings - 'metal_mine' - 'crystal_mine')
       || jsonb_strip_nulls(jsonb_build_object('mine_Fe', buildings->'metal_mine', 'mine_Si', buildings->'crystal_mine'))
     WHERE buildings ? 'metal_mine' OR buildings ? 'crystal_mine'`);
+  // ship upgrades were tried and removed
+  await pool.query("DELETE FROM queue WHERE kind='upgrade'");
+  await pool.query("ALTER TABLE planets DROP COLUMN IF EXISTS ship_levels");
+  await pool.query("ALTER TABLE fleets DROP COLUMN IF EXISTS levels");
   await pool.query("UPDATE queue SET type='mine_Fe' WHERE type='metal_mine'");
   await pool.query("UPDATE queue SET type='mine_Si' WHERE type='crystal_mine'");
   await pool.query(`UPDATE fleets SET loot = jsonb_strip_nulls(jsonb_build_object('Fe', loot->'metal', 'Si', loot->'crystal'))

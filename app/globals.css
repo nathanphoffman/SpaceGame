@@ -124,3 +124,18 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .tile-top:has(.notbuilt) .tile-head { opacity:.35; filter:grayscale(1); }
 .notbuilt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;
   font-weight:700; font-size:13px; color:var(--text); text-shadow:0 0 6px #000, 0 0 2px #000; pointer-events:none; }
+.hangar { margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+.hangar-row { margin-top:8px; }
+.hangar-label { font-size:12px; margin-bottom:3px; }
+.hangar-ships { display:flex; flex-wrap:wrap; gap:2px; align-items:center; }
+.hangar-ships img { width:18px; height:18px; }
+.ship-link { background:none; color:var(--text); padding:0; display:flex; flex-direction:column; align-items:center; gap:2px; font-weight:400; }
+.ship-link b { text-decoration:underline dotted; text-underline-offset:3px; }
+.ship-link:hover b { color:var(--accent); }
+.ship-info { display:flex; gap:12px; align-items:center; padding:10px; margin-bottom:10px; background:#0d1526; border:1px solid var(--accent); border-radius:10px; }
+.ship-info .icon-box img { flex:none; }
+.ship-info .grow { flex:1; min-width:0; }
+.ship-info .sub { color:var(--dim); font-size:12px; margin-top:2px; }
+.tile-icon-box { display:flex; align-items:center; justify-content:center; height:60px; }
+.tile-icon-box .tile-icon { margin:0; }
+.ship-info .icon-box { width:60px; display:flex; justify-content:center; }

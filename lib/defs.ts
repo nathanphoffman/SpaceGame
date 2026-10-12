@@ -69,10 +69,26 @@ export const buildCost = (type: string, level: number): Res => {
 export const buildSeconds = (type: string, level: number) => Math.round(buildingInfo(type)!.time * 1.5 ** level);
 
 // ---- ships ----
+// size is the on-screen icon scale (1 = cruiser). speed and health (1-10) are shown in the UI; combat currently only uses attack and cargo.
 export const SHIPS = {
-  fighter: { name: "Fighter", icon: "/icons/fighter.svg", cost: { Fe: 50, Si: 20 } as Res, time: 8, attack: 5, cargo: 50 },
-  cruiser: { name: "Cruiser", icon: "/icons/cruiser.svg", cost: { Fe: 200, Si: 100 } as Res, time: 25, attack: 25, cargo: 200 },
-  colony_ship: { name: "Colony Ship", icon: "/icons/colony_ship.svg", cost: { Fe: 500, Si: 300 } as Res, time: 40, attack: 0, cargo: 100 },
+  scout: { name: "Scout", icon: "/icons/scout.svg", size: 0.5, cost: { Fe: 20, Si: 10 } as Res, time: 5, attack: 1, cargo: 10, speed: 10, health: 1, desc: "Cheap and very fast, with long-range sensors and almost no weapons. Good for looking at a system before you commit a fleet." },
+  fighter: { name: "Fighter", icon: "/icons/fighter.svg", size: 0.55, cost: { Fe: 50, Si: 20 } as Res, time: 8, attack: 5, cargo: 50, speed: 8, health: 2, desc: "Small, cheap and everywhere. Weak alone, but a big swarm of them adds up." },
+  interceptor: { name: "Interceptor", icon: "/icons/interceptor.svg", size: 0.6, cost: { Fe: 70, Si: 30 } as Res, time: 10, attack: 8, cargo: 20, speed: 9, health: 2, desc: "A fast fighter built to hunt down small ships. Hits hard for its size but has little armor." },
+  raider: { name: "Raider", icon: "/icons/raider.svg", size: 0.65, cost: { Fe: 120, Si: 70 } as Res, time: 16, attack: 12, cargo: 80, speed: 8, health: 2, desc: "A stealthy hit-and-run ship. Fast, with room to carry off loot after an attack." },
+  corvette: { name: "Corvette", icon: "/icons/corvette.svg", size: 0.7, cost: { Fe: 90, Si: 40 } as Res, time: 12, attack: 8, cargo: 40, speed: 8, health: 3, desc: "A small, cheap escort. Handy for filling out a fleet without spending much." },
+  frigate: { name: "Frigate", icon: "/icons/frigate.svg", size: 0.8, cost: { Fe: 140, Si: 70 } as Res, time: 18, attack: 14, cargo: 80, speed: 7, health: 4, desc: "The general-purpose warship. Balanced speed, firepower and armor at a fair price." },
+  destroyer: { name: "Destroyer", icon: "/icons/destroyer.svg", size: 0.9, cost: { Fe: 170, Si: 90 } as Res, time: 22, attack: 20, cargo: 100, speed: 6, health: 5, desc: "A sturdy escort with turrets built to shoot down smaller ships before they reach the big ones." },
+  cruiser: { name: "Cruiser", icon: "/icons/cruiser.svg", size: 1, cost: { Fe: 200, Si: 100 } as Res, time: 25, attack: 25, cargo: 200, speed: 5, health: 7, desc: "The all-rounder. Tough, well armed and with a decent cargo hold." },
+  gunship: { name: "Gunship", icon: "/icons/gunship.svg", size: 1.05, cost: { Fe: 350, Si: 150, Al: 50 } as Res, time: 35, attack: 40, cargo: 100, speed: 3, health: 6, desc: "Slow and heavily armed, built to batter planets and stations from orbit." },
+  battlecruiser: { name: "Battlecruiser", icon: "/icons/battlecruiser.svg", size: 1.15, cost: { Fe: 450, Si: 220, Al: 100 } as Res, time: 45, attack: 50, cargo: 250, speed: 5, health: 5, desc: "Cruiser speed with near-dreadnought guns. The trade-off is thin armor, so protect it." },
+  carrier: { name: "Carrier", icon: "/icons/carrier.svg", size: 1.3, cost: { Fe: 700, Si: 400, Al: 150 } as Res, time: 60, attack: 15, cargo: 600, speed: 4, health: 8, desc: "A huge hull with hangar bays for smaller craft. Weak guns of its own, so keep it behind the fleet." },
+  dreadnought: { name: "Dreadnought", icon: "/icons/dreadnought.svg", size: 1.45, cost: { Fe: 1200, Si: 600, Al: 300, Ti: 100 } as Res, time: 90, attack: 100, cargo: 400, speed: 3, health: 9, desc: "The heavy frontline ship. Slow and expensive, but very hard to kill and devastating up close." },
+  titan: { name: "Titan", icon: "/icons/titan.svg", size: 1.6, cost: { Fe: 3000, Si: 1500, Al: 800, Ti: 400 } as Res, time: 180, attack: 250, cargo: 1000, speed: 2, health: 10, desc: "A late-game flagship. Enormous firepower and armor, and one of the most expensive things you can build." },
+  miner: { name: "Miner", icon: "/icons/miner.svg", size: 0.8, cost: { Fe: 120, Si: 60 } as Res, time: 20, attack: 0, cargo: 150, speed: 4, health: 3, desc: "An unarmed mining ship that gathers resources. Keep it away from fights." },
+  hauler: { name: "Hauler", icon: "/icons/hauler.svg", size: 1.05, cost: { Fe: 250, Si: 100 } as Res, time: 30, attack: 0, cargo: 1000, speed: 4, health: 4, desc: "An unarmed freighter with a very large cargo hold, for moving resources between planets." },
+  troop_transport: { name: "Troop Transport", icon: "/icons/troop_transport.svg", size: 0.9, cost: { Fe: 200, Si: 100 } as Res, time: 30, attack: 2, cargo: 300, speed: 5, health: 4, desc: "Carries ground troops for invading enemy planets. Needs an escort to get there." },
+  support_ship: { name: "Support Ship", icon: "/icons/support_ship.svg", size: 0.9, cost: { Fe: 200, Si: 120, Al: 40 } as Res, time: 30, attack: 3, cargo: 100, speed: 5, health: 4, desc: "A repair vessel that patches up friendly ships. Best kept inside a fleet." },
+  colony_ship: { name: "Colony Ship", icon: "/icons/colony_ship.svg", size: 0.95, cost: { Fe: 500, Si: 300 } as Res, time: 40, attack: 0, cargo: 100, speed: 3, health: 4, desc: "Carries settlers to found a new colony on an empty planet." },
 } as const;
 export type ShipType = keyof typeof SHIPS;
 

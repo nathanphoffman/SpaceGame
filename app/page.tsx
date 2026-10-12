@@ -45,6 +45,7 @@ export default function Page() {
   const [systemId, setSystemId] = useState<number | null>(null); // system shown on the solar map
   const [shipQty, setShipQty] = useState<Record<string, number>>({});
   const [sendQty, setSendQty] = useState<Record<string, number>>({});
+  const [infoShip, setInfoShip] = useState<ShipType | null>(null); // ship whose description is open in the shipyard
   const [error, setError] = useState("");
 
   const apply = (g: GameState) => {
@@ -400,6 +401,19 @@ export default function Page() {
             <div className="panel">
               <h2>Shipyard {shipyard ? `(Lv ${shipyard})` : ""}</h2>
               {!shipyard && <div className="dim">Build a shipyard to start building ships.</div>}
+              {infoShip && (
+                <div className="ship-info">
+                  <span className="icon-box"><img src={SHIPS[infoShip].icon} style={{ width: 36 * SHIPS[infoShip].size, height: 36 * SHIPS[infoShip].size }} alt="" /></span>
+                  <div className="grow">
+                    <b>{SHIPS[infoShip].name}</b>
+                    <div>{SHIPS[infoShip].desc}</div>
+                    <div className="sub">
+                      Atk {SHIPS[infoShip].attack} · Cargo {SHIPS[infoShip].cargo} · Speed {SHIPS[infoShip].speed}/10 · Health {SHIPS[infoShip].health}/10
+                    </div>
+                  </div>
+                  <button className="ghost" onClick={() => setInfoShip(null)}>Close</button>
+                </div>
+              )}
               <div className="tiles">
                 {(Object.keys(SHIPS) as ShipType[]).map((t) => {
                   const s = SHIPS[t];
@@ -407,8 +421,10 @@ export default function Page() {
                   const inQueue = sQueue.filter((x) => x.type === t);
                   return (
                     <div className="tile" key={t}>
-                      <img className="tile-icon" src={s.icon} alt="" />
-                      <b>{s.name}</b>
+                      <button className="ship-link" title="Click for details" onClick={() => setInfoShip(infoShip === t ? null : t)}>
+                        <span className="tile-icon-box"><img className="tile-icon" style={{ width: 36 * s.size, height: 36 * s.size }} src={s.icon} alt="" /></span>
+                        <b>{s.name}</b>
+                      </button>
                       <span className="dim">×{planet.ships[t] ?? 0} · Atk {s.attack} · Cargo {s.cargo}</span>
                       <div className="sub"><Cost cost={s.cost} /></div>
                       <div className="sub">{fmtTime(shipSeconds(t, shipyard) * 1000)} each</div>
@@ -436,6 +452,27 @@ export default function Page() {
 
           <div className="panel">
             <h2>Fleets</h2>
+            {viewed.kind === "player" && (
+              <div className="hangar">
+                <div className="dim">Hangar — {planet.name}</div>
+                {(Object.keys(SHIPS) as ShipType[]).every((t) => !(planet.ships[t] > 0)) && <div className="dim">No ships here.</div>}
+                {(Object.keys(SHIPS) as ShipType[]).filter((t) => planet.ships[t] > 0).map((t) => {
+                  const n = planet.ships[t];
+                  const shown = Math.min(n, 300); // keep the page light if you build thousands
+                  return (
+                    <div className="hangar-row" key={t} title={`${n} × ${SHIPS[t].name}`}>
+                      <div className="hangar-label">{SHIPS[t].name} <b>×{n}</b></div>
+                      <div className="hangar-ships">
+                        {Array.from({ length: shown }, (_, i) => (
+                          <img key={i} src={SHIPS[t].icon} style={{ width: 22 * SHIPS[t].size, height: 22 * SHIPS[t].size }} alt="" />
+                        ))}
+                        {n > shown && <span className="dim"> +{n - shown} more</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {activeFleets.length === 0 && <div className="dim">None.</div>}
             {activeFleets.map((f) => (
               <div className="row" key={f.id}>
