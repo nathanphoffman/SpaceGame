@@ -103,3 +103,7 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .solar.crowded .snode .label { display:none; }
 .solar.crowded .snode:hover .label, .solar.crowded .snode.sel .label { display:block; z-index:2; background:#070b14cc; padding:1px 4px; border-radius:4px; }
 .solar.crowded .snode:hover { z-index:3; }
+.stats { margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
+.elbar { display:flex; height:26px; border-radius:6px; overflow:hidden; margin-top:4px; border:1px solid var(--line); }
+.elseg { display:flex; align-items:center; justify-content:center; flex-basis:0; min-width:2px; font-size:12px; font-weight:700; color:#0b0f1a; text-shadow:0 0 2px #ffffff55; }
+.ellegend { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; font-size:12px; }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import PlanetView from "@/components/PlanetView";
 import { planetThumb, thumbDisplaySize } from "@/components/planetThumb";
-import { describePlanet, planetParams, starParams } from "@/lib/planetGen";
+import { describePlanet, equilibriumTempK, planetParams, planetStats, starParams } from "@/lib/planetGen";
 import {
   BUILDINGS, SHIPS, buildCost, buildSeconds, shipSeconds, rates, flightSeconds,
   type BuildingType, type ShipType, type GameState, type PlanetDTO,
@@ -14,6 +14,13 @@ const fmtTime = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 const planetIcon = (p: PlanetDTO) => `/icons/planet_${p.kind === "player" ? "player" : p.kind === "npc" ? "enemy" : "empty"}.svg`;
+
+const ELEMENT_COLORS: Record<string, string> = {
+  H: "#7fb2e5", He: "#d9c2f0", C: "#6b6b6b", N: "#5b7fd6", O: "#d95f5f", Ne: "#e87fb6", Na: "#e8a33c", Mg: "#4fa36b",
+  Al: "#a9b4c2", Si: "#b98a5a", S: "#d8c840", Cl: "#7ccf5f", Ar: "#9f7fd0", K: "#c76fa8", Ca: "#8fc6a0",
+  Ti: "#8e9bb0", Fe: "#b5533c", Ni: "#6fa8a0", Cu: "#d0824a", U: "#7fd04f",
+};
+const elementColor = (sym: string) => ELEMENT_COLORS[sym] ?? "#777";
 
 // eslint-disable-next-line @next/next/no-img-element
 const Ico = ({ src, big }: { src: string; big?: boolean }) => <img src={src} alt="" className={big ? "ico big" : "ico"} />;
@@ -76,6 +83,7 @@ export default function Page() {
   const target = game.planets.find((p) => p.id === targetId && p.kind !== "player") ?? null;
   const viewed = game.planets.find((p) => p.id === viewId) ?? planet;
   const viewedInfo = describePlanet(planetParams(viewed.seed));
+  const viewedStats = planetStats(viewed.seed);
   const planetName = (id: number) => game.planets.find((p) => p.id === id)?.name ?? "?";
 
   const r = rates(planet.buildings);
@@ -159,6 +167,18 @@ export default function Page() {
               </div>
               <div className="dim">
                 {viewed.kind === "player" ? "Your planet" : viewed.kind === "npc" ? `Enemy · defense ${viewed.defense}` : "Unclaimed"} · seed {viewed.seed}
+              </div>
+              <div className="stats">
+                <div><span className="dim">Diameter</span> <b>{viewedStats.diameterKm.toLocaleString()} km</b> <span className="dim">({viewedStats.earths.toFixed(2)} × Earth)</span></div>
+                <div><span className="dim">Orbit</span> <b>{viewed.orbit.toFixed(1)} AU</b> <span className="dim">· ~{Math.round(equilibriumTempK(starParams(sysOf(viewed.systemId).seed), viewed.orbit) - 273.15)} °C</span></div>
+                <div className="dim" style={{ marginTop: 6 }}>Composition</div>
+                <div className="elbar">
+                  {viewedStats.composition.map((e) => (
+                    <div key={e.symbol} className="elseg" style={{ flexGrow: e.pct, background: elementColor(e.symbol) }} title={`${e.name} (${e.symbol}) ${e.pct}%`}>
+                      {e.symbol}
+                    </div>
+                  ))}
+                </div>
               </div>
               {activeFleets.filter((f) => f.status === "stationed" && f.targetId === viewed.id).map((f) => (
                 <div key={f.id} className="good">Guarded by your fleet: <ShipList ships={f.ships} /></div>

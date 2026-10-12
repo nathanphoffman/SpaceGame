@@ -249,3 +249,63 @@ export function starName(seed: number) {
   const r = mulberry32(seed * 15485863 + 11);
   return `${GREEK[Math.floor(r() * GREEK.length)]} ${planetName(seed + 5000).split(" ")[0]}`;
 }
+
+// ---- statistics ----
+
+const ELEMENT_NAMES: Record<string, string> = {
+  H: "Hydrogen", He: "Helium", C: "Carbon", N: "Nitrogen", O: "Oxygen", Ne: "Neon", Na: "Sodium", Mg: "Magnesium",
+  Al: "Aluminium", Si: "Silicon", S: "Sulfur", Cl: "Chlorine", Ar: "Argon", K: "Potassium", Ca: "Calcium",
+  Ti: "Titanium", Fe: "Iron", Ni: "Nickel", Cu: "Copper", U: "Uranium",
+};
+
+// elements a world of each kind is likely to be made of, with rough relative abundance
+const ELEMENT_POOL: Record<PlanetKind, [string, number][]> = {
+  rocky: [["O", 10], ["Si", 8], ["Fe", 8], ["Mg", 6], ["Al", 4], ["Ca", 4], ["Ni", 2], ["S", 2], ["Na", 2], ["Ti", 1], ["C", 2], ["H", 1]],
+  moon: [["O", 9], ["Si", 8], ["Mg", 6], ["Fe", 6], ["Ca", 4], ["Al", 4], ["Ti", 2], ["Ni", 1.5], ["S", 1.5], ["U", 0.3]],
+  desert: [["O", 9], ["Si", 8], ["Fe", 7], ["Al", 4], ["Ca", 4], ["S", 3], ["Mg", 3], ["Na", 2], ["Ti", 1], ["Cu", 0.8]],
+  ice: [["H", 10], ["O", 10], ["C", 4], ["N", 3], ["S", 2], ["Si", 2], ["Na", 1], ["Cl", 1], ["Fe", 1], ["Ar", 0.5]],
+  gas: [["H", 14], ["He", 10], ["C", 2], ["N", 1.5], ["O", 1.5], ["Ne", 1], ["S", 0.8], ["Ar", 0.5], ["K", 0.3]],
+};
+
+export type PlanetStats = {
+  diameterKm: number;
+  earths: number; // diameter relative to Earth
+  composition: { symbol: string; name: string; pct: number }[]; // sorted, sums to 100
+};
+
+export function planetStats(seed: number): PlanetStats {
+  const p = planetParams(seed);
+  const r = mulberry32(seed * 2246822519 + 97);
+  for (let i = 0; i < 4; i++) r();
+
+  // game radius -> kilometres (Earth 12,742, Mars 6,779, Moon 3,474, Jupiter 139,820)
+  const perUnit = { rocky: 11000, desert: 10500, ice: 10000, moon: 5000, gas: 95000 }[p.kind];
+  const diameterKm = Math.round((p.radius * perUnit * (0.92 + r() * 0.16)) / (p.kind === "gas" ? 100 : 10)) * (p.kind === "gas" ? 100 : 10);
+
+  // 1d6 predominant elements; each share is its natural abundance times a random factor,
+  // so a gas giant is still mostly H/He but the exact ratios differ world to world
+  const n = 1 + Math.floor(r() * 6);
+  const pool = [...ELEMENT_POOL[p.kind]];
+  const picked: [string, number][] = [];
+  for (let i = 0; i < n && pool.length; i++) {
+    let roll = r() * pool.reduce((sum, [, w]) => sum + w, 0);
+    const idx = pool.findIndex(([, w]) => (roll -= w) < 0);
+    picked.push(pool.splice(idx < 0 ? 0 : idx, 1)[0]);
+  }
+  const raw = picked.map(([, w]) => w * (0.3 + r() * 1.4));
+  const total = raw.reduce((a, b) => a + b, 0);
+  // every element gets at least MIN_SHARE so its symbol always fits on the bar
+  const MIN_SHARE = 8;
+  const shares = raw.map((v) => Math.round((MIN_SHARE + (v / total) * (100 - MIN_SHARE * picked.length)) * 10) / 10);
+  shares[0] = Math.round((shares[0] + (100 - shares.reduce((a, b) => a + b, 0))) * 10) / 10; // sum to exactly 100
+  const composition = picked
+    .map(([symbol], i) => ({ symbol, name: ELEMENT_NAMES[symbol] ?? symbol, pct: shares[i] }))
+    .sort((a, b) => b.pct - a.pct);
+  return { diameterKm, earths: diameterKm / 12742, composition };
+}
+
+/** Rough equilibrium temperature (Kelvin) at `orbitAU` from a star. */
+export function equilibriumTempK(star: { radius: number; temp: number }, orbitAU: number) {
+  const luminosity = star.radius * star.radius * Math.pow(star.temp / 5772, 4); // solar units
+  return 278 * Math.pow(luminosity, 0.25) / Math.sqrt(orbitAU);
+}
