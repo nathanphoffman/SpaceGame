@@ -24,8 +24,7 @@ CREATE TABLE IF NOT EXISTS planets (
   system_id int REFERENCES systems(id),
   orbit double precision,        -- distance from the star in AU
   kind text NOT NULL,            -- player | npc | empty
-  metal double precision NOT NULL DEFAULT 0,
-  crystal double precision NOT NULL DEFAULT 0,
+  resources jsonb NOT NULL DEFAULT '{}',   -- element symbol -> amount
   buildings jsonb NOT NULL DEFAULT '{}',
   ships jsonb NOT NULL DEFAULT '{}',
   defense int NOT NULL DEFAULT 0,
@@ -33,6 +32,7 @@ CREATE TABLE IF NOT EXISTS planets (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE planets ADD COLUMN IF NOT EXISTS seed int;
+ALTER TABLE planets ADD COLUMN IF NOT EXISTS resources jsonb NOT NULL DEFAULT '{}';
 ALTER TABLE planets ADD COLUMN IF NOT EXISTS system_id int REFERENCES systems(id);
 ALTER TABLE planets ADD COLUMN IF NOT EXISTS orbit double precision;
 ALTER TABLE planets DROP COLUMN IF EXISTS x;
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS fleets (
   target_id int NOT NULL REFERENCES planets(id),
   mission text NOT NULL,         -- attack | colonize
   ships jsonb NOT NULL,
-  loot jsonb NOT NULL DEFAULT '{"metal":0,"crystal":0}',
+  loot jsonb NOT NULL DEFAULT '{}',
   depart_at timestamptz NOT NULL,
   arrive_at timestamptz NOT NULL,
   return_at timestamptz NOT NULL,
@@ -68,19 +68,19 @@ const SYSTEMS: [number, number, number, number][] = [
   [4, 80, 22, 3],
 ];
 
-// id, system, orbit (AU), kind, metal, crystal, buildings, ships, defense, planet seed
-const SEED: [number, number, number, string, number, number, object, object, number, number][] = [
-  [1, 1, 1.0, "player", 500, 300, { metal_mine: 1, crystal_mine: 1 }, { fighter: 2 }, 0, 34],
-  [5, 1, 0.5, "empty", 0, 0, {}, {}, 0, 22],
-  [2, 1, 1.9, "npc", 400, 200, { metal_mine: 2, crystal_mine: 1 }, {}, 20, 35],
-  [7, 1, 4.3, "empty", 0, 0, {}, {}, 0, 26],
-  [6, 2, 0.8, "empty", 0, 0, {}, {}, 0, 9],
-  [3, 2, 2.4, "npc", 1200, 700, { metal_mine: 4, crystal_mine: 3 }, {}, 80, 12],
-  [8, 2, 6.0, "empty", 0, 0, {}, {}, 0, 25],
-  [9, 3, 1.3, "empty", 0, 0, {}, {}, 0, 19],
-  [4, 3, 3.1, "npc", 3000, 1800, { metal_mine: 7, crystal_mine: 5 }, {}, 250, 4],
-  [10, 4, 0.7, "empty", 0, 0, {}, {}, 0, 16],
-  [11, 4, 5.2, "empty", 0, 0, {}, {}, 0, 30],
+// id, system, orbit (AU), kind, resources, buildings, ships, defense, planet seed
+const SEED: [number, number, number, string, Record<string, number>, Record<string, number>, object, number, number][] = [
+  [1, 1, 1.0, "player", { Fe: 500, Si: 300 }, { mine_Fe: 1, mine_Si: 1 }, { fighter: 2 }, 0, 34],
+  [5, 1, 0.5, "empty", {}, {}, {}, 0, 22],
+  [2, 1, 1.9, "npc", { Fe: 400, Si: 200 }, { mine_Fe: 2, mine_Si: 1 }, {}, 20, 35],
+  [7, 1, 4.3, "empty", {}, {}, {}, 0, 26],
+  [6, 2, 0.8, "empty", {}, {}, {}, 0, 9],
+  [3, 2, 2.4, "npc", { Fe: 1200, Si: 700 }, { mine_Fe: 4, mine_Si: 3 }, {}, 80, 12],
+  [8, 2, 6.0, "empty", {}, {}, {}, 0, 25],
+  [9, 3, 1.3, "empty", {}, {}, {}, 0, 19],
+  [4, 3, 3.1, "npc", { Fe: 3000, Si: 1800 }, { mine_Fe: 7, mine_Si: 5 }, {}, 250, 4],
+  [10, 4, 0.7, "empty", {}, {}, {}, 0, 16],
+  [11, 4, 5.2, "empty", {}, {}, {}, 0, 30],
 ];
 
 // Idempotent: only inserts what is missing, so existing games keep their progress.
@@ -98,12 +98,12 @@ async function seed() {
     for (const pl of layout) {
       const row = mine.find((r) => r[0] === pl.id);
       const d = row
-        ? { name: planetName(row[9]), kind: row[3], metal: row[4], crystal: row[5], buildings: row[6], ships: row[7], defense: row[8], seed: row[9] }
+        ? { name: planetName(row[8]), kind: row[3], resources: row[4], buildings: row[5], ships: row[6], defense: row[7], seed: row[8] }
         : { ...pl.fresh!, ships: {} };
       await pool.query(
-        `INSERT INTO planets (id,name,system_id,orbit,kind,metal,crystal,buildings,ships,defense,seed)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`,
-        [pl.id, d.name, systemId, pl.orbit, d.kind, d.metal, d.crystal, JSON.stringify(d.buildings), JSON.stringify(d.ships), d.defense, d.seed],
+        `INSERT INTO planets (id,name,system_id,orbit,kind,resources,buildings,ships,defense,seed)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING`,
+        [pl.id, d.name, systemId, pl.orbit, d.kind, JSON.stringify(d.resources), JSON.stringify(d.buildings), JSON.stringify(d.ships), d.defense, d.seed],
       );
       // (re)place on its orbit; also covers planets created before systems/orbits existed
       await pool.query("UPDATE planets SET system_id=$1, orbit=$2 WHERE id=$3", [systemId, pl.orbit, pl.id]);
@@ -112,9 +112,28 @@ async function seed() {
   }
 }
 
+// Games saved before the elements update used metal/crystal: Fe/Si are their direct replacements.
+async function migrateToElements() {
+  const { rows } = await pool.query(
+    "SELECT 1 FROM information_schema.columns WHERE table_name='planets' AND column_name='metal'",
+  );
+  if (rows.length) {
+    await pool.query("UPDATE planets SET resources = jsonb_build_object('Fe', metal, 'Si', crystal)");
+    await pool.query("ALTER TABLE planets DROP COLUMN metal, DROP COLUMN crystal");
+  }
+  await pool.query(`UPDATE planets SET buildings = (buildings - 'metal_mine' - 'crystal_mine')
+      || jsonb_strip_nulls(jsonb_build_object('mine_Fe', buildings->'metal_mine', 'mine_Si', buildings->'crystal_mine'))
+    WHERE buildings ? 'metal_mine' OR buildings ? 'crystal_mine'`);
+  await pool.query("UPDATE queue SET type='mine_Fe' WHERE type='metal_mine'");
+  await pool.query("UPDATE queue SET type='mine_Si' WHERE type='crystal_mine'");
+  await pool.query(`UPDATE fleets SET loot = jsonb_strip_nulls(jsonb_build_object('Fe', loot->'metal', 'Si', loot->'crystal'))
+    WHERE loot ? 'metal' OR loot ? 'crystal'`);
+}
+
 export function ready(): Promise<void> {
   return (g.__ready ??= (async () => {
     await pool.query(SCHEMA);
+    await migrateToElements();
     await seed();
     // give planets that still have the old placeholder names a generated one
     const { rows: old } = await pool.query(

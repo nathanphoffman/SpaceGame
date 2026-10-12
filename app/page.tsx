@@ -5,8 +5,8 @@ import PlanetView from "@/components/PlanetView";
 import { planetThumb, thumbDisplaySize } from "@/components/planetThumb";
 import { describePlanet, equilibriumTempK, planetParams, planetStats, starParams } from "@/lib/planetGen";
 import {
-  BUILDINGS, SHIPS, buildCost, buildSeconds, shipSeconds, rates, flightSeconds,
-  type BuildingType, type ShipType, type GameState, type PlanetDTO,
+  ELEMENTS, ELEMENT_ORDER, SHIPS, buildCost, buildSeconds, MAX_BUILDING_LEVEL, buildingInfo, flightSeconds, toRoman, mineElement, mineRate, mineType, productionRates, shipSeconds,
+  type Element, type Res, type ShipType, type GameState, type PlanetDTO,
 } from "@/lib/defs";
 
 const fmtTime = (ms: number) => {
@@ -15,18 +15,18 @@ const fmtTime = (ms: number) => {
 };
 const planetIcon = (p: PlanetDTO) => `/icons/planet_${p.kind === "player" ? "player" : p.kind === "npc" ? "enemy" : "empty"}.svg`;
 
-const ELEMENT_COLORS: Record<string, string> = {
-  H: "#7fb2e5", He: "#d9c2f0", C: "#6b6b6b", N: "#5b7fd6", O: "#d95f5f", Ne: "#e87fb6", Na: "#e8a33c", Mg: "#4fa36b",
-  Al: "#a9b4c2", Si: "#b98a5a", S: "#d8c840", Cl: "#7ccf5f", Ar: "#9f7fd0", K: "#c76fa8", Ca: "#8fc6a0",
-  Ti: "#8e9bb0", Fe: "#b5533c", Ni: "#6fa8a0", Cu: "#d0824a", U: "#7fd04f",
-};
-const elementColor = (sym: string) => ELEMENT_COLORS[sym] ?? "#777";
+const elementColor = (sym: string) => ELEMENTS[sym as Element]?.color ?? "#777";
 
 // eslint-disable-next-line @next/next/no-img-element
 const Ico = ({ src, big }: { src: string; big?: boolean }) => <img src={src} alt="" className={big ? "ico big" : "ico"} />;
-const Cost = ({ metal, crystal }: { metal: number; crystal: number }) => (
+/** a bundle of resources as coloured element symbols, e.g. "Fe 60  Si 15" */
+const Cost = ({ cost }: { cost: Res }) => (
   <>
-    <Ico src="/icons/metal.svg" /> {metal} <Ico src="/icons/crystal.svg" /> {crystal}
+    {Object.entries(cost).filter(([, n]) => n > 0).map(([el, n]) => (
+      <span key={el} className="cost" title={ELEMENTS[el as Element]?.name}>
+        <b style={{ color: elementColor(el) }}>{el}</b> {Math.round(n)}
+      </span>
+    ))}
   </>
 );
 const ShipList = ({ ships }: { ships: Record<string, number> }) => {
@@ -86,22 +86,27 @@ export default function Page() {
   const viewedStats = planetStats(viewed.seed);
   const planetName = (id: number) => game.planets.find((p) => p.id === id)?.name ?? "?";
 
-  const r = rates(planet.buildings);
+  const composition = planetStats(planet.seed).composition;
+  const rate = productionRates(planet.buildings, composition);
   const sec = Math.max(0, (now - game.now) / 1000);
-  const metal = planet.metal + r.metal * sec;
-  const crystal = planet.crystal + r.crystal * sec;
+  const stock = (el: string) => (planet.resources[el] ?? 0) + (rate[el] ?? 0) * sec;
 
   const bQueue = game.queue.filter((q) => q.planetId === planet.id && q.kind === "building");
   const sQueue = game.queue.filter((q) => q.planetId === planet.id && q.kind === "ship");
   const shipyard = planet.buildings.shipyard ?? 0;
   // why something can't be bought right now (undefined = it can), used for the disabled-button tooltips
-  const shortfall = (m: number, c: number) => {
-    const missing = [
-      metal < m && `${Math.ceil(m - metal)} more metal`,
-      crystal < c && `${Math.ceil(c - crystal)} more crystal`,
-    ].filter(Boolean);
+  const shortfall = (cost: Res) => {
+    const missing = Object.entries(cost)
+      .filter(([el, n]) => stock(el) < n)
+      .map(([el, n]) => `${Math.ceil(n - stock(el))} more ${ELEMENTS[el as Element]?.name ?? el}`);
     return missing.length ? `Not enough resources: need ${missing.join(" and ")}` : undefined;
   };
+  // what this planet can build: a shipyard, a mine for each element it is made of, and any mines it already has
+  const buildingTypes = Array.from(new Set([
+    "shipyard",
+    ...composition.map((c) => mineType(c.symbol)),
+    ...Object.keys(planet.buildings).filter((t) => buildingInfo(t)),
+  ]));
   const activeFleets = game.fleets.filter((f) => f.status !== "done");
   const reports = game.fleets.filter((f) => f.report).slice(-6).reverse();
 
@@ -150,8 +155,12 @@ export default function Page() {
           ))}
         </div>
         <div className="spacer" />
-        <div className="res"><Ico src="/icons/metal.svg" /> <b>{Math.floor(metal)}</b> <small>+{r.metal.toFixed(1)}/s</small></div>
-        <div className="res"><Ico src="/icons/crystal.svg" /> <b>{Math.floor(crystal)}</b> <small>+{r.crystal.toFixed(1)}/s</small></div>
+        {ELEMENT_ORDER.map((el) => (
+          <div key={el} className={`res ${ELEMENTS[el].rare ? "rare" : ""}`} title={`${ELEMENTS[el].name}${ELEMENTS[el].rare ? " (rare)" : ""}`}>
+            <b style={{ color: ELEMENTS[el].color }}>{el}</b> <span>{Math.floor(stock(el))}</span>
+            {rate[el] > 0 && <small>+{rate[el].toFixed(1)}/s</small>}
+          </div>
+        ))}
         <button className="ghost" onClick={() => confirm("Reset the whole game?") && act({ action: "reset" })}>Reset</button>
       </div>
 
@@ -159,6 +168,15 @@ export default function Page() {
         <div>
           <div className="panel">
             <h2>{viewed.name}</h2>
+            <div className="composition">
+              <div className="elbar">
+                {viewedStats.composition.map((e) => (
+                  <div key={e.symbol} className="elseg" style={{ flexGrow: e.pct, background: elementColor(e.symbol) }} title={`${e.name} (${e.symbol}) ${e.pct}%`}>
+                    {e.symbol}
+                  </div>
+                ))}
+              </div>
+            </div>
             <PlanetView seed={viewed.seed} />
             <div className="planet-info">
               <div><b>{viewedInfo.type}</b> · {viewedInfo.size} · {viewedInfo.surface}</div>
@@ -171,14 +189,6 @@ export default function Page() {
               <div className="stats">
                 <div><span className="dim">Diameter</span> <b>{viewedStats.diameterKm.toLocaleString()} km</b> <span className="dim">({viewedStats.earths.toFixed(2)} × Earth)</span></div>
                 <div><span className="dim">Orbit</span> <b>{viewed.orbit.toFixed(1)} AU</b> <span className="dim">· ~{Math.round(equilibriumTempK(starParams(sysOf(viewed.systemId).seed), viewed.orbit) - 273.15)} °C</span></div>
-                <div className="dim" style={{ marginTop: 6 }}>Composition</div>
-                <div className="elbar">
-                  {viewedStats.composition.map((e) => (
-                    <div key={e.symbol} className="elseg" style={{ flexGrow: e.pct, background: elementColor(e.symbol) }} title={`${e.name} (${e.symbol}) ${e.pct}%`}>
-                      {e.symbol}
-                    </div>
-                  ))}
-                </div>
               </div>
               {activeFleets.filter((f) => f.status === "stationed" && f.targetId === viewed.id).map((f) => (
                 <div key={f.id} className="good">Guarded by your fleet: <ShipList ships={f.ships} /></div>
@@ -325,30 +335,62 @@ export default function Page() {
             <div className="panel">
               <h2>{planet.name} — buildings</h2>
               <div className="tiles">
-                {(Object.keys(BUILDINGS) as BuildingType[]).map((t) => {
+                {buildingTypes.map((t) => {
+                  const info = buildingInfo(t)!;
                   const q = bQueue.filter((x) => x.type === t);
                   const level = (planet.buildings[t] ?? 0) + q.length;
                   const cost = buildCost(t, level);
                   const active = q[0];
+                  const maxed = level >= MAX_BUILDING_LEVEL;
+                  const unbuilt = (planet.buildings[t] ?? 0) === 0;
+                  const why = maxed ? `Already at the maximum level (${toRoman(MAX_BUILDING_LEVEL)})` : shortfall(cost);
                   return (
-                    <div className="tile" key={t} title={BUILDINGS[t].desc}>
-                      <img className="tile-icon" src={BUILDINGS[t].icon} alt="" />
-                      <b>{BUILDINGS[t].name}</b>
-                      <span className="dim">Lv {planet.buildings[t] ?? 0}{q.length ? ` → ${level}` : ""}</span>
-                      <div className="sub"><Cost metal={cost.metal} crystal={cost.crystal} /></div>
-                      <div className="sub">{fmtTime(buildSeconds(t, level) * 1000)}</div>
+                    <div className="tile" key={t} title={info.desc}>
+                      <div className="tile-top">
+                        <div className="tile-head">
+                          {mineElement(t) ? (
+                            // greyscale icon tinted with the element's colour (same colour as the composition bar)
+                            <span className="tile-icon tinted" style={{ background: elementColor(mineElement(t)!), WebkitMaskImage: `url(${info.icon})`, maskImage: `url(${info.icon})` }}>
+                              <img src={info.icon} alt="" />
+                            </span>
+                          ) : (
+                            <img className="tile-icon" src={info.icon} alt="" />
+                          )}
+                          <b>{info.name}{!unbuilt && <span className="dim"> ({toRoman(planet.buildings[t] ?? 0)})</span>}</b>
+                        </div>
+                        {unbuilt && <span className="notbuilt">(Not Built Yet)</span>}
+                      </div>
+                      <div className="dots" title={`Level ${planet.buildings[t] ?? 0}${q.length ? `, upgrading to ${level}` : ""}`}>
+                        {Array.from({ length: level }, (_, i) => (
+                          <span key={i} className={`dot-level ${i < (planet.buildings[t] ?? 0) ? "on" : "queued"}`} />
+                        ))}
+                      </div>
+                      {mineElement(t) && (() => {
+                        const el = mineElement(t)!;
+                        const pct = composition.find((c) => c.symbol === el)?.pct ?? 0;
+                        const built = planet.buildings[t] ?? 0;
+                        return (
+                          <div className="sub" title={`${el} makes up ${pct}% of this planet; richer deposits yield more per level`}>
+                            <b style={{ color: elementColor(el) }}>{el}</b> {pct}% · +{mineRate(built, pct).toFixed(1)}/s
+                            {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>}
+                          </div>
+                        );
+                      })()}
+                      {maxed ? (
+                        <div className="sub good">Maximum level</div>
+                      ) : (
+                        <>
+                          <div className="sub">Cost: <Cost cost={cost} /></div>
+                          <div className="sub">{fmtTime(buildSeconds(t, level) * 1000)}</div>
+                        </>
+                      )}
                       {active && (
                         <div className="grow-fill">
                           <div className="sub good">{fmtTime(active.finishAt - now)}</div>
                           <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div>
                         </div>
                       )}
-                      {(() => {
-                        const why = shortfall(cost.metal, cost.crystal);
-                        return (
-                          <button disabled={!!why} title={why} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>Upgrade</button>
-                        );
-                      })()}
+                      <button disabled={!!why} title={why} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>{maxed ? "Max level" : unbuilt ? "Build" : "Upgrade"}</button>
                     </div>
                   );
                 })}
@@ -368,7 +410,7 @@ export default function Page() {
                       <img className="tile-icon" src={s.icon} alt="" />
                       <b>{s.name}</b>
                       <span className="dim">×{planet.ships[t] ?? 0} · Atk {s.attack} · Cargo {s.cargo}</span>
-                      <div className="sub"><Cost metal={s.cost.metal} crystal={s.cost.crystal} /></div>
+                      <div className="sub"><Cost cost={s.cost} /></div>
                       <div className="sub">{fmtTime(shipSeconds(t, shipyard) * 1000)} each</div>
                       {inQueue[0] && <div className="sub good">+{inQueue.length} · next {fmtTime(inQueue[0].finishAt - now)}</div>}
                       <div className="tile-actions">
@@ -378,7 +420,7 @@ export default function Page() {
                             ? "Build a Shipyard first"
                             : !(qty >= 1 && qty <= 20)
                               ? "Quantity must be between 1 and 20"
-                              : shortfall(s.cost.metal * qty, s.cost.crystal * qty);
+                              : shortfall(Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
                           return (
                             <button disabled={!!why} title={why} onClick={() => act({ action: "ship", planetId: planet.id, type: t, qty })}>Build</button>
                           );
@@ -402,7 +444,7 @@ export default function Page() {
                   {f.status === "outbound" ? `${f.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(f.targetId)}`
                     : f.status === "stationed" ? `Guarding ${planetName(f.targetId)}`
                     : `Returning to ${planetName(f.originId)}`}
-                  <div className="sub"><ShipList ships={f.ships} />{f.loot.metal + f.loot.crystal > 0 && <> · loot <Cost metal={f.loot.metal} crystal={f.loot.crystal} /></>}</div>
+                  <div className="sub"><ShipList ships={f.ships} />{Object.values(f.loot).some((n) => n > 0) && <> · loot <Cost cost={f.loot} /></>}</div>
                 </div>
                 {f.status === "stationed"
                   ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: f.id })}>Recall</button>

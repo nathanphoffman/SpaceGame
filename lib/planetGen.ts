@@ -1,3 +1,5 @@
+import { ELEMENTS, type Element } from "./defs";
+
 // Deterministic planet generation: the same seed always gives the same world.
 // Pure functions only (no three.js) so it can be used on the server or in scripts.
 
@@ -251,21 +253,27 @@ export function starName(seed: number) {
 }
 
 // ---- statistics ----
+// Planets are made of the nine game elements (see ELEMENTS in defs.ts). Titanium, Uranium and
+// Helium-3 are rare; very occasionally a planet is made of just one of them.
 
-const ELEMENT_NAMES: Record<string, string> = {
-  H: "Hydrogen", He: "Helium", C: "Carbon", N: "Nitrogen", O: "Oxygen", Ne: "Neon", Na: "Sodium", Mg: "Magnesium",
-  Al: "Aluminium", Si: "Silicon", S: "Sulfur", Cl: "Chlorine", Ar: "Argon", K: "Potassium", Ca: "Calcium",
-  Ti: "Titanium", Fe: "Iron", Ni: "Nickel", Cu: "Copper", U: "Uranium",
-};
-
-// elements a world of each kind is likely to be made of, with rough relative abundance
+// common elements a world of each kind is likely to be made of, with rough relative abundance
 const ELEMENT_POOL: Record<PlanetKind, [string, number][]> = {
-  rocky: [["O", 10], ["Si", 8], ["Fe", 8], ["Mg", 6], ["Al", 4], ["Ca", 4], ["Ni", 2], ["S", 2], ["Na", 2], ["Ti", 1], ["C", 2], ["H", 1]],
-  moon: [["O", 9], ["Si", 8], ["Mg", 6], ["Fe", 6], ["Ca", 4], ["Al", 4], ["Ti", 2], ["Ni", 1.5], ["S", 1.5], ["U", 0.3]],
-  desert: [["O", 9], ["Si", 8], ["Fe", 7], ["Al", 4], ["Ca", 4], ["S", 3], ["Mg", 3], ["Na", 2], ["Ti", 1], ["Cu", 0.8]],
-  ice: [["H", 10], ["O", 10], ["C", 4], ["N", 3], ["S", 2], ["Si", 2], ["Na", 1], ["Cl", 1], ["Fe", 1], ["Ar", 0.5]],
-  gas: [["H", 14], ["He", 10], ["C", 2], ["N", 1.5], ["O", 1.5], ["Ne", 1], ["S", 0.8], ["Ar", 0.5], ["K", 0.3]],
+  rocky: [["O", 10], ["Si", 8], ["Fe", 8], ["Al", 5], ["C", 3], ["H", 2]],
+  moon: [["O", 9], ["Si", 8], ["Fe", 6], ["Al", 5], ["C", 0.5], ["H", 0.3]],
+  desert: [["O", 9], ["Si", 8], ["Fe", 7], ["Al", 5], ["C", 1], ["H", 0.5]],
+  ice: [["H", 10], ["O", 10], ["C", 4], ["Si", 2], ["Fe", 1.5], ["Al", 0.5]],
+  gas: [["H", 14], ["C", 2], ["O", 1.5], ["Fe", 0.2], ["Si", 0.2]],
 };
+// chance that a world has a trace of each rare element at all (Helium-3 is mostly a gas giant thing)
+const RARE_CHANCE: Record<PlanetKind, Record<string, number>> = {
+  rocky: { Ti: 0.04, U: 0.012, He: 0.001 },
+  moon: { Ti: 0.1, U: 0.02, He: 0.002 },
+  desert: { Ti: 0.06, U: 0.015, He: 0.001 },
+  ice: { Ti: 0.03, U: 0.008, He: 0.012 },
+  gas: { Ti: 0.004, U: 0.003, He: 0.16 },
+};
+const RARE = new Set(["Ti", "U", "He"]);
+const WHOLE_PLANET_RARE_CHANCE = 1 / 300; // a world that is entirely one rare element
 
 export type PlanetStats = {
   diameterKm: number;
@@ -273,7 +281,17 @@ export type PlanetStats = {
   composition: { symbol: string; name: string; pct: number }[]; // sorted, sums to 100
 };
 
+const statsCache = new Map<number, PlanetStats>();
+
 export function planetStats(seed: number): PlanetStats {
+  const hit = statsCache.get(seed);
+  if (hit) return hit;
+  const stats = computePlanetStats(seed);
+  statsCache.set(seed, stats);
+  return stats;
+}
+
+function computePlanetStats(seed: number): PlanetStats {
   const p = planetParams(seed);
   const r = mulberry32(seed * 2246822519 + 97);
   for (let i = 0; i < 4; i++) r();
@@ -282,24 +300,32 @@ export function planetStats(seed: number): PlanetStats {
   const perUnit = { rocky: 11000, desert: 10500, ice: 10000, moon: 5000, gas: 95000 }[p.kind];
   const diameterKm = Math.round((p.radius * perUnit * (0.92 + r() * 0.16)) / (p.kind === "gas" ? 100 : 10)) * (p.kind === "gas" ? 100 : 10);
 
+  // very rarely the whole planet is one rare element: a jackpot world
+  if (r() < WHOLE_PLANET_RARE_CHANCE) {
+    const symbol = p.kind === "gas" ? "He" : r() < 0.7 ? "Ti" : "U";
+    return { diameterKm, earths: diameterKm / 12742, composition: [{ symbol, name: ELEMENTS[symbol as Element].name, pct: 100 }] };
+  }
+
   // 1d6 predominant elements; each share is its natural abundance times a random factor,
   // so a gas giant is still mostly H/He but the exact ratios differ world to world
-  const n = 1 + Math.floor(r() * 6);
+  const n = Math.max(2, 1 + Math.floor(r() * 6)); // a d6, but never a single-element planet (that is the rare jackpot case)
+  const rare = Object.entries(RARE_CHANCE[p.kind]).filter(([, chance]) => r() < chance).map(([sym]) => sym);
   const pool = [...ELEMENT_POOL[p.kind]];
   const picked: [string, number][] = [];
-  for (let i = 0; i < n && pool.length; i++) {
+  for (let i = 0; i < Math.max(1, n - rare.length) && pool.length; i++) {
     let roll = r() * pool.reduce((sum, [, w]) => sum + w, 0);
     const idx = pool.findIndex(([, w]) => (roll -= w) < 0);
     picked.push(pool.splice(idx < 0 ? 0 : idx, 1)[0]);
   }
-  const raw = picked.map(([, w]) => w * (0.3 + r() * 1.4));
+  for (const sym of rare) picked.push([sym, 1]);
+  const raw = picked.map(([sym, w]) => w * (0.3 + r() * 1.4) * (RARE.has(sym) ? 0.3 : 1)); // rare elements only ever make up a small share
   const total = raw.reduce((a, b) => a + b, 0);
   // every element gets at least MIN_SHARE so its symbol always fits on the bar
   const MIN_SHARE = 8;
   const shares = raw.map((v) => Math.round((MIN_SHARE + (v / total) * (100 - MIN_SHARE * picked.length)) * 10) / 10);
   shares[0] = Math.round((shares[0] + (100 - shares.reduce((a, b) => a + b, 0))) * 10) / 10; // sum to exactly 100
   const composition = picked
-    .map(([symbol], i) => ({ symbol, name: ELEMENT_NAMES[symbol] ?? symbol, pct: shares[i] }))
+    .map(([symbol], i) => ({ symbol, name: ELEMENTS[symbol as Element].name, pct: shares[i] }))
     .sort((a, b) => b.pct - a.pct);
   return { diameterKm, earths: diameterKm / 12742, composition };
 }

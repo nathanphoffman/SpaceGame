@@ -1,5 +1,6 @@
 // Deterministic solar system layout: how many planets a system has and where they orbit.
-import { mulberry32, planetName } from "./planetGen";
+import { mineType } from "./defs";
+import { mulberry32, planetName, planetStats } from "./planetGen";
 
 export type GeneratedPlanet = {
   id: number;
@@ -8,8 +9,7 @@ export type GeneratedPlanet = {
   fresh?: {
     name: string;
     kind: "npc" | "empty";
-    metal: number;
-    crystal: number;
+    resources: Record<string, number>;
     buildings: Record<string, number>;
     defense: number;
     seed: number;
@@ -64,16 +64,25 @@ export function layoutSystem(
     g++;
     const seed = 1 + Math.floor(r() * 99999);
     const hostile = !safe && r() < 0.3;
-    const mines = 1 + Math.floor(r() * 6);
+    // hostile bases run mines on their planet's most common elements and sit on a stockpile
+    const buildings: Record<string, number> = {};
+    const resources: Record<string, number> = {};
+    if (hostile) {
+      const mines = Math.min(1 + Math.floor(r() * 3), planetStats(seed).composition.length);
+      for (const { symbol } of planetStats(seed).composition.slice(0, mines)) {
+        const level = 1 + Math.floor(r() * 6);
+        buildings[mineType(symbol)] = level;
+        resources[symbol] = 300 * level;
+      }
+    }
     out.push({
       id: systemId * 100 + g,
       orbit,
       fresh: {
         name: planetName(seed),
         kind: hostile ? "npc" : "empty",
-        metal: hostile ? 300 * mines : 0,
-        crystal: hostile ? 150 * mines : 0,
-        buildings: hostile ? { metal_mine: mines, crystal_mine: Math.max(1, mines - 1) } : {},
+        resources,
+        buildings,
         defense: hostile ? Math.round(10 + r() * r() * 400) : 0,
         seed,
       },

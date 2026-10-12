@@ -45,7 +45,7 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .dim { color:var(--dim); }
 .ico { width:1.1em; height:1.1em; vertical-align:-0.2em; }
 .fleet img { width:100%; height:100%; }
-.planet3d { width:100%; aspect-ratio:1; border-radius:10px; overflow:hidden; background: radial-gradient(circle at 50% 50%, #101a33 0, #070b14 70%); border:1px solid var(--line); }
+.planet3d { width:100%; aspect-ratio:2 / 1; border-radius:10px; overflow:hidden; background: radial-gradient(circle at 50% 50%, #101a33 0, #070b14 70%); border:1px solid var(--line); }
 .planet-info { margin-top:10px; }
 
 .map.galaxy { aspect-ratio: 16 / 10; }
@@ -107,3 +107,20 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .elbar { display:flex; height:26px; border-radius:6px; overflow:hidden; margin-top:4px; border:1px solid var(--line); }
 .elseg { display:flex; align-items:center; justify-content:center; flex-basis:0; min-width:2px; font-size:12px; font-weight:700; color:#0b0f1a; text-shadow:0 0 2px #ffffff55; }
 .ellegend { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; font-size:12px; }
+.composition { margin-bottom:8px; }
+.composition .elbar { margin-top:0; }
+.cost { margin-right:8px; white-space:nowrap; }
+.res.rare { opacity:.85; }
+.topbar { row-gap:6px; }
+.topbar .res { gap:4px; }
+.tile-icon.tinted { display:block; width:48px; height:48px; margin-bottom:4px; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center; }
+.tile-icon.tinted img { display:block; width:100%; height:100%; mix-blend-mode:multiply; filter:brightness(1.35); }
+.dots { display:flex; flex-wrap:wrap; justify-content:center; gap:3px; min-height:8px; margin:2px 0; }
+.dot-level { width:7px; height:7px; border-radius:50%; border:1px solid var(--accent); }
+.dot-level.on { background:var(--accent); }
+.dot-level.queued { background:transparent; border-style:dashed; opacity:.8; }
+.tile-top { position:relative; display:flex; flex-direction:column; align-items:center; width:100%; }
+.tile-head { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.tile-top:has(.notbuilt) .tile-head { opacity:.35; filter:grayscale(1); }
+.notbuilt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;
+  font-weight:700; font-size:13px; color:var(--text); text-shadow:0 0 6px #000, 0 0 2px #000; pointer-events:none; }

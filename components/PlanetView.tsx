@@ -21,7 +21,7 @@ export default function PlanetView({ seed }: { seed: number }) {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-    camera.position.set(0, 0.6, 7.5);
+    camera.position.set(0, 0.4, 5.5); // closer than a square view so the planet still fills the shorter frame
     camera.lookAt(0, 0, 0);
 
     const sun = new THREE.DirectionalLight(0xffffff, 2.6);

@@ -2,13 +2,14 @@ import { randomUUID } from "crypto";
 import type { PoolClient } from "pg";
 import { pool, ready } from "./db";
 import {
-  BUILDINGS, SHIPS, buildCost, buildSeconds, shipSeconds, rates, flightSeconds,
-  type BuildingType, type ShipType, type Res, type GameState, type SystemDTO,
+  ELEMENTS, MAX_BUILDING_LEVEL, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds,
+  type ShipType, type Res, type GameState, type SystemDTO,
 } from "./defs";
+import { planetStats } from "./planetGen";
 
 type Planet = {
   id: number; name: string; system_id: number; orbit: number; kind: "player" | "npc" | "empty";
-  metal: number; crystal: number; buildings: Record<string, number>; ships: Record<string, number>;
+  resources: Res; buildings: Record<string, number>; ships: Record<string, number>;
   defense: number; seed: number; updated_at: Date;
 };
 type QueueItem = { id: string; planet_id: number; kind: "building" | "ship"; type: string; start_at: Date; finish_at: Date };
@@ -36,8 +37,8 @@ async function load(c: PoolClient): Promise<World> {
 async function save(c: PoolClient, w: World) {
   for (const p of w.planets) {
     await c.query(
-      `UPDATE planets SET name=$2, kind=$3, metal=$4, crystal=$5, buildings=$6, ships=$7, defense=$8, updated_at=$9 WHERE id=$1`,
-      [p.id, p.name, p.kind, p.metal, p.crystal, JSON.stringify(p.buildings), JSON.stringify(p.ships), p.defense, p.updated_at],
+      `UPDATE planets SET name=$2, kind=$3, resources=$4, buildings=$5, ships=$6, defense=$7, updated_at=$8 WHERE id=$1`,
+      [p.id, p.name, p.kind, JSON.stringify(p.resources), JSON.stringify(p.buildings), JSON.stringify(p.ships), p.defense, p.updated_at],
     );
   }
   await c.query("DELETE FROM queue");
@@ -67,13 +68,18 @@ function accrue(p: Planet, t: Date) {
   if (t <= p.updated_at) return;
   if (p.kind !== "empty") {
     const dt = (t.getTime() - p.updated_at.getTime()) / 1000;
-    const r = rates(p.buildings);
+    const rate = productionRates(p.buildings, planetStats(p.seed).composition);
     const cap = p.kind === "npc" ? NPC_RESOURCE_CAP : Infinity;
-    p.metal = Math.min(cap, p.metal + r.metal * dt);
-    p.crystal = Math.min(cap, p.crystal + r.crystal * dt);
+    for (const [el, perSec] of Object.entries(rate)) p.resources[el] = Math.min(cap, (p.resources[el] ?? 0) + perSec * dt);
   }
   p.updated_at = t;
 }
+
+const addRes = (to: Res, from: Res) => {
+  for (const [el, n] of Object.entries(from)) to[el] = (to[el] ?? 0) + n;
+};
+const resText = (r: Res) =>
+  Object.entries(r).filter(([, n]) => n > 0).map(([el, n]) => `${n} ${el}`).join(", ") || "nothing";
 
 const shipList = (s: Record<string, number>) =>
   Object.entries(s).filter(([, n]) => n > 0).map(([t, n]) => `${n} ${SHIPS[t as ShipType].name}`).join(", ") || "nothing";
@@ -94,15 +100,13 @@ function arrive(w: World, f: Fleet) {
     }
     f.ships.colony_ship -= 1;
     target.kind = "player";
-    target.metal = 100;
-    target.crystal = 50;
+    target.resources = { Fe: 100, Si: 50 };
     target.updated_at = f.arrive_at;
     // the rest of this fleet, and any fleet already guarding the planet, join the new base
     const joining = [f, ...w.fleets.filter((g) => g !== f && g.status === "stationed" && g.target_id === target.id)];
     for (const g of joining) {
       for (const [t, n] of Object.entries(g.ships)) target.ships[t] = (target.ships[t] ?? 0) + n;
-      target.metal += g.loot.metal;
-      target.crystal += g.loot.crystal;
+      addRes(target.resources, g.loot);
       g.status = "done";
     }
     f.report = `Colonized ${target.name}! ${joining.length > 1 ? "The guarding fleet joined the new base." : ""}`.trim();
@@ -130,17 +134,21 @@ function arrive(w: World, f: Fleet) {
       f.ships[t] -= lost[t];
     }
     const cargo = Object.entries(f.ships).reduce((s, [t, n]) => s + n * SHIPS[t as ShipType].cargo, 0);
-    const metal = Math.min(target.metal, cargo / 2);
-    const crystal = Math.min(target.crystal, cargo / 2);
-    f.loot = { metal: Math.floor(metal), crystal: Math.floor(crystal) };
+    // take the biggest stockpiles first until the cargo holds are full
+    let room = cargo;
+    const loot: Res = {};
+    for (const [el, amount] of Object.entries(target.resources).sort((a, b) => b[1] - a[1])) {
+      const take = Math.min(Math.floor(amount), room);
+      if (take > 0) { loot[el] = take; room -= take; }
+    }
+    f.loot = loot;
     // the enemy base is destroyed; the planet becomes neutral and the fleet guards it
     target.kind = "empty";
     target.buildings = {};
     target.defense = 0;
-    target.metal = 0;
-    target.crystal = 0;
+    target.resources = {};
     f.status = "stationed";
-    f.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${f.loot.metal} metal, ${f.loot.crystal} crystal. Lost: ${shipList(lost)}.`;
+    f.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${resText(f.loot)}. Lost: ${shipList(lost)}.`;
     return;
   }
   target.defense = Math.max(0, target.defense - Math.floor(power * 0.5));
@@ -173,8 +181,7 @@ function settle(w: World, now: Date) {
           const origin = w.planets.find((p) => p.id === f.origin_id)!;
           accrue(origin, f.return_at);
           for (const [type, n] of Object.entries(f.ships)) origin.ships[type] = (origin.ships[type] ?? 0) + n;
-          origin.metal += f.loot.metal;
-          origin.crystal += f.loot.crystal;
+          addRes(origin.resources, f.loot);
           f.status = "done";
         });
       }
@@ -214,7 +221,7 @@ function toState(w: World, now: Date): GameState {
     systems: w.systems,
     planets: w.planets.map((p) => ({
       id: p.id, name: p.name, systemId: p.system_id, orbit: p.orbit, kind: p.kind,
-      metal: p.metal, crystal: p.crystal, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed,
+      resources: p.resources, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed,
     })),
     queue: w.queue.map((q) => ({
       id: q.id, planetId: q.planet_id, kind: q.kind, type: q.type,
@@ -237,19 +244,25 @@ function ownPlanet(w: World, id: number) {
 }
 
 function pay(p: Planet, cost: Res) {
-  if (p.metal < cost.metal || p.crystal < cost.crystal) throw new GameError("Not enough resources");
-  p.metal -= cost.metal;
-  p.crystal -= cost.crystal;
+  for (const [el, n] of Object.entries(cost)) {
+    if ((p.resources[el] ?? 0) < n) throw new GameError(`Not enough ${ELEMENTS[el as keyof typeof ELEMENTS]?.name ?? el}`);
+  }
+  for (const [el, n] of Object.entries(cost)) p.resources[el] = (p.resources[el] ?? 0) - n;
 }
 
 const lastFinish = (w: World, planetId: number, kind: string, now: Date) =>
   w.queue.filter((q) => q.planet_id === planetId && q.kind === kind).reduce((m, q) => (q.finish_at > m ? q.finish_at : m), now);
 
-export function build(w: World, now: Date, planetId: number, type: BuildingType) {
-  if (!(type in BUILDINGS)) throw new GameError("Unknown building");
+export function build(w: World, now: Date, planetId: number, type: string) {
+  if (!buildingInfo(type)) throw new GameError("Unknown building");
   const p = ownPlanet(w, planetId);
+  const element = mineElement(type);
+  if (element && !planetStats(p.seed).composition.some((c) => c.symbol === element)) {
+    throw new GameError(`There is no ${ELEMENTS[element].name} on this planet to mine`);
+  }
   const queued = w.queue.filter((q) => q.planet_id === p.id && q.kind === "building" && q.type === type).length;
   const level = (p.buildings[type] ?? 0) + queued;
+  if (level >= MAX_BUILDING_LEVEL) throw new GameError(`${buildingInfo(type)!.name} is already at the maximum level (${MAX_BUILDING_LEVEL})`);
   pay(p, buildCost(type, level));
   const start = lastFinish(w, p.id, "building", now);
   const finish = new Date(start.getTime() + buildSeconds(type, level) * 1000);
@@ -263,7 +276,7 @@ export function buildShips(w: World, now: Date, planetId: number, type: ShipType
   qty = Math.floor(qty);
   if (!(qty >= 1 && qty <= 20)) throw new GameError("Quantity must be 1-20");
   const s = SHIPS[type];
-  pay(p, { metal: s.cost.metal * qty, crystal: s.cost.crystal * qty });
+  pay(p, Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
   let start = lastFinish(w, p.id, "ship", now);
   for (let i = 0; i < qty; i++) {
     const finish = new Date(start.getTime() + shipSeconds(type, p.buildings.shipyard) * 1000);
@@ -292,7 +305,7 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
     flightSeconds({ systemId: origin.system_id, orbit: origin.orbit }, { systemId: target.system_id, orbit: target.orbit }, w.systems) * 1000;
   w.fleets.push({
     id: randomUUID(), origin_id: origin.id, target_id: target.id, mission, ships: sent,
-    loot: { metal: 0, crystal: 0 }, depart_at: now, arrive_at: new Date(now.getTime() + flight),
+    loot: {}, depart_at: now, arrive_at: new Date(now.getTime() + flight),
     return_at: new Date(now.getTime() + flight * 2), status: "outbound", report: "",
   });
 }
