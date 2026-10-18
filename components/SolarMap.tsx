@@ -35,6 +35,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
     <div className="panel">
       <h2>Solar system — {system.name} <span className="dim">({star.spectral} · {star.label})</span></h2>
       <div className={`solar ${slots > 8 ? "crowded" : ""}`}>
+        {slots === 0 && <div className="dim" style={{ position: "absolute", right: 12, top: 8, zIndex: 1 }}>Surveying system…</div>}
         <div className="sun" style={{
           width: starR * 2, height: starR * 2, left: STAR_VISIBLE - starR * 2, top: `calc(${SOLAR_Y}% - ${starR}px)`,
           background: `radial-gradient(circle closest-side, ${rgba(1)} 0, ${rgba(1)} 80%, #fff 100%)`,
@@ -58,8 +59,9 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
         ))}
 
         {planets.map((p, i) => {
-          const spacingPx = (440 * 86) / 100 / slots;
-          const body = Math.min(14 + planetParams(p.seed).radius * 16, spacingPx * 0.8); // planet diameter in px
+          // planet diameter in px, proportional to its size and capped by how much room each slot has
+          const cap = Math.max(14, (((544 * 86) / 100) / slots) * 0.85);
+          const body = 8 + (planetParams(p.seed).radius / 1.45) * (cap - 8);
           const size = thumbDisplaySize(p.seed, body);
           return (
             <button key={p.id} className={`snode ${p.id === viewed.id ? "sel" : ""} ${i % 2 ? "below" : "above"}`}

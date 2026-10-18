@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GameState } from "@/lib/defs";
 
+/** what the player is looking at: the server only sends (and generates) that part of the galaxy */
+export type GameView = { sx: number; sy: number; system?: number };
+
 /** Polls the server for game state and exposes `act` for sending actions. `now` is the server clock, ticking locally. */
-export function useGame() {
+export function useGame(view: GameView) {
+  const { sx, sy, system } = view;
   const [game, setGame] = useState<GameState | null>(null);
   const [offset, setOffset] = useState(0); // server clock - client clock
   const [clock, setClock] = useState(Date.now());
@@ -14,13 +18,13 @@ export function useGame() {
   };
   const refresh = useCallback(async () => {
     try {
-      const r = await fetch("/api/state");
+      const r = await fetch(`/api/state?sx=${sx}&sy=${sy}${system ? `&system=${system}` : ""}`);
       if (r.ok) apply(await r.json());
       else setError((await r.json()).error ?? "Could not load game (is the database running?)");
     } catch {
       setError("Could not reach server");
     }
-  }, []);
+  }, [sx, sy, system]);
 
   useEffect(() => {
     refresh();
@@ -30,7 +34,7 @@ export function useGame() {
   }, [refresh]);
 
   const act = async (body: object) => {
-    const r = await fetch("/api/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const r = await fetch("/api/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, view: { sx, sy, system } }) });
     const j = await r.json();
     if (!r.ok) setError(j.error);
     else { setError(""); apply(j); }

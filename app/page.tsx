@@ -4,7 +4,8 @@ import { useState } from "react";
 import Buildings from "@/components/Buildings";
 import FleetSend from "@/components/FleetSend";
 import FleetsPanel from "@/components/FleetsPanel";
-import GalaxyMap from "@/components/GalaxyMap";
+import GalaxyView from "@/components/GalaxyView";
+import LocalMap from "@/components/LocalMap";
 import PlanetPanel from "@/components/PlanetPanel";
 import Shipyard from "@/components/Shipyard";
 import SolarMap from "@/components/SolarMap";
@@ -12,13 +13,16 @@ import TopBar from "@/components/TopBar";
 import { planetStats } from "@/lib/planetGen";
 import { ELEMENTS, buildingInfo, mineType, productionRates, type Element, type Res } from "@/lib/defs";
 import { useGame } from "@/lib/useGame";
+import { CENTER } from "@/lib/sector";
 
 export default function Page() {
-  const { game, error, act, now } = useGame();
+  const [sector, setSector] = useState<[number, number]>([CENTER, CENTER]); // the sector shown on the local map
+  const [atGalaxy, setAtGalaxy] = useState(false); // true = showing the grid of sectors instead of one sector
+  const [systemId, setSystemId] = useState<number | null>(null); // system shown on the solar map
+  const { game, error, act, now } = useGame({ sx: sector[0], sy: sector[1], system: systemId ?? undefined });
   const [planetId, setPlanetId] = useState<number | null>(null);
   const [targetId, setTargetId] = useState<number | null>(null);
   const [viewId, setViewId] = useState<number | null>(null);
-  const [systemId, setSystemId] = useState<number | null>(null); // system shown on the solar map
 
   if (!game) return <div style={{ padding: 24 }}>{error || "Loading…"}</div>;
 
@@ -27,7 +31,7 @@ export default function Page() {
   const target = game.planets.find((p) => p.id === targetId && p.kind !== "player") ?? null;
   const viewed = game.planets.find((p) => p.id === viewId) ?? planet;
   const sysOf = (id: number) => game.systems.find((x) => x.id === id)!;
-  const shownSystem = sysOf(systemId ?? viewed.systemId);
+  const shownSystem = game.systems.find((x) => x.id === systemId) ?? sysOf(viewed.systemId); // (a just-clicked system arrives with the next update)
 
   const composition = planetStats(planet.seed).composition;
   const rate = productionRates(planet.buildings, composition);
@@ -56,7 +60,10 @@ export default function Page() {
     <>
       <TopBar
         planets={mine} current={planet} stock={stock} rate={rate}
-        onSelect={(id) => { setPlanetId(id); setViewId(id); setSystemId(null); }}
+        onSelect={(id) => {
+          const home = sysOf(game.planets.find((p) => p.id === id)!.systemId);
+          setPlanetId(id); setViewId(id); setSystemId(home.id); setSector([home.sectorX, home.sectorY]); setAtGalaxy(false);
+        }}
         onReset={() => confirm("Reset the whole game?") && act({ action: "reset" })}
       />
       <div className="layout">
@@ -69,7 +76,11 @@ export default function Page() {
             game={game} system={shownSystem} viewed={viewed} now={now}
             onSelect={(p) => { setViewId(p.id); if (p.kind === "player") setPlanetId(p.id); else setTargetId(p.id); }}
           />
-          <GalaxyMap game={game} shownSystemId={shownSystem.id} now={now} onSelect={setSystemId} />
+          {atGalaxy ? (
+            <GalaxyView game={game} current={sector} onSelect={(sx, sy) => { setSector([sx, sy]); setAtGalaxy(false); }} />
+          ) : (
+            <LocalMap key={sector.join(",")} game={game} sector={sector} shownSystemId={shownSystem.id} now={now} onSelect={setSystemId} onBack={() => setAtGalaxy(true)} />
+          )}
         </div>
 
         <div>

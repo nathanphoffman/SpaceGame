@@ -1,17 +1,11 @@
 /**
- * Where each star goes on the galaxy map, as % of the map box. Real light-year positions are scaled
- * uniformly to fit, then stars that would overlap (Alpha Centauri and Proxima are 0.2 ly apart) are nudged apart.
+ * Where each star of one sector goes on the local map, as % of the (square) map box. Real light-year
+ * positions are scaled so the whole sector fits; stars that would overlap (Alpha Centauri and Proxima
+ * are 0.2 ly apart) are then nudged apart.
  */
-export function mapPositions(systems: { id: number; x: number; y: number }[], aspect = 1.6) {
-  const W = 100 * aspect; // map width in "percent of height" units, so distances stay isotropic
-  const xs = systems.map((s) => s.x), ys = systems.map((s) => s.y);
-  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const scale = Math.min((0.86 * W) / Math.max(1, maxX - minX), 84 / Math.max(1, maxY - minY));
-  const pts = systems.map((s) => ({
-    id: s.id,
-    x: W / 2 + (s.x - (minX + maxX) / 2) * scale,
-    y: 50 - (s.y - (minY + maxY) / 2) * scale, // north (+y) is up
-  }));
+export function mapPositions(systems: { id: number; x: number; y: number }[], centre: { x: number; y: number }, halfWidthLy: number) {
+  const scale = 44 / halfWidthLy; // sector edge sits 6% in from the map edge
+  const pts = systems.map((s) => ({ id: s.id, x: 50 + (s.x - centre.x) * scale, y: 50 - (s.y - centre.y) * scale })); // north is up
 
   const MIN_GAP = 3.4;
   for (let iter = 0; iter < 60; iter++) {
@@ -28,5 +22,5 @@ export function mapPositions(systems: { id: number; x: number; y: number }[], as
     }
   }
   const clamp = (v: number) => Math.min(96, Math.max(4, v));
-  return new Map(pts.map((p) => [p.id, { x: clamp((p.x / W) * 100), y: clamp(p.y) }]));
+  return new Map(pts.map((p) => [p.id, { x: clamp(p.x), y: clamp(p.y) }]));
 }

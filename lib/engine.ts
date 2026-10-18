@@ -6,61 +6,13 @@ import {
   type ShipType, type Res, type GameState, type SystemDTO,
 } from "./defs";
 import { planetStats } from "./planetGen";
-
-type Planet = {
-  id: number; name: string; system_id: number; orbit: number; kind: "player" | "npc" | "empty";
-  resources: Res; buildings: Record<string, number>; ships: Record<string, number>;
-  defense: number; seed: number; shared: boolean; updated_at: Date;
-};
-type QueueItem = { id: string; planet_id: number; kind: "building" | "ship"; type: string; start_at: Date; finish_at: Date };
-type Fleet = {
-  id: string; origin_id: number; target_id: number; mission: "attack" | "colonize";
-  ships: Record<string, number>; loot: Res; depart_at: Date; arrive_at: Date; return_at: Date;
-  status: "outbound" | "stationed" | "returning" | "done"; report: string;
-};
-type World = { systems: SystemDTO[]; planets: Planet[]; queue: QueueItem[]; fleets: Fleet[] };
+import { ensureSector, ensureSystem } from "./lazyGen";
+import { validSector } from "./sector";
+import { load, save, type Fleet, type Planet, type View, type World } from "./world";
 
 export class GameError extends Error {}
 
 const NPC_RESOURCE_CAP = 3000;
-
-// ---------- load / save ----------
-
-async function load(c: PoolClient): Promise<World> {
-  const systems = (await c.query("SELECT * FROM systems ORDER BY id")).rows as SystemDTO[];
-  const planets = (await c.query("SELECT * FROM planets ORDER BY id")).rows as Planet[];
-  const queue = (await c.query("SELECT * FROM queue ORDER BY finish_at")).rows as QueueItem[];
-  const fleets = (await c.query("SELECT * FROM fleets ORDER BY depart_at")).rows as Fleet[];
-  return { systems, planets, queue, fleets };
-}
-
-async function save(c: PoolClient, w: World) {
-  for (const p of w.planets) {
-    await c.query(
-      `UPDATE planets SET name=$2, kind=$3, resources=$4, buildings=$5, ships=$6, defense=$7, updated_at=$8 WHERE id=$1`,
-      [p.id, p.name, p.kind, JSON.stringify(p.resources), JSON.stringify(p.buildings), JSON.stringify(p.ships), p.defense, p.updated_at],
-    );
-  }
-  await c.query("DELETE FROM queue");
-  for (const q of w.queue) {
-    await c.query(
-      "INSERT INTO queue (id,planet_id,kind,type,start_at,finish_at) VALUES ($1,$2,$3,$4,$5,$6)",
-      [q.id, q.planet_id, q.kind, q.type, q.start_at, q.finish_at],
-    );
-  }
-  await c.query("DELETE FROM fleets");
-  // keep only the last few finished fleets so the reports list doesn't grow forever
-  const done = w.fleets.filter((f) => f.status === "done").slice(-10);
-  const keep = [...w.fleets.filter((f) => f.status !== "done"), ...done];
-  for (const f of keep) {
-    await c.query(
-      `INSERT INTO fleets (id,origin_id,target_id,mission,ships,loot,depart_at,arrive_at,return_at,status,report)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [f.id, f.origin_id, f.target_id, f.mission, JSON.stringify(f.ships), JSON.stringify(f.loot),
-       f.depart_at, f.arrive_at, f.return_at, f.status, f.report],
-    );
-  }
-}
 
 // ---------- simulation ----------
 
@@ -194,13 +146,16 @@ function settle(w: World, now: Date) {
 
 // ---------- entry point ----------
 
-export async function withGame<T>(fn: (w: World, now: Date) => T): Promise<{ result: T; state: GameState }> {
+export async function withGame<T>(fn: (w: World, now: Date) => T, view: View = {}): Promise<{ result: T; state: GameState }> {
   await ready();
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
     await c.query("SELECT pg_advisory_xact_lock(42)"); // one writer at a time
-    const w = await load(c);
+    // stars and planets are generated the first time they are looked at
+    if (view.sx !== undefined && view.sy !== undefined && validSector(view.sx, view.sy)) await ensureSector(c, view.sx, view.sy);
+    if (view.system !== undefined) await ensureSystem(c, view.system);
+    const w = await load(c, view);
     const now = new Date();
     settle(w, now);
     const result = fn(w, now);

@@ -15,7 +15,7 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .tabs button.on { background:var(--accent); color:#00121f; }
 .spacer { flex:1; }
 
-.layout { display:grid; grid-template-columns: 469px minmax(0,1fr); gap:16px; padding:16px; align-items:start; }
+.layout { display:grid; grid-template-columns: 570px minmax(0,1fr); gap:16px; padding:16px; align-items:start; }
 @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:16px; }
 .panel h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:0 0 10px; }
@@ -48,8 +48,7 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .planet3d { width:100%; aspect-ratio:2 / 1; border-radius:10px; overflow:hidden; background: radial-gradient(circle at 50% 50%, #101a33 0, #070b14 70%); border:1px solid var(--line); }
 .planet-info { margin-top:10px; }
 
-.map.galaxy { aspect-ratio: 16 / 10; }
-.gnode { position:absolute; transform:translate(-50%,-50%); background:none; border:0; padding:0; color:var(--text); font-weight:400; cursor:pointer; text-align:center; }
+.gnode { position:absolute; transform:translate(-50%,-50%); background:none; border:0; padding:7px; /* padding = bigger click target around tiny stars */ color:var(--text); font-weight:400; cursor:pointer; text-align:center; }
 .gnode .star { position:relative; display:block; border-radius:50%; margin:0 auto; width:var(--d); height:var(--d);
   background: radial-gradient(circle, #fff 0, #fff 22%, var(--c) 58%, color-mix(in srgb, var(--c) 0%, transparent) 100%);
   box-shadow: 0 0 calc(var(--d) * 0.9) calc(var(--d) * 0.2) color-mix(in srgb, var(--c) 45%, transparent); }
@@ -143,3 +142,11 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .map.galaxy.crowded .gnode .label { display:none; }
 .map.galaxy.crowded .gnode:hover .label, .map.galaxy.crowded .gnode.sel .label, .map.galaxy.crowded .gnode.home .label { display:block; z-index:2; background:#070b14cc; padding:1px 4px; border-radius:4px; }
 .map.galaxy.crowded .gnode:hover { z-index:3; }
+.map.galaxy { aspect-ratio: 1; cursor:grab; touch-action:none; }
+.zoom-controls { position:absolute; top:8px; right:8px; z-index:5; display:flex; gap:4px; }
+.zoom-controls button { padding:3px 9px; }
+.gal-grid { display:grid; grid-template-columns: repeat(21, 1fr); gap:2px; }
+.gal-cell { aspect-ratio:1; padding:0; border:1px solid var(--line); border-radius:3px; color:var(--text); font-size:10px; font-weight:400; line-height:1; }
+.gal-cell:hover { border-color:var(--accent); }
+.gal-cell.sel { outline:2px solid var(--accent); outline-offset:1px; }
+.gal-cell.sol { border-color:#ffd37a; color:#ffd37a; }

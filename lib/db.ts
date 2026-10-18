@@ -39,6 +39,10 @@ ALTER TABLE planets ADD COLUMN IF NOT EXISTS shared boolean NOT NULL DEFAULT fal
 ALTER TABLE planets DROP COLUMN IF EXISTS x;
 ALTER TABLE planets DROP COLUMN IF EXISTS y;
 CREATE TABLE IF NOT EXISTS meta (key text PRIMARY KEY, value text NOT NULL);
+CREATE TABLE IF NOT EXISTS sectors (x int NOT NULL, y int NOT NULL, PRIMARY KEY (x, y)); -- sectors whose stars have been generated
+ALTER TABLE systems ADD COLUMN IF NOT EXISTS sector_x int NOT NULL DEFAULT 10;
+ALTER TABLE systems ADD COLUMN IF NOT EXISTS sector_y int NOT NULL DEFAULT 10;
+ALTER TABLE systems ADD COLUMN IF NOT EXISTS explored boolean NOT NULL DEFAULT false; -- planets generated yet?
 CREATE TABLE IF NOT EXISTS queue (
   id text PRIMARY KEY,
   planet_id int NOT NULL REFERENCES planets(id),
@@ -88,7 +92,7 @@ async function migrateToElements() {
 async function wipeIfStale() {
   const { rows } = await pool.query("SELECT value FROM meta WHERE key='galaxy'");
   if (rows[0]?.value === GALAXY_VERSION) return;
-  await pool.query("TRUNCATE queue, fleets, planets, systems");
+  await pool.query("TRUNCATE queue, fleets, planets, systems, sectors");
   await pool.query("ALTER TABLE systems ALTER COLUMN x TYPE double precision, ALTER COLUMN y TYPE double precision");
   await pool.query("INSERT INTO meta (key,value) VALUES ('galaxy',$1) ON CONFLICT (key) DO UPDATE SET value=$1", [GALAXY_VERSION]);
 }
@@ -107,6 +111,6 @@ export function ready(): Promise<void> {
 
 export async function resetGame() {
   await ready();
-  await pool.query("TRUNCATE queue, fleets, planets, systems");
+  await pool.query("TRUNCATE queue, fleets, planets, systems, sectors");
   await seedGalaxy(pool);
 }

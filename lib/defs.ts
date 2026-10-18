@@ -114,7 +114,7 @@ export function productionRates(buildings: Record<string, number>, composition: 
 }
 
 /** x, y: light-years from Sol in the galactic plane */
-export type SystemDTO = { id: number; name: string; x: number; y: number; seed: number };
+export type SystemDTO = { id: number; name: string; x: number; y: number; seed: number; sectorX: number; sectorY: number };
 
 type Placed = { systemId: number; orbit: number };
 const SECONDS_PER_LY = 4;
