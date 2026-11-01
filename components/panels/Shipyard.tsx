@@ -11,59 +11,79 @@ type Props = {
   act: (body: object) => Promise<void>;
 };
 
-export default function Shipyard({ show, planet, queue, now, shortfall, act }: Props) {
-  const [qtys, setQtys] = useState<Record<string, number>>({});
+const MIN_BATCH = 1;
+const MAX_BATCH = 20;
+const ICON_PX = 36;
+
+type Ship = (typeof SHIPS)[ShipType];
+
+/** the open description card for one ship: what it is good at and its stats */
+function ShipInfo({ ship, onClose }: { ship: Ship; onClose: () => void }) {
+  return (
+    <div className="ship-info">
+      <span className="icon-box"><img src={ship.icon} style={{ width: ICON_PX * ship.size, height: ICON_PX * ship.size }} alt="" /></span>
+      <div className="grow">
+        <b>{ship.name}</b>
+        <div>{ship.desc}</div>
+        <div className="sub">Atk {ship.attack} · Cargo {ship.cargo} · Speed {ship.speed}/10 · Health {ship.health}/10</div>
+      </div>
+      <button className="ghost" onClick={onClose}>Close</button>
+    </div>
+  );
+}
+
+/** why the build button is disabled (undefined = it can be pressed) */
+function buildBlocker(ship: Ship, level: number, quantity: number, shortfall: Props["shortfall"]) {
+  if (!level) return "Build a Shipyard first";
+
+  if (!(quantity >= MIN_BATCH && quantity <= MAX_BATCH)) return `Quantity must be between ${MIN_BATCH} and ${MAX_BATCH}`;
+
+  return shortfall(Object.fromEntries(Object.entries(ship.cost).map(([element, amount]) => [element, amount * quantity])));
+}
+
+type TileProps = { type: ShipType; props: Props; level: number; quantity: number; onQuantity: (value: number) => void; onInfo: () => void };
+
+function ShipTile({ type, props, level, quantity, onQuantity, onInfo }: TileProps) {
+  const ship = SHIPS[type];
+  const queued = props.queue.filter((item) => item.type === type);
+  const why = buildBlocker(ship, level, quantity, props.shortfall);
+
+  return (
+    <div className="tile">
+      <button className="ship-link" title="Click for details" onClick={onInfo}>
+        <span className="tile-icon-box"><img className="tile-icon" style={{ width: ICON_PX * ship.size, height: ICON_PX * ship.size }} src={ship.icon} alt="" /></span>
+        <b>{ship.name}</b>
+      </button>
+      <span className="dim">×{props.planet.ships[type] ?? 0} · Atk {ship.attack} · Cargo {ship.cargo}</span>
+      <div className="sub"><Cost cost={ship.cost} /></div>
+      <div className="sub">{fmtTime(shipSeconds(type, level) * 1000)} each</div>
+      {queued[0] && <div className="sub good">+{queued.length} · next {fmtTime(queued[0].finishAt - props.now)}</div>}
+      <div className="tile-actions">
+        <input type="number" min={MIN_BATCH} max={MAX_BATCH} value={quantity} onChange={(event) => onQuantity(Number(event.target.value))} />
+        <button disabled={!!why} title={why} onClick={() => props.act({ action: "ship", planetId: props.planet.id, type, qty: quantity })}>Build</button>
+      </div>
+    </div>
+  );
+}
+
+export default function Shipyard(props: Props) {
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [infoShip, setInfoShip] = useState<ShipType | null>(null); // ship whose description is open
 
-  if (!show) return null;
-  const level = planet.buildings.shipyard ?? 0;
-  const info = infoShip && SHIPS[infoShip];
+  if (!props.show) return null;
+
+  const level = props.planet.buildings.shipyard ?? 0;
 
   return (
     <div className="panel">
       <h2>Shipyard {level ? `(Lv ${level})` : ""}</h2>
       {!level && <div className="dim">Build a shipyard to start building ships.</div>}
-      {info && (
-        <div className="ship-info">
-          <span className="icon-box"><img src={info.icon} style={{ width: 36 * info.size, height: 36 * info.size }} alt="" /></span>
-          <div className="grow">
-            <b>{info.name}</b>
-            <div>{info.desc}</div>
-            <div className="sub">Atk {info.attack} · Cargo {info.cargo} · Speed {info.speed}/10 · Health {info.health}/10</div> {/* ship stats */}
-          </div>
-          <button className="ghost" onClick={() => setInfoShip(null)}>Close</button>
-        </div>
-      )}
-
+      {infoShip && <ShipInfo ship={SHIPS[infoShip]} onClose={() => setInfoShip(null)} />}
       <div className="tiles">
-        {SHIP_TYPES.map((t) => { // one row per ship type that can be built
-          const s = SHIPS[t];
-          const qty = qtys[t] ?? 1;
-          const inQueue = queue.filter((queueItem) => queueItem.type === t);
-          const why = !level
-            ? "Build a Shipyard first"
-            : !(qty >= 1 && qty <= 20)
-              ? "Quantity must be between 1 and 20" // explains why the build button is disabled
-              : shortfall(Object.fromEntries(Object.entries(s.cost).map(([symbol, n]) => [symbol, n * qty])));
-
-          return (
-            <div className="tile" key={t}>
-              <button className="ship-link" title="Click for details" onClick={() => setInfoShip(infoShip === t ? null : t)}>
-                <span className="tile-icon-box"><img className="tile-icon" style={{ width: 36 * s.size, height: 36 * s.size }} src={s.icon} alt="" /></span>
-                <b>{s.name}</b>
-              </button>
-              <span className="dim">×{planet.ships[t] ?? 0} · Atk {s.attack} · Cargo {s.cargo}</span>
-              <div className="sub"><Cost cost={s.cost} /></div> {/* price of one ship */}
-              <div className="sub">{fmtTime(shipSeconds(t, level) * 1000)} each</div>
-              {inQueue[0] && <div className="sub good">+{inQueue.length} · next {fmtTime(inQueue[0].finishAt - now)}</div>}
-              <div className="tile-actions">
-                <input type="number" min={1} max={20} value={qty} onChange={(event) => setQtys({ ...qtys, [t]: Number(event.target.value) })} />
-                <button disabled={!!why} title={why} onClick={() => act({ action: "ship", planetId: planet.id, type: t, qty })}>Build</button>
-              </div>
-            </div>
-          );
-        })}
-
+        {SHIP_TYPES.map((type) => (
+          <ShipTile key={type} type={type} props={props} level={level} quantity={quantities[type] ?? 1}
+            onQuantity={(value) => setQuantities({ ...quantities, [type]: value })} onInfo={() => setInfoShip(infoShip === type ? null : type)} />
+        ))}
       </div>
     </div>
   );

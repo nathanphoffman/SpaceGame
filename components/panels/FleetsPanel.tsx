@@ -1,4 +1,4 @@
-import { SHIPS, type FleetDTO, type PlanetDTO } from "@/lib/defs";
+import { SHIPS, type FleetDTO, type PlanetDTO, type ShipType } from "@/lib/defs";
 import { Cost, SHIP_TYPES, ShipList, fleetIcon, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -10,54 +10,74 @@ type Props = {
   act: (body: object) => Promise<void>;
 };
 
+const MAX_ICONS_PER_ROW = 300; // keep the page light if you build thousands
+const HANGAR_ICON_PX = 22;
+
+/** one row of the hangar: a label and an icon for each ship of one type */
+function HangarRow({ type, count }: { type: ShipType; count: number }) {
+  const ship = SHIPS[type];
+  const shown = Math.min(count, MAX_ICONS_PER_ROW);
+
+  return (
+    <div className="hangar-row" title={`${count} × ${ship.name}`}>
+      <div className="hangar-label">{ship.name} <b>×{count}</b></div>
+      <div className="hangar-ships">
+        {Array.from({ length: shown }, (_, index) => (
+          <img key={`${type}-${index}`} src={ship.icon} style={{ width: HANGAR_ICON_PX * ship.size, height: HANGAR_ICON_PX * ship.size }} alt="" />
+        ))}
+        {count > shown && <span className="dim"> +{count - shown} more</span>}
+      </div>
+    </div>
+  );
+}
+
+function Hangar({ planet }: { planet: PlanetDTO }) {
+  const here = SHIP_TYPES.filter((type) => planet.ships[type] > 0);
+
+  return (
+    <div className="hangar">
+      <div className="dim">Hangar — {planet.name}</div>
+      {here.length === 0 && <div className="dim">No ships here.</div>}
+      {here.map((type) => <HangarRow key={type} type={type} count={planet.ships[type]} />)}
+    </div>
+  );
+}
+
+/** what a fleet is doing: flying out, guarding, or flying home */
+function statusText(fleet: FleetDTO, planetName: (id: number) => string) {
+  if (fleet.status === "outbound") return `${fleet.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(fleet.targetId)}`;
+
+  if (fleet.status === "stationed") return `Guarding ${planetName(fleet.targetId)}`;
+
+  return `Returning to ${planetName(fleet.originId)}`;
+}
+
+function FleetRow({ fleet, planetName, now, act }: { fleet: FleetDTO; planetName: Props["planetName"]; now: number; act: Props["act"] }) {
+  const hasLoot = Object.values(fleet.loot).some((amount) => amount > 0);
+  const arrival = fleet.status === "outbound" ? fleet.arriveAt : fleet.returnAt;
+
+  return (
+    <div className="row">
+      <span className="icon"><img src={fleetIcon(fleet)} alt="" /></span>
+      <div className="grow">
+        {statusText(fleet, planetName)}
+        <div className="sub"><ShipList ships={fleet.ships} />{hasLoot && <> · loot <Cost cost={fleet.loot} /></>}</div>
+      </div>
+      {fleet.status === "stationed"
+        ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: fleet.id })}>Recall</button>
+        : <b>{fmtTime(arrival - now)}</b>}
+    </div>
+  );
+}
+
 /** ships sitting at the planet, plus every fleet that is flying or guarding somewhere */
 export default function FleetsPanel({ planet, showHangar, fleets, planetName, now, act }: Props) {
-  const here = SHIP_TYPES.filter((t) => planet.ships[t] > 0);
-
   return (
     <div className="panel">
       <h2>Fleets</h2>
-      {showHangar && (
-        <div className="hangar">
-          <div className="dim">Hangar — {planet.name}</div>
-          {here.length === 0 && <div className="dim">No ships here.</div>}
-          {here.map((t) => { // one row per ship type waiting at this planet
-            const n = planet.ships[t];
-            const shown = Math.min(n, 300); // keep the page light if you build thousands
-
-            return (
-              <div className="hangar-row" key={t} title={`${n} × ${SHIPS[t].name}`}>
-                <div className="hangar-label">{SHIPS[t].name} <b>×{n}</b></div>
-                <div className="hangar-ships">
-                  {Array.from({ length: shown }, (_, index) => (
-                    <img key={`${t}-${index}`} src={SHIPS[t].icon} style={{ width: 22 * SHIPS[t].size, height: 22 * SHIPS[t].size }} alt="" />
-                  ))}
-
-                  {n > shown && <span className="dim"> +{n - shown} more</span>}
-                </div>
-              </div>
-            );
-          })}
-
-        </div>
-      )}
-
+      {showHangar && <Hangar planet={planet} />}
       {fleets.length === 0 && <div className="dim">None.</div>}
-      {fleets.map((fleet) => ( // one row per fleet in the air or on guard
-        <div className="row" key={fleet.id}>
-          <span className="icon"><img src={fleetIcon(fleet)} alt="" /></span>
-          <div className="grow">
-            {fleet.status === "outbound" ? `${fleet.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(fleet.targetId)}`
-              : fleet.status === "stationed" ? `Guarding ${planetName(fleet.targetId)}` // status text for a fleet: flying out, guarding, or flying home
-              : `Returning to ${planetName(fleet.originId)}`}
-            <div className="sub"><ShipList ships={fleet.ships} />{Object.values(fleet.loot).some((n) => n > 0) && <> · loot <Cost cost={fleet.loot} /></>}</div> {/* show loot only when at least one resource was taken */}
-          </div>
-          {fleet.status === "stationed"
-            ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: fleet.id })}>Recall</button>
-            : <b>{fmtTime((fleet.status === "outbound" ? fleet.arriveAt : fleet.returnAt) - now)}</b>}
-        </div>
-      ))}
-
+      {fleets.map((fleet) => <FleetRow key={fleet.id} fleet={fleet} planetName={planetName} now={now} act={act} />)}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SHIPS, flightSeconds, type GameState, type PlanetDTO } from "@/lib/defs";
+import { SHIPS, flightSeconds, type GameState, type PlanetDTO, type ShipType } from "@/lib/defs";
 import { SHIP_TYPES, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -10,43 +10,51 @@ type Props = {
   onSent: () => void;
 };
 
+type Quantities = Record<string, number>;
+
+/** what sending these ships would do: attack an enemy, colonise if a colony ship is along, otherwise just guard */
+function missionText(target: PlanetDTO, quantities: Quantities) {
+  if (target.kind === "npc") return `Attack · enemy defense ${target.defense} · survivors guard the planet`;
+
+  return (quantities.colony_ship ?? 0) > 0 ? "Colonize" : "Guard · add a Colony Ship to settle it";
+}
+
+function ShipRow({ type, available, value, onChange }: { type: ShipType; available: number; value: number; onChange: (value: number) => void }) {
+  return (
+    <div className="row">
+      <span className="icon"><img src={SHIPS[type].icon} alt="" /></span>
+      <span className="grow">{SHIPS[type].name} <span className="sub">({available} available)</span></span>
+      <input type="number" min={0} max={available} value={value} onChange={(event) => onChange(Number(event.target.value))} />
+    </div>
+  );
+}
+
 /** pick ships at the current planet and send them to the targeted planet */
 export default function FleetSend({ game, planet, target, act, onSent }: Props) {
-  const [qty, setQty] = useState<Record<string, number>>({});
+  const [quantities, setQuantities] = useState<Quantities>({});
+
+  const send = async () => {
+    await act({ action: "send", originId: planet.id, targetId: target!.id, ships: quantities });
+    setQuantities({});
+    onSent();
+  };
 
   return (
     <div className="panel">
       <h2>Fleet {target ? `→ ${target.name}` : ""}</h2>
-      {!target ? (
-        <div className="dim">Click an enemy or empty planet on the solar map to send ships.</div>
-      ) : (
+      {!target && <div className="dim">Click an enemy or empty planet on the solar map to send ships.</div>}
+      {target && (
         <>
           <div className="dim" style={{ marginBottom: 6 }}>
-            {target.kind === "npc"
-              ? `Attack · enemy defense ${target.defense} · survivors guard the planet`
-              : (qty.colony_ship ?? 0) > 0 ? "Colonize" : "Guard · add a Colony Ship to settle it"} {/* mission preview: attack an enemy, colonise if a colony ship is in the fleet, otherwise just guard */}
+            {missionText(target, quantities)}
             {" · "}flight {fmtTime(flightSeconds(planet, target, game.systems) * 1000)} each way
           </div>
-          {SHIP_TYPES.map((t) => ( // one row per ship type for choosing how many to send
-            <div className="row" key={t}>
-              <span className="icon"><img src={SHIPS[t].icon} alt="" /></span>
-              <span className="grow">{SHIPS[t].name} <span className="sub">({planet.ships[t] ?? 0} available)</span></span>
-              <input type="number" min={0} max={planet.ships[t] ?? 0} value={qty[t] ?? 0}
-                onChange={(event) => setQty({ ...qty, [t]: Number(event.target.value) })} />
-            </div>
+          {SHIP_TYPES.map((type) => (
+            <ShipRow key={type} type={type} available={planet.ships[type] ?? 0} value={quantities[type] ?? 0} onChange={(value) => setQuantities({ ...quantities, [type]: value })} />
           ))}
-
-          <button style={{ marginTop: 8 }} onClick={async () => {
-            await act({ action: "send", originId: planet.id, targetId: target.id, ships: qty });
-            setQty({});
-            onSent();
-          }}>
-
-            Send fleet
-          </button>
+          <button style={{ marginTop: 8 }} onClick={send}>Send fleet</button>
         </>
       )}
-
     </div>
   );
 }
