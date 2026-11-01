@@ -1,8 +1,8 @@
-import PlanetView from "@/components/PlanetView";
+import PlanetView from "@/components/planet/PlanetView";
 import { describePlanet, equilibriumTempK, planetParams, planetStats, starParams } from "@/lib/planetGen";
 import type { FleetDTO, PlanetDTO } from "@/lib/defs";
 import { bodyNote } from "@/lib/data/catalog";
-import { ShipList, elementColor, fmtAU } from "./ui";
+import { ShipList, elementColor, fmtAU } from "@/components/ui";
 
 type Props = { planet: PlanetDTO; systemSeed: number; guards: FleetDTO[] };
 

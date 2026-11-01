@@ -1,6 +1,6 @@
-import { ELEMENTS, type Element } from "./defs";
-import { BODY_BY_SEED, STAR_BY_SEED } from "./data/catalog";
-import { applyLook, parseComposition } from "./data/realBodies";
+import { ELEMENTS, type Element } from "@/lib/defs";
+import { BODY_BY_SEED, STAR_BY_SEED } from "@/lib/data/catalog";
+import { applyLook, parseComposition } from "@/lib/data/realBodies";
 
 // Deterministic planet generation: the same seed always gives the same world.
 // Pure functions only (no three.js) so it can be used on the server or in scripts.

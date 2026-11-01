@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import type { PlanetDTO } from "@/lib/defs";
-import { planetPosition, systemRadius } from "@/components/three/orbits";
-import { flightOf, flyingFleets, isCrossSystem } from "@/lib/flight";
+import { planetPosition, systemRadius } from "@/components/maps/three/orbits";
+import { flightOf, flyingFleets, isCrossSystem } from "@/lib/galaxy/flight";
 import type { FleetDTO, GameState } from "@/lib/defs";
 
 const planet = (id: number, orbit: number, systemId = 1): PlanetDTO => ({

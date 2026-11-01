@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withGame } from "@/lib/engine";
+import { withGame } from "@/lib/server/engine";
 
 export const dynamic = "force-dynamic";
 

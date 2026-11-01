@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SHIPS, shipSeconds, type PlanetDTO, type QueueDTO, type Res, type ShipType } from "@/lib/defs";
-import { Cost, SHIP_TYPES, fmtTime } from "./ui";
+import { Cost, SHIP_TYPES, fmtTime } from "@/components/ui";
 
 type Props = {
   show: boolean; // hidden (but still mounted, so quantities are remembered) when viewing a planet that isn't yours

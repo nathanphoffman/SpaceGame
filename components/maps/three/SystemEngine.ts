@@ -2,12 +2,12 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { GameState, PlanetDTO, SystemDTO } from "@/lib/defs";
-import { flightOf } from "@/lib/flight";
-import { BACKDROP_RADIUS, backdrop } from "./glow";
-import { startFly, stepFly, type Fly } from "./cameraFlight";
-import { orbitRing, planetPosition, systemRadius } from "./orbits";
-import { bindPointer, pickAt, type Pickable } from "./pointer";
-import { HIGH_DETAIL, LOW_DETAIL, createPlanetNode, createShip, createStar, disposeTree, placeShip, setDetail, type PlanetNode, type ShipNode } from "./systemParts";
+import { flightOf } from "@/lib/galaxy/flight";
+import { BACKDROP_RADIUS, backdrop } from "@/components/maps/three/glow";
+import { startFly, stepFly, type Fly } from "@/components/maps/three/cameraFlight";
+import { orbitRing, planetPosition, systemRadius } from "@/components/maps/three/orbits";
+import { bindPointer, pickAt, type Pickable } from "@/components/maps/three/pointer";
+import { HIGH_DETAIL, LOW_DETAIL, createPlanetNode, createShip, createStar, disposeTree, placeShip, setDetail, type PlanetNode, type ShipNode } from "@/components/maps/three/systemParts";
 
 const FIELD_OF_VIEW = 50;
 const MAX_PIXEL_RATIO = 2;

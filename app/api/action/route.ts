@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { resetGame } from "@/lib/db";
-import { GameError, startBuilding, buildShips, recallFleet, sendFleet, withGame } from "@/lib/engine";
+import { resetGame } from "@/lib/server/db";
+import { GameError, startBuilding, buildShips, recallFleet, sendFleet, withGame } from "@/lib/server/engine";
 
 export const dynamic = "force-dynamic";
 

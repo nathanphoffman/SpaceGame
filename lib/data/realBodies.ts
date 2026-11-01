@@ -1,6 +1,6 @@
-import { ELEMENTS, type Element } from "../defs";
-import type { PlanetKind, PlanetParams } from "../planetGen";
-import type { BodySpec } from "./types";
+import { ELEMENTS, type Element } from "@/lib/defs";
+import type { PlanetKind, PlanetParams } from "@/lib/planetGen";
+import type { BodySpec } from "@/lib/data/types";
 
 /** on-screen size (game units, ~0.35 .. 1.45) from a real diameter */
 export function bodyRadius(kind: PlanetKind, km: number) {

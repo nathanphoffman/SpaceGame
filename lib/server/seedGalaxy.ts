@@ -1,7 +1,7 @@
 import type { Pool } from "pg";
-import { SYSTEMS } from "./data/catalog";
-import { fillSystem } from "./systemGen";
-import type { Filler } from "./systemGen";
+import { SYSTEMS } from "@/lib/data/catalog";
+import { fillSystem } from "@/lib/galaxy/systemGen";
+import type { Filler } from "@/lib/galaxy/systemGen";
 
 /** anything with pg's query(): the pool, or a client inside a transaction */
 export type Q = { query(text: string, values?: unknown[]): Promise<{ rows: any[] }> }; // eslint-disable-line @typescript-eslint/no-explicit-any

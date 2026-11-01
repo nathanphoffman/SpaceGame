@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SHIPS, flightSeconds, type GameState, type PlanetDTO } from "@/lib/defs";
-import { SHIP_TYPES, fmtTime } from "./ui";
+import { SHIP_TYPES, fmtTime } from "@/components/ui";
 
 type Props = {
   game: GameState;

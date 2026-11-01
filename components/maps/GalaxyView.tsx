@@ -1,5 +1,5 @@
 import type { GameState } from "@/lib/defs";
-import { CENTER, GRID, SECTOR_LY, sectorStarCount } from "@/lib/sector";
+import { CENTER, GRID, SECTOR_LY, sectorStarCount } from "@/lib/galaxy/sector";
 import { SYSTEMS } from "@/lib/data/catalog";
 
 type Props = { game: GameState; current: [number, number]; onSelect: (sx: number, sy: number) => void };

@@ -1,5 +1,5 @@
 import { SHIPS, type FleetDTO, type PlanetDTO } from "@/lib/defs";
-import { Cost, SHIP_TYPES, ShipList, fleetIcon, fmtTime } from "./ui";
+import { Cost, SHIP_TYPES, ShipList, fleetIcon, fmtTime } from "@/components/ui";
 
 type Props = {
   planet: PlanetDTO; // the planet whose hangar is shown

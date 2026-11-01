@@ -1,10 +1,10 @@
 import { starParams } from "@/lib/planetGen";
 import type { GameState } from "@/lib/defs";
-import { flightOf, flyingFleets } from "@/lib/flight";
-import { mapPositions } from "@/lib/galaxyLayout";
-import { CENTER, SECTOR_LY, sectorCentre } from "@/lib/sector";
-import { fleetIcon } from "./ui";
-import { useMapZoom } from "./useMapZoom";
+import { flightOf, flyingFleets } from "@/lib/galaxy/flight";
+import { mapPositions } from "@/lib/galaxy/galaxyLayout";
+import { CENTER, SECTOR_LY, sectorCentre } from "@/lib/galaxy/sector";
+import { fleetIcon } from "@/components/ui";
+import { useMapZoom } from "@/components/maps/useMapZoom";
 
 type Props = {
   game: GameState;

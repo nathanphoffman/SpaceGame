@@ -1,8 +1,8 @@
-import { planetThumb, thumbDisplaySize } from "@/components/planetThumb";
+import { planetThumb, thumbDisplaySize } from "@/components/planet/planetThumb";
 import { planetParams, starParams } from "@/lib/planetGen";
 import { SHIPS, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
-import { flightOf, flyingFleets, isCrossSystem } from "@/lib/flight";
-import { fleetIcon, fmtAU } from "./ui";
+import { flightOf, flyingFleets, isCrossSystem } from "@/lib/galaxy/flight";
+import { fleetIcon, fmtAU } from "@/components/ui";
 
 type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (planet: PlanetDTO) => void };
 

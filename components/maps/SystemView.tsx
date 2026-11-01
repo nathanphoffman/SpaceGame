@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { starParams } from "@/lib/planetGen";
 import type { GameState, PlanetDTO, SystemDTO } from "@/lib/defs";
-import { SystemEngine } from "./three/SystemEngine";
+import { SystemEngine } from "@/components/maps/three/SystemEngine";
 
 type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (planet: PlanetDTO) => void };
 

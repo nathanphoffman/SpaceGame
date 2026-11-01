@@ -3,7 +3,7 @@ import {
   type PlanetDTO, type QueueDTO, type Res,
 } from "@/lib/defs";
 
-import { Cost, elementColor, fmtTime } from "./ui";
+import { Cost, elementColor, fmtTime } from "@/components/ui";
 
 type Props = {
   planet: PlanetDTO;

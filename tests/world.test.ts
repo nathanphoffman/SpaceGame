@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { CENTER, GRID, SECTOR_LY, sectorCentre, sectorOf, sectorStarCount, sectorStars, validSector } from "@/lib/sector";
-import { mapPositions } from "@/lib/galaxyLayout";
+import { CENTER, GRID, SECTOR_LY, sectorCentre, sectorOf, sectorStarCount, sectorStars, validSector } from "@/lib/galaxy/sector";
+import { mapPositions } from "@/lib/galaxy/galaxyLayout";
 import { flightSeconds, productionRates, buildCost, toRoman, shipSeconds } from "@/lib/defs";
-import { fillSystem, planetCount } from "@/lib/systemGen";
+import { fillSystem, planetCount } from "@/lib/galaxy/systemGen";
 import { planetParams, planetStats } from "@/lib/planetGen";
 
 describe("sectors", () => {

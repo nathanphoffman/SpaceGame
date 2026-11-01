@@ -1,5 +1,5 @@
 import { ELEMENTS, ELEMENT_ORDER, type PlanetDTO, type Res } from "@/lib/defs";
-import { Ico } from "./ui";
+import { Ico } from "@/components/ui";
 
 type Props = {
   planets: PlanetDTO[]; // your planets
@@ -17,7 +17,7 @@ export default function TopBar({ planets, current, stock, rate, onSelect, onRese
       <div className="tabs">
         {planets.map((planet) => ( // one tab per base you own
           <button key={planet.id} className={planet.id === current.id ? "on" : ""} onClick={() => onSelect(planet.id)}>
-            <Ico src="/icons/planet_player.svg" /> {planet.name}
+            <Ico src="/icons/planets/planet_player.svg" /> {planet.name}
           </button>
         ))}
 

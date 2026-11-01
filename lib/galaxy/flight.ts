@@ -1,4 +1,4 @@
-import type { FleetDTO, GameState } from "./defs";
+import type { FleetDTO, GameState } from "@/lib/defs";
 
 // find a planet by id; every fleet refers to planets that are loaded
 const planetOf = (game: GameState, id: number) => game.planets.find((planet) => planet.id === id)!;

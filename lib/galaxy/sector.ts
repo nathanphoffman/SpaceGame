@@ -1,4 +1,4 @@
-import { mulberry32, starName } from "./planetGen";
+import { mulberry32, starName } from "@/lib/planetGen";
 
 // The galaxy map is a GRID x GRID board of square sectors, SECTOR_LY light-years wide. Sol's sector is the exact centre.
 // Sector (x, y) with y increasing northwards; the centre of Sol's sector is the origin of the light-year coordinates.

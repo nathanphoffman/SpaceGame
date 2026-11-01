@@ -1,8 +1,8 @@
-import { EXOPLANETS } from "./exoplanets";
-import { bodyRadius } from "./realBodies";
-import { SOL_BODIES } from "./sol";
-import { STARS } from "./stars";
-import type { BodySpec, SystemSpec } from "./types";
+import { EXOPLANETS } from "@/lib/data/exoplanets";
+import { bodyRadius } from "@/lib/data/realBodies";
+import { SOL_BODIES } from "@/lib/data/sol";
+import { STARS } from "@/lib/data/stars";
+import type { BodySpec, SystemSpec } from "@/lib/data/types";
 
 /** bump this when the catalog changes: a stored game from an older version is wiped and re-seeded */
 export const GALAXY_VERSION = "local-neighbourhood-3";

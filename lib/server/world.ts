@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import type { Res, SystemDTO } from "./defs";
+import type { Res, SystemDTO } from "@/lib/defs";
 
 export type Planet = {
   id: number; name: string; system_id: number; orbit: number; kind: "player" | "npc" | "empty";

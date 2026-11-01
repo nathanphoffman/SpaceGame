@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import Buildings from "@/components/Buildings";
-import FleetSend from "@/components/FleetSend";
-import FleetsPanel from "@/components/FleetsPanel";
-import GalaxyView from "@/components/GalaxyView";
-import LocalMap from "@/components/LocalMap";
-import PlanetPanel from "@/components/PlanetPanel";
-import Shipyard from "@/components/Shipyard";
-import SolarMap from "@/components/SolarMap";
-import SystemView from "@/components/SystemView";
-import TopBar from "@/components/TopBar";
+import Buildings from "@/components/panels/Buildings";
+import FleetSend from "@/components/panels/FleetSend";
+import FleetsPanel from "@/components/panels/FleetsPanel";
+import GalaxyView from "@/components/maps/GalaxyView";
+import LocalMap from "@/components/maps/LocalMap";
+import PlanetPanel from "@/components/panels/PlanetPanel";
+import Shipyard from "@/components/panels/Shipyard";
+import SolarMap from "@/components/maps/SolarMap";
+import SystemView from "@/components/maps/SystemView";
+import TopBar from "@/components/panels/TopBar";
 import { planetStats } from "@/lib/planetGen";
 import { ELEMENTS, buildingInfo, mineType, productionRates, type Element, type Res } from "@/lib/defs";
 import type { PlanetDTO } from "@/lib/defs";
 import { useGame } from "@/lib/useGame";
-import { CENTER } from "@/lib/sector";
+import { CENTER } from "@/lib/galaxy/sector";
 
 export default function Page() {
   const [sector, setSector] = useState<[number, number]>([CENTER, CENTER]); // the sector shown on the local map

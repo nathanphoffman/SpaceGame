@@ -1,6 +1,6 @@
 import { Pool } from "pg";
-import { GALAXY_VERSION } from "./data/catalog";
-import { seedGalaxy } from "./seedGalaxy";
+import { GALAXY_VERSION } from "@/lib/data/catalog";
+import { seedGalaxy } from "@/lib/server/seedGalaxy";
 
 const g = globalThis as unknown as { __pool?: Pool; __ready?: Promise<void> };
 

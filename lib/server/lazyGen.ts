@@ -1,6 +1,6 @@
-import { insertPlanets, type PlanetRow, type Q } from "./seedGalaxy";
-import { sectorStars } from "./sector";
-import { fillSystem } from "./systemGen";
+import { insertPlanets, type PlanetRow, type Q } from "@/lib/server/seedGalaxy";
+import { sectorStars } from "@/lib/galaxy/sector";
+import { fillSystem } from "@/lib/galaxy/systemGen";
 
 /** Create a sector's stars the first time anyone looks at it. The same sector always generates the same stars. */
 export async function ensureSector(q: Q, sx: number, sy: number) {

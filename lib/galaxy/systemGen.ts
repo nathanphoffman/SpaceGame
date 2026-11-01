@@ -1,6 +1,6 @@
 // Fills the gaps in a star system: planets we haven't discovered yet are generated, deterministically.
-import { mineType } from "./defs";
-import { mulberry32, planetName, planetStats, starParams } from "./planetGen";
+import { mineType } from "@/lib/defs";
+import { mulberry32, planetName, planetStats, starParams } from "@/lib/planetGen";
 
 export type Filler = {
   id: number;

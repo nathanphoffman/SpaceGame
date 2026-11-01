@@ -1,14 +1,14 @@
 import { randomUUID } from "crypto";
-import { pool, ready } from "./db";
+import { pool, ready } from "@/lib/server/db";
 import {
   ELEMENTS, MAX_BUILDING_LEVEL, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds,
   type ShipType, type Res, type GameState,
-} from "./defs";
+} from "@/lib/defs";
 
-import { planetStats } from "./planetGen";
-import { ensureSector, ensureSystem } from "./lazyGen";
-import { validSector } from "./sector";
-import { load, save, type Fleet, type Planet, type View, type World } from "./world";
+import { planetStats } from "@/lib/planetGen";
+import { ensureSector, ensureSystem } from "@/lib/server/lazyGen";
+import { validSector } from "@/lib/galaxy/sector";
+import { load, save, type Fleet, type Planet, type View, type World } from "@/lib/server/world";
 
 export class GameError extends Error {}
 

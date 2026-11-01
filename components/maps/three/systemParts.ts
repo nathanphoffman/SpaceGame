@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { planetParams, starParams } from "@/lib/planetGen";
 import type { FleetDTO, PlanetDTO, SystemDTO } from "@/lib/defs";
-import { createPlanetGroup } from "../planetMesh";
-import { glowSprite } from "./glow";
+import { createPlanetGroup } from "@/components/planet/planetMesh";
+import { glowSprite } from "@/components/maps/three/glow";
 
 const STAR_WHITEN = 0.35;
 const LIGHT_WHITEN = 0.3;
