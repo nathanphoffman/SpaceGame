@@ -1,4 +1,5 @@
 import { STAR_BY_SEED } from "@/lib/data/catalog";
+import { SUN_TEMP_K, STEFAN_BOLTZMANN_POWER } from "./constants";
 import { mulberry32 } from "./noise";
 import type { RGB, StarParams } from "./types";
 
@@ -43,16 +44,23 @@ const SEED_OFFSET = 7;
 const WARM_UP_DRAWS = 3;
 const SUBTYPES = 10;
 const SUBTYPE_BLEND = 0.6; // how far a star's colour moves toward the next (cooler) class at subtype 9
-const SUN_TEMP_K = 5772;
+const SUBTYPE_MAX = 9; // subtypes run 0..9
+const DA_INDEX_NUMERATOR = 50400; // white dwarf temperature index = 50400 / temperature
+const DA_INDEX_RANGE: [number, number] = [1, 9];
+const WHITE_DWARF_TEMP = { base: 8000, spread: 25000 };
+const GIANT_RADIUS = { base: 12, spread: 40, redBonus: 20 }; // solar radii
+const SUPERGIANT_RADIUS = { red: { base: 250, spread: 600 }, blue: { base: 30, spread: 60 } };
+const SIZE_LOOK = { base: 0.6, perDecade: 0.35, referenceRadius: 0.1, min: 0.5, max: 1.8 }; // display size grows with the log of the radius
+const GLARE_LOOK = { base: 0.35, perDecade: 0.12, offset: 0.2, min: 0.2, minLuminosity: 1e-3 };
 const WHITE_DWARF = { radius: 0.012, color: [0.82, 0.88, 1] as RGB, size: 0.5, bright: 0.35 };
 
 const mixColors = (first: RGB, second: RGB, t: number): RGB => [first[0] + (second[0] - first[0]) * t, first[1] + (second[1] - first[1]) * t, first[2] + (second[2] - first[2]) * t];
 
 /** display size and glare from radius (solar radii) and temperature (K); luminosity ~ R^2 T^4 */
 function starLook(radius: number, temp: number) {
-  const size = Math.min(1.8, Math.max(0.5, 0.6 + 0.35 * Math.log10(radius / 0.1)));
-  const luminosity = radius * radius * Math.pow(temp / SUN_TEMP_K, 4);
-  const bright = Math.min(1, Math.max(0.2, 0.35 + 0.12 * Math.log10(Math.max(luminosity, 1e-3)) + 0.2));
+  const size = Math.min(SIZE_LOOK.max, Math.max(SIZE_LOOK.min, SIZE_LOOK.base + SIZE_LOOK.perDecade * Math.log10(radius / SIZE_LOOK.referenceRadius)));
+  const luminosity = radius * radius * Math.pow(temp / SUN_TEMP_K, STEFAN_BOLTZMANN_POWER);
+  const bright = Math.min(1, Math.max(GLARE_LOOK.min, GLARE_LOOK.base + GLARE_LOOK.perDecade * Math.log10(Math.max(luminosity, GLARE_LOOK.minLuminosity)) + GLARE_LOOK.offset));
 
   return { size, bright };
 }
@@ -77,11 +85,11 @@ function starLabel(kind: StarKind, cls: string) {
 function starRadius(kind: StarKind, cls: string, sub: number, jitter: number) {
   const [, , rHot, rCool] = CLASS_DATA[cls];
 
-  if (kind.lum === "III") return 12 + jitter * 40 + (cls === "M" ? 20 : 0);
+  if (kind.lum === "III") return GIANT_RADIUS.base + jitter * GIANT_RADIUS.spread + (cls === "M" ? GIANT_RADIUS.redBonus : 0);
 
-  if (kind.lum === "I") return cls === "M" ? 250 + jitter * 600 : 30 + jitter * 60;
+  if (kind.lum === "I") return cls === "M" ? SUPERGIANT_RADIUS.red.base + jitter * SUPERGIANT_RADIUS.red.spread : SUPERGIANT_RADIUS.blue.base + jitter * SUPERGIANT_RADIUS.blue.spread;
 
-  return rHot + (rCool - rHot) * (sub / 9);
+  return rHot + (rCool - rHot) * (sub / SUBTYPE_MAX);
 }
 
 export function starParams(seed: number): StarParams {
@@ -105,14 +113,14 @@ export function starParams(seed: number): StarParams {
   const jitter = random();
 
   if (kind.lum === "D") { // white dwarf: hot, tiny, bluish-white
-    const temp = Math.round(8000 + jitter * 25000);
-    const index = Math.min(9, Math.max(1, Math.round(50400 / temp))); // DA temperature index = 50400 / T
+    const temp = Math.round(WHITE_DWARF_TEMP.base + jitter * WHITE_DWARF_TEMP.spread);
+    const index = Math.min(DA_INDEX_RANGE[1], Math.max(DA_INDEX_RANGE[0], Math.round(DA_INDEX_NUMERATOR / temp)));
 
     return { spectral: `DA${index}`, label: "White dwarf", temp, ...WHITE_DWARF };
   }
 
   const [hot, cool] = CLASS_DATA[cls];
-  const temp = Math.round(hot + (cool - hot) * (sub / 9));
+  const temp = Math.round(hot + (cool - hot) * (sub / SUBTYPE_MAX));
   const radius = starRadius(kind, cls, sub, jitter);
 
   return { spectral: `${cls}${sub}${kind.lum}`, label: starLabel(kind, cls), temp, radius, color: classColor(cls, sub), ...starLook(radius, temp) };

@@ -1,6 +1,7 @@
 import { ELEMENTS, type Element } from "@/lib/defs";
 import { BODY_BY_SEED } from "@/lib/data/catalog";
 import { parseComposition } from "@/lib/data/realBodies";
+import { EARTH_EQUILIBRIUM_K, PERCENT, STEFAN_BOLTZMANN_POWER, SUN_TEMP_K } from "./constants";
 import { mulberry32 } from "./noise";
 import { planetParams } from "./planetParams";
 import type { PlanetKind, PlanetParams, PlanetStats } from "./types";
@@ -38,14 +39,20 @@ const WARM_UP_DRAWS = 4;
 const MIN_SHARE = 8; // every element gets at least this percent so its symbol always fits on the bar
 const RARE_SHARE_FACTOR = 0.3; // rare elements only ever make up a small share
 const DICE_SIDES = 6;
+const GAS_ROUNDING_KM = 100; // made-up gas giants are sized to the nearest 100 km, other planets to the nearest 10
+const ROCK_ROUNDING_KM = 10;
+const SIZE_SPREAD = { min: 0.92, range: 0.16 }; // a made-up planet is up to 8% smaller or bigger than its look suggests
+const SHARE_WEIGHT = { min: 0.3, range: 1.4 }; // each element's abundance is scaled by a random factor in this range
+const TENTHS = 10; // percentages are rounded to a tenth
+const LUMINOSITY_ROOT = 0.25; // temperature falls with the fourth root of luminosity
 
 const statsCache = new Map<number, PlanetStats>();
 
 /** a real planet's size is exact; a made-up one is sized from its look, with a little random spread */
 function diameterOf(params: PlanetParams, random: () => number) {
-  const round = params.kind === "gas" ? 100 : 10;
+  const round = params.kind === "gas" ? GAS_ROUNDING_KM : ROCK_ROUNDING_KM;
 
-  return Math.round((params.radius * KM_PER_RADIUS_UNIT[params.kind] * (0.92 + random() * 0.16)) / round) * round;
+  return Math.round((params.radius * KM_PER_RADIUS_UNIT[params.kind] * (SIZE_SPREAD.min + random() * SIZE_SPREAD.range)) / round) * round;
 }
 
 /** pick `count` elements from the pool, each time weighted by how common it is, without picking one twice */
@@ -65,12 +72,12 @@ function pickElements(kind: PlanetKind, count: number, random: () => number) {
 
 /** turn the picked elements into percentages that add up to exactly 100, biggest first */
 function composeShares(picked: [string, number][], random: () => number) {
-  const raw = picked.map(([symbol, weight]) => weight * (0.3 + random() * 1.4) * (RARE.has(symbol) ? RARE_SHARE_FACTOR : 1));
+  const raw = picked.map(([symbol, weight]) => weight * (SHARE_WEIGHT.min + random() * SHARE_WEIGHT.range) * (RARE.has(symbol) ? RARE_SHARE_FACTOR : 1));
 
   // add up the raw amounts so each can be turned into a percentage
   const total = raw.reduce((sum, value) => sum + value, 0);
-  const shares = raw.map((value) => Math.round((MIN_SHARE + (value / total) * (100 - MIN_SHARE * picked.length)) * 10) / 10);
-  shares[0] = Math.round((shares[0] + (100 - shares.reduce((sum, value) => sum + value, 0))) * 10) / 10; // sum to exactly 100
+  const shares = raw.map((value) => Math.round((MIN_SHARE + (value / total) * (PERCENT - MIN_SHARE * picked.length)) * TENTHS) / TENTHS);
+  shares[0] = Math.round((shares[0] + (PERCENT - shares.reduce((sum, value) => sum + value, 0))) * TENTHS) / TENTHS; // sum to exactly 100
 
   return picked
     .map(([symbol], index) => ({ symbol, name: ELEMENTS[symbol as Element].name, pct: shares[index] }))
@@ -94,7 +101,7 @@ function buildStats(seed: number, params: PlanetParams): PlanetStats {
   if (random() < WHOLE_PLANET_RARE_CHANCE) { // very rarely the whole planet is one rare element: a jackpot world
     const symbol = params.kind === "gas" ? "He" : random() < TITANIUM_SHARE_OF_JACKPOTS ? "Ti" : "U"; // gas giants hold helium; other planets titanium or uranium
 
-    return { diameterKm, earths, composition: [{ symbol, name: ELEMENTS[symbol as Element].name, pct: 100 }] };
+    return { diameterKm, earths, composition: [{ symbol, name: ELEMENTS[symbol as Element].name, pct: PERCENT }] };
   }
 
   // 1d6 predominant elements; each share is its natural abundance times a random factor,
@@ -122,7 +129,7 @@ export function planetStats(seed: number): PlanetStats {
 
 /** Rough equilibrium temperature (Kelvin) at `orbitAU` from a star. */
 export function equilibriumTempK(star: { radius: number; temp: number }, orbitAU: number) {
-  const luminosity = star.radius * star.radius * Math.pow(star.temp / 5772, 4); // solar units
+  const luminosity = star.radius * star.radius * Math.pow(star.temp / SUN_TEMP_K, STEFAN_BOLTZMANN_POWER); // solar units
 
-  return 278 * Math.pow(luminosity, 0.25) / Math.sqrt(orbitAU);
+  return EARTH_EQUILIBRIUM_K * Math.pow(luminosity, LUMINOSITY_ROOT) / Math.sqrt(orbitAU);
 }
