@@ -3,9 +3,73 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { planetParams } from "@/lib/planets/planetParams";
+import type { PlanetParams } from "@/lib/planets/types";
 import { createPlanetGroup } from "@/components/planet/planetMesh";
+import { disposeScene, lightScene } from "@/components/planet/sceneParts";
 
 const MAX_FPS = 30;
+const MAX_PIXEL_RATIO = 2;
+const DEFAULT_SIZE_PX = 300;
+
+function createRenderer(element: HTMLElement) {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
+  element.appendChild(renderer.domElement);
+  renderer.domElement.style.display = "block";
+
+  return renderer;
+}
+
+/** the planet, its lights and a camera that looks at it from a little above */
+function createScene(params: PlanetParams) {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+  camera.position.set(0, 0.4, 5.5); // closer than a square view so the planet still fills the shorter frame
+  camera.lookAt(0, 0, 0);
+  lightScene(scene);
+  const { group, planet } = createPlanetGroup(params);
+  scene.add(group);
+
+  return { scene, camera, planet };
+}
+
+/** keeps the renderer and camera matched to the size of the element; returns the function that stops watching */
+function followSize(element: HTMLElement, renderer: THREE.WebGLRenderer, camera: THREE.PerspectiveCamera) {
+  const resize = () => {
+    const width = element.clientWidth || DEFAULT_SIZE_PX;
+    const height = element.clientHeight || DEFAULT_SIZE_PX;
+    renderer.setSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  };
+
+  resize();
+  const watcher = new ResizeObserver(resize);
+  watcher.observe(element);
+
+  return () => watcher.disconnect();
+}
+
+/** draws and spins the planet, skipping frames above the frame-rate cap; returns the function that stops the loop */
+function startLoop(render: () => void, spin: (seconds: number) => void) {
+  let frame = 0;
+  let last = performance.now();
+  const frameMs = 1000 / MAX_FPS;
+
+  const loop = (time: number) => {
+    frame = requestAnimationFrame(loop);
+
+    if (time - last < frameMs - 1) return;
+
+    spin((time - last) / 1000);
+    last = time;
+    render();
+  };
+
+  frame = requestAnimationFrame(loop);
+
+  return () => cancelAnimationFrame(frame);
+}
 
 export default function PlanetView({ seed }: { seed: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -13,61 +77,15 @@ export default function PlanetView({ seed }: { seed: number }) {
   useEffect(() => {
     const element = ref.current!;
     const params = planetParams(seed);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    element.appendChild(renderer.domElement);
-    renderer.domElement.style.display = "block";
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-    camera.position.set(0, 0.4, 5.5); // closer than a square view so the planet still fills the shorter frame
-    camera.lookAt(0, 0, 0);
-
-    const sun = new THREE.DirectionalLight(0xffffff, 2.6);
-    sun.position.set(5, 3, 5);
-    scene.add(sun, new THREE.AmbientLight(0xffffff, 0.35));
-
-    const { group, planet } = createPlanetGroup(params);
-    scene.add(group);
-
-    const resize = () => {
-      const w = element.clientWidth || 300;
-      const h = element.clientHeight || 300;
-      renderer.setSize(w, h);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    };
-
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(element);
-
-    let raf = 0;
-    let last = performance.now();
-    const frameMs = 1000 / MAX_FPS;
-
-    const loop = (t: number) => {
-      raf = requestAnimationFrame(loop);
-
-      if (t - last < frameMs - 1) return; // skip frames above the cap
-      planet.rotation.y += ((t - last) / 1000) * params.spin;
-      last = t;
-      renderer.render(scene, camera);
-    };
-
-    raf = requestAnimationFrame(loop);
+    const renderer = createRenderer(element);
+    const { scene, camera, planet } = createScene(params);
+    const stopWatching = followSize(element, renderer, camera);
+    const stopLoop = startLoop(() => renderer.render(scene, camera), (seconds) => { planet.rotation.y += seconds * params.spin; });
 
     return () => { // cleanup that runs when the view closes: stop the loop and free the GPU memory
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      scene.traverse((o) => {
-        if (o instanceof THREE.Mesh) {
-          o.geometry.dispose();
-          (o.material as THREE.Material).dispose();
-        }
-      });
-
+      stopLoop();
+      stopWatching();
+      disposeScene(scene);
       renderer.dispose();
       element.removeChild(renderer.domElement);
     };
