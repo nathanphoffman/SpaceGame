@@ -1,8 +1,7 @@
 import {
   MAX_BUILDING_LEVEL, buildCost, buildSeconds, buildingInfo, mineElement, mineRate, toRoman,
-  type PlanetDTO, type QueueDTO, type Res,
+  type BuildingInfo, type PlanetDTO, type QueueDTO, type Res,
 } from "@/lib/defs";
-
 import { Cost, elementColor, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -15,75 +14,124 @@ type Props = {
   act: (body: object) => Promise<void>;
 };
 
-export default function Buildings({ planet, composition, types, queue, now, shortfall, act }: Props) {
+type TileState = { type: string; info: BuildingInfo; built: number; level: number; queued: QueueDTO[]; element: string | null; pct: number };
+
+/** the icon, tinted with the element's colour (the same colour as the composition bar) when the building is a mine */
+function TileIcon({ info, element }: { info: BuildingInfo; element: string | null }) {
+  if (!element) return <img className="tile-icon" src={info.icon} alt="" />;
+
+  return (
+    <span className="tile-icon tinted" style={{ background: elementColor(element), WebkitMaskImage: `url(${info.icon})`, maskImage: `url(${info.icon})` }}>
+      <img src={info.icon} alt="" />
+    </span>
+  );
+}
+
+function TileHead({ tile }: { tile: TileState }) {
+  const unbuilt = tile.built === 0;
+
+  return (
+    <div className="tile-top">
+      <div className="tile-head">
+        <TileIcon info={tile.info} element={tile.element} />
+        <b>{tile.info.name}{!unbuilt && <span className="dim"> ({toRoman(tile.built)})</span>}</b>
+      </div>
+      {unbuilt && <span className="notbuilt">(Not Built Yet)</span>}
+    </div>
+  );
+}
+
+/** one dot per level: filled for built levels, hollow for levels still in the queue */
+function LevelDots({ tile }: { tile: TileState }) {
+  const title = `Level ${tile.built}${tile.queued.length ? `, upgrading to ${tile.level}` : ""}`;
+
+  return (
+    <div className="dots" title={title}>
+      {Array.from({ length: tile.level }, (_, index) => (
+        <span key={`level-${index}`} className={`dot-level ${index < tile.built ? "on" : "queued"}`} />
+      ))}
+    </div>
+  );
+}
+
+/** how much of the element this mine makes now, and after the next upgrade (until the level cap) */
+function MineOutput({ tile }: { tile: TileState }) {
+  const { element, pct, built, level } = tile;
+
+  if (!element) return null;
+
+  return (
+    <div className="sub" title={`${element} makes up ${pct}% of this planet; richer deposits yield more per level`}>
+      <b style={{ color: elementColor(element) }}>{element}</b> {pct}% · +{mineRate(built, pct).toFixed(1)}/s
+      {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>}
+    </div>
+  );
+}
+
+function NextLevel({ tile, cost }: { tile: TileState; cost: Res }) {
+  if (tile.level >= MAX_BUILDING_LEVEL) return <div className="sub good">Maximum level</div>;
+
+  return (
+    <>
+      <div className="sub">Cost: <Cost cost={cost} /></div>
+      <div className="sub">{fmtTime(buildSeconds(tile.type, tile.level) * 1000)}</div>
+    </>
+  );
+}
+
+/** time left on the building being built, with a bar of how much of its build time has already passed */
+function BuildProgress({ active, now }: { active: QueueDTO | undefined; now: number }) {
+  if (!active) return null;
+
+  const share = Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100);
+
+  return (
+    <div className="grow-fill">
+      <div className="sub good">{fmtTime(active.finishAt - now)}</div>
+      <div className="bar"><div style={{ width: `${share}%` }} /></div>
+    </div>
+  );
+}
+
+function buttonLabel(tile: TileState) {
+  if (tile.level >= MAX_BUILDING_LEVEL) return "Max level";
+
+  return tile.built === 0 ? "Build" : "Upgrade";
+}
+
+function tileState(type: string, props: Props): TileState {
+  const queued = props.queue.filter((item) => item.type === type);
+  const built = props.planet.buildings[type] ?? 0;
+  const element = mineElement(type);
+  const pct = props.composition.find((part) => part.symbol === element)?.pct ?? 0;
+
+  return { type, info: buildingInfo(type)!, built, level: built + queued.length, queued, element, pct };
+}
+
+function BuildingTile({ type, props }: { type: string; props: Props }) {
+  const tile = tileState(type, props);
+  const cost = buildCost(type, tile.level);
+  const maxed = tile.level >= MAX_BUILDING_LEVEL;
+  const why = maxed ? `Already at the maximum level (${toRoman(MAX_BUILDING_LEVEL)})` : props.shortfall(cost);
+
+  return (
+    <div className="tile" title={tile.info.desc}>
+      <TileHead tile={tile} />
+      <LevelDots tile={tile} />
+      <MineOutput tile={tile} />
+      <NextLevel tile={tile} cost={cost} />
+      <BuildProgress active={tile.queued[0]} now={props.now} />
+      <button disabled={!!why} title={why} onClick={() => props.act({ action: "build", planetId: props.planet.id, type })}>{buttonLabel(tile)}</button>
+    </div>
+  );
+}
+
+export default function Buildings(props: Props) {
   return (
     <div className="panel">
-      <h2>{planet.name} — buildings</h2>
+      <h2>{props.planet.name} — buildings</h2>
       <div className="tiles">
-        {types.map((t) => { // one row per building this planet can have
-          const info = buildingInfo(t)!;
-          const q = queue.filter((queueItem) => queueItem.type === t);
-          const built = planet.buildings[t] ?? 0;
-          const level = built + q.length;
-          const cost = buildCost(t, level);
-          const active = q[0];
-          const maxed = level >= MAX_BUILDING_LEVEL;
-          const unbuilt = built === 0;
-          const why = maxed ? `Already at the maximum level (${toRoman(MAX_BUILDING_LEVEL)})` : shortfall(cost);
-          const el = mineElement(t);
-          const pct = composition.find((c) => c.symbol === el)?.pct ?? 0;
-
-          return (
-            <div className="tile" key={t} title={info.desc}>
-              <div className="tile-top">
-                <div className="tile-head">
-                  {el ? (
-                    // greyscale icon tinted with the element's colour (same colour as the composition bar)
-                    <span className="tile-icon tinted" style={{ background: elementColor(el), WebkitMaskImage: `url(${info.icon})`, maskImage: `url(${info.icon})` }}>
-                      <img src={info.icon} alt="" />
-                    </span>
-                  ) : (
-                    <img className="tile-icon" src={info.icon} alt="" />
-                  )}
-
-                  <b>{info.name}{!unbuilt && <span className="dim"> ({toRoman(built)})</span>}</b>
-                </div>
-                {unbuilt && <span className="notbuilt">(Not Built Yet)</span>}
-              </div>
-              <div className="dots" title={`Level ${built}${q.length ? `, upgrading to ${level}` : ""}`}>
-                {Array.from({ length: level }, (_, index) => (
-                  <span key={`level-${index}`} className={`dot-level ${index < built ? "on" : "queued"}`} />
-                ))}
-
-              </div>
-              {el && (
-                <div className="sub" title={`${el} makes up ${pct}% of this planet; richer deposits yield more per level`}>
-                  <b style={{ color: elementColor(el) }}>{el}</b> {pct}% · +{mineRate(built, pct).toFixed(1)}/s
-                  {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>} {/* show the output gain of the next level only until the level cap */}
-                </div>
-              )}
-
-              {maxed ? (
-                <div className="sub good">Maximum level</div>
-              ) : (
-                <>
-                  <div className="sub">Cost: <Cost cost={cost} /></div> {/* the price of the next level */}
-                  <div className="sub">{fmtTime(buildSeconds(t, level) * 1000)}</div>
-                </>
-              )}
-
-              {active && (
-                <div className="grow-fill">
-                  <div className="sub good">{fmtTime(active.finishAt - now)}</div>
-                  <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div> {/* bar width = share of the build time that has already passed, capped at 100% */}
-                </div>
-              )}
-
-              <button disabled={!!why} title={why} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>{maxed ? "Max level" : unbuilt ? "Build" : "Upgrade"}</button> {/* button text: max level, first build, or upgrade, depending on the building's state */}
-            </div>
-          );
-        })}
-
+        {props.types.map((type) => <BuildingTile key={type} type={type} props={props} />)}
       </div>
     </div>
   );
