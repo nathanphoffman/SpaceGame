@@ -29,41 +29,65 @@ const SEED_MULTIPLIER = 7919;
 const SEED_OFFSET = 17;
 const DEFAULT_JITTER = 0.08;
 const OCEAN_COLOR: RGB = [0.1, 0.25, 0.5];
+const OCEAN_JITTER = 0.05;
 const RING_COLOR: RGB = [0.75, 0.7, 0.62];
+const RING_JITTER = 0.1;
 const MAX_RING_RADIUS_SHARE = 1.9; // rings reach at most this many planet radii
+const RING_INNER_RANGE: [number, number] = [1.25, 1.5]; // where the rings start, in planet radii
+const RING_WIDTH_RANGE: [number, number] = [0.4, 0.8]; // how wide the rings are, in planet radii
+const RING_TILT_RANGE: [number, number] = [-0.5, 0.5];
 const MAX_NOISE_OFFSET = 1000;
+const TILT_RANGE: [number, number] = [-0.45, 0.45]; // axial tilt in radians
+const SPIN_RANGE: [number, number] = [0.08, 0.3]; // radians per second
+const SEA_LEVEL_RANGE: [number, number] = [0.4, 0.55]; // only rocky worlds have oceans
+const NOISE_SCALE_RANGE: [number, number] = [1.2, 2.6];
+const BAND_FREQUENCY_RANGE: [number, number] = [5, 12];
+const BUMP_EXPONENT = 0.8; // below 1 makes bumpy worlds more common
+const CRATER_COUNT_EXPONENT = 1.2;
+const CRATER_SIZE_EXPONENT = 2.5; // above 1 makes big craters rare
+const CRATER_MIN_SIZE = 0.05;
+const CRATER_SIZE_SPREAD = 0.28;
+const CRATER_MIN_DEPTH = 0.02;
+const CRATER_DEPTH_SPREAD = 0.05;
+const NO_OCEAN = -1;
+// the radius range of each kind of planet, in the order the random numbers are drawn (all five are always drawn)
+const RADIUS_RANGES: Record<PlanetKind, [number, number]> = { moon: [0.45, 0.8], rocky: [0.7, 1.15], desert: [0.7, 1.1], ice: [0.65, 1.1], gas: [1.1, 1.45] };
+// gas-giant band colours: a base tone and three variations, each with how far the colour may drift
+const BAND_COLORS: { color: RGB; jitter: number }[] = [
+  { color: [0.72, 0.58, 0.4], jitter: 0.15 }, { color: [0.9, 0.82, 0.65], jitter: 0.12 }, { color: [0.55, 0.4, 0.3], jitter: 0.12 }, { color: [0.8, 0.7, 0.55], jitter: 0.12 },
+];
 
 // the first kind whose roll limit is above the roll; anything above the last limit is a desert
 const kindFromRoll = (roll: number): PlanetKind => KIND_ROLLS.find(([limit]) => roll < limit)?.[1] ?? "desert";
 
 /** every kind's radius is drawn (to keep the random sequence fixed) and the planet's own kind is used */
 function radiusFor(kind: PlanetKind, range: Range) {
-  return { moon: range(0.45, 0.8), rocky: range(0.7, 1.15), desert: range(0.7, 1.1), ice: range(0.65, 1.1), gas: range(1.1, 1.45) }[kind];
+  const radii = Object.fromEntries(Object.entries(RADIUS_RANGES).map(([name, [low, high]]) => [name, range(low, high)]));
+
+  return radii[kind];
 }
 
 /** craters are spread over the sphere at random; a few are big and deep */
 function makeCraters(count: number, random: () => number) {
   return Array.from({ length: count }, () => {
     const height = random() * 2 - 1, angle = random() * Math.PI * 2, ring = Math.sqrt(1 - height * height);
-    const big = Math.pow(random(), 2.5);
+    const big = Math.pow(random(), CRATER_SIZE_EXPONENT);
 
-    return { dir: [ring * Math.cos(angle), height, ring * Math.sin(angle)] as RGB, size: 0.05 + big * 0.28, depth: 0.02 + big * 0.05 };
+    return { dir: [ring * Math.cos(angle), height, ring * Math.sin(angle)] as RGB, size: CRATER_MIN_SIZE + big * CRATER_SIZE_SPREAD, depth: CRATER_MIN_DEPTH + big * CRATER_DEPTH_SPREAD };
   });
 }
 
 /** four gas-giant band colours: a base tone and three variations */
 function makeBands(jitter: Jitter): RGB[] {
-  const base = jitter([0.72, 0.58, 0.4], 0.15);
-
-  return [base, jitter([0.9, 0.82, 0.65], 0.12), jitter([0.55, 0.4, 0.3], 0.12), jitter([0.8, 0.7, 0.55], 0.12)];
+  return BAND_COLORS.map((band) => jitter(band.color, band.jitter));
 }
 
 function makeRings(radius: number, inner: number, range: Range, jitter: Jitter, random: () => number) {
   return {
     inner,
-    outer: Math.min(inner + radius * range(0.4, 0.8), radius * MAX_RING_RADIUS_SHARE),
-    tilt: range(-0.5, 0.5),
-    color: jitter(RING_COLOR, 0.1),
+    outer: Math.min(inner + radius * range(...RING_WIDTH_RANGE), radius * MAX_RING_RADIUS_SHARE),
+    tilt: range(...RING_TILT_RANGE),
+    color: jitter(RING_COLOR, RING_JITTER),
     seed: Math.floor(random() * MAX_NOISE_OFFSET),
   };
 }
@@ -71,39 +95,37 @@ function makeRings(radius: number, inner: number, range: Range, jitter: Jitter, 
 export function planetParams(seed: number): PlanetParams {
   const real: BodySpec | undefined = BODY_BY_SEED.get(seed); // real bodies pin kind, size and (if known) look to the data
   const random = mulberry32(seed * SEED_MULTIPLIER + SEED_OFFSET);
-
   const range: Range = (low, high) => low + (high - low) * random();
-
   // nudge each colour channel by up to +-amount at random and keep it within 0..1
   const jitter: Jitter = (color, amount = DEFAULT_JITTER) => color.map((channel) => Math.min(1, Math.max(0, channel + (random() - 0.5) * amount * 2))) as RGB;
 
   const roll = random(); // always drawn, even for real bodies, so their other values stay the same
   const kind = real?.kind ?? kindFromRoll(roll);
   const radius = radiusFor(kind, range);
-  const bump = BUMP_MAX[kind] * Math.pow(random(), 0.8);
-  const craterCount = real?.look?.craters ?? Math.floor(CRATER_MAX[kind] * Math.pow(random(), 1.2));
+  const bump = BUMP_MAX[kind] * Math.pow(random(), BUMP_EXPONENT);
+  const craterCount = real?.look?.craters ?? Math.floor(CRATER_MAX[kind] * Math.pow(random(), CRATER_COUNT_EXPONENT));
   const craters = makeCraters(craterCount, random);
   const bands = makeBands(jitter);
   const hasRings = random() < RING_CHANCE[kind];
-  const inner = radius * range(1.25, 1.5);
+  const inner = radius * range(...RING_INNER_RANGE);
 
   const params: PlanetParams = {
     kind,
     radius,
     bump,
     craters,
-    seaLevel: kind === "rocky" ? range(0.4, 0.55) : -1,
-    noiseScale: range(1.2, 2.6),
+    seaLevel: kind === "rocky" ? range(...SEA_LEVEL_RANGE) : NO_OCEAN,
+    noiseScale: range(...NOISE_SCALE_RANGE),
     noiseOffset: Math.floor(random() * MAX_NOISE_OFFSET),
     low: jitter(PALETTES[kind].low),
     high: jitter(PALETTES[kind].high),
-    ocean: jitter(OCEAN_COLOR, 0.05),
+    ocean: jitter(OCEAN_COLOR, OCEAN_JITTER),
     bands,
-    bandFreq: range(5, 12),
+    bandFreq: range(...BAND_FREQUENCY_RANGE),
     atmosphere: random() < ATMOSPHERE_CHANCE[kind] ? ATMOSPHERE_COLOR[kind] : null, // only some planets get an atmosphere
     rings: hasRings ? makeRings(radius, inner, range, jitter, random) : null,
-    tilt: range(-0.45, 0.45),
-    spin: range(0.08, 0.3),
+    tilt: range(...TILT_RANGE),
+    spin: range(...SPIN_RANGE),
   };
 
   return real ? applyLook(params, real) : params;
