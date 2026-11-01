@@ -42,13 +42,14 @@ export function useMapZoom() {
     return () => el.removeEventListener("wheel", onWheel);
   }, [zoomAt]);
 
-  const onPointerDown = (e: React.PointerEvent) => {
+  const onPointerDown = (e: React.PointerEvent) => { // start dragging the map: remember where the drag began
     if (e.button !== 0) return;
     moved.current = false;
     const r = ref.current!.getBoundingClientRect();
     const start = { x: e.clientX, y: e.clientY };
     let last = start;
-    const move = (m: PointerEvent) => {
+
+    const move = (m: PointerEvent) => { // while dragging, move the map by how far the pointer travelled
       if (Math.hypot(m.clientX - start.x, m.clientY - start.y) > 4) moved.current = true;
 
       if (!moved.current) return;

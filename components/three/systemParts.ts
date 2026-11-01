@@ -39,10 +39,11 @@ export function addLabel(parent: THREE.Object3D, text: string, cls: string) {
 
 /** frees the geometry and materials under an object */
 export function disposeTree(root: THREE.Object3D) {
-  root.traverse((o) => {
+  root.traverse((o) => { // visit every mesh under this object
     const m = o as THREE.Mesh;
     m.geometry?.dispose();
     const mat = m.material as THREE.Material | THREE.Material[] | undefined;
+    // a material can be one material, a list of them, or missing; handle all three
     (Array.isArray(mat) ? mat : mat ? [mat] : []).forEach((x) => x.dispose());
   });
 }
@@ -90,6 +91,7 @@ export function createShip(fleet: FleetDTO): ShipNode {
   hull.rotation.x = Math.PI / 2; // a cone points along +y; turn it to +z, the way lookAt() faces
   const holder = new THREE.Group();
   holder.add(hull, glowSprite(color, SHIP_LENGTH, 0.8));
+  // total ships in the fleet: add up the count of every ship type
   const count = Object.values(fleet.ships).reduce((total, n) => total + n, 0);
   addLabel(holder, `${fleet.mission === "colonize" ? "Colony" : "Fleet"} ×${count}`, "ship");
   const trailGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);

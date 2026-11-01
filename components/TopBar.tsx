@@ -15,17 +15,18 @@ export default function TopBar({ planets, current, stock, rate, onSelect, onRese
     <div className="topbar">
       <h1>Space Game</h1>
       <div className="tabs">
-        {planets.map((planet) => (
+        {planets.map((planet) => ( // one tab per base you own
           <button key={planet.id} className={planet.id === current.id ? "on" : ""} onClick={() => onSelect(planet.id)}>
             <Ico src="/icons/planet_player.svg" /> {planet.name}
           </button>
         ))}
+
       </div>
       <div className="spacer" />
       {ELEMENT_ORDER.map((el) => (
         <div key={el} className={`res ${ELEMENTS[el].rare ? "rare" : ""}`} title={`${ELEMENTS[el].name}${ELEMENTS[el].rare ? " (rare)" : ""}`}>
           <b style={{ color: ELEMENTS[el].color }}>{el}</b> <span>{Math.floor(stock(el))}</span>
-          {rate[el] > 0 && <small>+{rate[el].toFixed(1)}/s</small>}
+          {rate[el] > 0 && <small>+{rate[el].toFixed(1)}/s</small>} {/* only show the income when this element is produced at all */}
         </div>
       ))}
 

@@ -25,7 +25,9 @@ export type Res = Record<string, number>;
 // ---- buildings ----
 // A planet can build a mine for each element it is made of, plus a shipyard.
 export const MINE_PREFIX = "mine_";
+
 export const mineType = (el: string) => `${MINE_PREFIX}${el}`;
+
 export const mineElement = (type: string): Element | null => {
   const el = type.startsWith(MINE_PREFIX) ? type.slice(MINE_PREFIX.length) : null;
 
@@ -50,6 +52,7 @@ export function buildingInfo(type: string): BuildingInfo | null {
 
   return {
     name: `${ELEMENTS[el].name} Mine`,
+    // gas, gem or metal mine icon depending on the element
     icon: GAS_MINES.has(el) ? "/icons/gas_mine.svg" : GEM_MINES.has(el) ? "/icons/crystal_mine.svg" : "/icons/metal_mine.svg",
     cost: { Fe: Math.round(60 * m), Si: Math.round(15 * m) },
     time: Math.round(10 * Math.sqrt(m)),
@@ -71,7 +74,7 @@ export const toRoman = (n: number) => {
   return out;
 };
 
-export const buildCost = (type: string, level: number): Res => {
+export const buildCost = (type: string, level: number): Res => { // the cost of a level: the base cost grows by 1.6x for each level already built
   const base = buildingInfo(type)!.cost;
 
   return Object.fromEntries(Object.entries(base).map(([el, n]) => [el, Math.round(n * 1.6 ** level)]));

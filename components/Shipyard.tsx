@@ -29,21 +29,21 @@ export default function Shipyard({ show, planet, queue, now, shortfall, act }: P
           <div className="grow">
             <b>{info.name}</b>
             <div>{info.desc}</div>
-            <div className="sub">Atk {info.attack} · Cargo {info.cargo} · Speed {info.speed}/10 · Health {info.health}/10</div>
+            <div className="sub">Atk {info.attack} · Cargo {info.cargo} · Speed {info.speed}/10 · Health {info.health}/10</div> {/* ship stats */}
           </div>
           <button className="ghost" onClick={() => setInfoShip(null)}>Close</button>
         </div>
       )}
 
       <div className="tiles">
-        {SHIP_TYPES.map((t) => {
+        {SHIP_TYPES.map((t) => { // one row per ship type that can be built
           const s = SHIPS[t];
           const qty = qtys[t] ?? 1;
           const inQueue = queue.filter((x) => x.type === t);
           const why = !level
             ? "Build a Shipyard first"
             : !(qty >= 1 && qty <= 20)
-              ? "Quantity must be between 1 and 20"
+              ? "Quantity must be between 1 and 20" // explains why the build button is disabled
               : shortfall(Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
 
           return (
@@ -53,7 +53,7 @@ export default function Shipyard({ show, planet, queue, now, shortfall, act }: P
                 <b>{s.name}</b>
               </button>
               <span className="dim">×{planet.ships[t] ?? 0} · Atk {s.attack} · Cargo {s.cargo}</span>
-              <div className="sub"><Cost cost={s.cost} /></div>
+              <div className="sub"><Cost cost={s.cost} /></div> {/* price of one ship */}
               <div className="sub">{fmtTime(shipSeconds(t, level) * 1000)} each</div>
               {inQueue[0] && <div className="sub good">+{inQueue.length} · next {fmtTime(inQueue[0].finishAt - now)}</div>}
               <div className="tile-actions">
@@ -63,6 +63,7 @@ export default function Shipyard({ show, planet, queue, now, shortfall, act }: P
             </div>
           );
         })}
+
       </div>
     </div>
   );

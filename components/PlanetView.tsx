@@ -46,6 +46,7 @@ export default function PlanetView({ seed }: { seed: number }) {
     let raf = 0;
     let last = performance.now();
     const frameMs = 1000 / MAX_FPS;
+
     const loop = (t: number) => {
       raf = requestAnimationFrame(loop);
 
@@ -57,7 +58,7 @@ export default function PlanetView({ seed }: { seed: number }) {
 
     raf = requestAnimationFrame(loop);
 
-    return () => {
+    return () => { // cleanup that runs when the view closes: stop the loop and free the GPU memory
       cancelAnimationFrame(raf);
       ro.disconnect();
       scene.traverse((o) => {

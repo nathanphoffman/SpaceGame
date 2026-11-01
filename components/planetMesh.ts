@@ -56,6 +56,7 @@ function buildPlanet(p: PlanetParams, detail: number): THREE.Mesh {
 
         if (p.kind === "rocky" && t > 0.82) color = mix(color, [0.95, 0.96, 0.98], (t - 0.82) / 0.18);
       }
+
       const grain = 0.9 + 0.2 * noise3(nx * 25, ny * 25, nz * 25, s + 3);
       shade = Math.max(0.35, shade) * grain;
       color = [color[0] * shade, color[1] * shade, color[2] * shade];
@@ -106,7 +107,6 @@ function buildRings(p: PlanetParams): THREE.Mesh {
 
   return mesh;
 }
-
 
 /** Planet + rings + atmosphere, tilted. `detail` 1 = full quality, lower = fewer vertices (thumbnails). */
 export function createPlanetGroup(p: PlanetParams, detail = 1) {

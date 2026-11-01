@@ -34,16 +34,17 @@ const addRes = (to: Res, from: Res) => {
   for (const [el, n] of Object.entries(from)) to[el] = (to[el] ?? 0) + n;
 };
 
-const resText = (r: Res) =>
+const resText = (r: Res) => // turn a resource bundle into text like "60 Fe, 15 Si"
   Object.entries(r).filter(([, n]) => n > 0).map(([el, n]) => `${n} ${el}`).join(", ") || "nothing";
 
-const shipList = (s: Record<string, number>) =>
+const shipList = (s: Record<string, number>) => // turn a ship bundle into text like "3 Cruiser"
   Object.entries(s).filter(([, n]) => n > 0).map(([t, n]) => `${n} ${SHIPS[t as ShipType].name}`).join(", ") || "nothing";
 
 function arrive(w: World, f: Fleet) {
   const target = w.planets.find((p) => p.id === f.target_id)!;
   accrue(target, f.arrive_at);
   const flight = f.arrive_at.getTime() - f.depart_at.getTime();
+
   const goHome = () => {
     f.status = "returning";
     f.return_at = new Date(f.arrive_at.getTime() + flight);
@@ -101,6 +102,7 @@ function arrive(w: World, f: Fleet) {
       f.ships[t] -= lost[t];
     }
 
+    // total cargo space: each ship's cargo times how many of it there are
     const cargo = Object.entries(f.ships).reduce((s, [t, n]) => s + n * SHIPS[t as ShipType].cargo, 0);
 
     // take the biggest stockpiles first until the cargo holds are full
@@ -135,13 +137,14 @@ function arrive(w: World, f: Fleet) {
 function settle(w: World, now: Date) {
   for (;;) {
     let t: Date | null = null;
+    // `consider` keeps the earliest event that is already due (and what to do for it); the loop repeats until none is left
     let run: (() => void) | null = null;
     const consider = (when: Date, fn: () => void) => {
       if (when <= now && (!t || when < t)) { t = when; run = fn; }
     };
 
     for (const q of w.queue) {
-      consider(q.finish_at, () => {
+      consider(q.finish_at, () => { // a building or ship finishes
         const p = w.planets.find((x) => x.id === q.planet_id)!;
         accrue(p, q.finish_at);
 
@@ -155,7 +158,7 @@ function settle(w: World, now: Date) {
       if (f.status === "outbound") consider(f.arrive_at, () => arrive(w, f));
 
       if (f.status === "returning") {
-        consider(f.return_at, () => {
+        consider(f.return_at, () => { // a fleet gets back home
           const origin = w.planets.find((p) => p.id === f.origin_id)!;
           accrue(origin, f.return_at);
 
@@ -242,7 +245,8 @@ function pay(p: Planet, cost: Res) {
   for (const [el, n] of Object.entries(cost)) p.resources[el] = (p.resources[el] ?? 0) - n;
 }
 
-const lastFinish = (w: World, planetId: number, kind: string, now: Date) =>
+const lastFinish = (w: World, planetId: number, kind: string, now: Date) => // queue entries for one planet and kind
+  // the latest finish time in the queue, or now if the queue is empty
   w.queue.filter((q) => q.planet_id === planetId && q.kind === kind).reduce((m, q) => (q.finish_at > m ? q.finish_at : m), now);
 
 export function build(w: World, now: Date, planetId: number, type: string) {

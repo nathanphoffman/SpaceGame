@@ -29,14 +29,19 @@ export type PlanetParams = {
 };
 
 export function mulberry32(seed: number) {
+  // force the seed into an unsigned 32-bit number (>>> 0)
   let a = seed >>> 0;
 
   return () => {
+    // step the generator state forward by a fixed odd constant, staying in 32 bits
     a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
+    // scramble the bits (xor and shift) so nearby seeds give unrelated numbers
     t = Math.imul(t ^ (t >>> 15), t | 1);
+    // mix once more; Math.imul is a 32-bit integer multiply
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
 
+    // final scramble, then divide by 2^32 to get a number from 0 up to (not including) 1
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
@@ -44,19 +49,25 @@ export function mulberry32(seed: number) {
 // ---- value noise ----
 
 function hash3(x: number, y: number, z: number, s: number) {
+  // mix the four inputs: multiply each by a large odd number and combine them with xor
   let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(z, 2147483647) ^ Math.imul(s, 1274126177);
+  // scramble the bits again so close inputs give unrelated outputs
   h = Math.imul(h ^ (h >>> 13), 1274126177);
+  // fold the high bits into the low bits
   h ^= h >>> 16;
 
+  // make it unsigned and scale to 0..1
   return (h >>> 0) / 4294967295;
 }
 
 const smooth = (t: number) => t * t * (3 - 2 * t);
+
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 export function noise3(x: number, y: number, z: number, s: number) {
   const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
   const u = smooth(x - xi), v = smooth(y - yi), w = smooth(z - zi);
+
   const c = (dx: number, dy: number, dz: number) => hash3(xi + dx, yi + dy, zi + dz, s);
 
   return lerp(
@@ -85,10 +96,14 @@ export function fbm(x: number, y: number, z: number, s: number, octaves = 5) {
 export function planetParams(seed: number): PlanetParams {
   const real = BODY_BY_SEED.get(seed); // real bodies pin kind, size and (if known) look to the data
   const r = mulberry32(seed * 7919 + 17);
+
   const range = (a: number, b: number) => a + (b - a) * r();
+
+  // nudge each colour channel by up to +-amt at random and keep it within 0..1
   const jitter = (c: RGB, amt = 0.08): RGB => c.map((v) => Math.min(1, Math.max(0, v + (r() - 0.5) * amt * 2))) as RGB;
 
   const roll = r();
+  // pick the kind from the roll: 25% rocky, 25% moon, 20% gas, 15% ice, 15% desert
   const kind: PlanetKind = real?.kind ?? (roll < 0.25 ? "rocky" : roll < 0.5 ? "moon" : roll < 0.7 ? "gas" : roll < 0.85 ? "ice" : "desert");
 
   const radius = {
@@ -140,6 +155,7 @@ export function planetParams(seed: number): PlanetParams {
     ocean: jitter([0.1, 0.25, 0.5], 0.05),
     bands,
     bandFreq: range(5, 12),
+    // only some planets get an atmosphere
     atmosphere: r() < atmoChance ? atmoColor : null,
     rings: hasRings
       ? { inner, outer: Math.min(inner + radius * range(0.4, 0.8), radius * 1.9), tilt: range(-0.5, 0.5), color: jitter([0.75, 0.7, 0.62], 0.1), seed: Math.floor(r() * 1000) }
@@ -153,7 +169,9 @@ export function planetParams(seed: number): PlanetParams {
 
 export function describePlanet(p: PlanetParams) {
   const type = p.label ?? { rocky: "Rocky world", moon: "Moon", gas: "Gas giant", ice: "Ice world", desert: "Desert world" }[p.kind];
+  // size words from the planet's radius
   const size = p.radius < 0.75 ? "Small" : p.radius < 1.1 ? "Medium" : "Large";
+  // surface words from how bumpy the planet is
   const surface = p.kind === "gas" ? "Gaseous" : p.bump < 0.025 ? "Smooth" : p.bump < 0.06 ? "Rolling" : p.bump < 0.1 ? "Rugged" : "Mountainous";
 
   return { type, size, surface, craters: p.craters.length, rings: !!p.rings, atmosphere: !!p.atmosphere };
@@ -256,6 +274,7 @@ export function starParams(seed: number): StarParams {
 
   for (let i = 0; i < 3; i++) r();
 
+  // add up the weights of every star kind, so one random roll can be mapped onto them
   let roll = r() * STAR_KINDS.reduce((s, k) => s + k.weight, 0);
   const kind = STAR_KINDS.find((k) => (roll -= k.weight) < 0) ?? STAR_KINDS[0];
   const cls = kind.classes[Math.floor(r() * kind.classes.length)];
@@ -283,6 +302,7 @@ export function starParams(seed: number): StarParams {
   const color = lerpRgb(CLASS_COLOR[cls], CLASS_COLOR[next], (sub / 10) * 0.6);
 
   const label =
+    // giants are named by colour, everything else by its class
     kind.lum === "I" ? (cls === "M" ? "Red supergiant" : "Blue supergiant")
     : kind.lum === "III" ? (cls === "M" ? "Red giant" : "Orange giant")
     : CLASS_LABEL[cls];
@@ -356,10 +376,12 @@ function computePlanetStats(seed: number): PlanetStats {
 
   // game radius -> kilometres (Earth 12,742, Mars 6,779, Moon 3,474, Jupiter 139,820)
   const perUnit = { rocky: 11000, desert: 10500, ice: 10000, moon: 5000, gas: 95000 }[p.kind];
+  // real bodies keep their true size; made-up ones get a size from their look, with a little random spread
   const diameterKm = real ? real.diameterKm : Math.round((p.radius * perUnit * (0.92 + r() * 0.16)) / (p.kind === "gas" ? 100 : 10)) * (p.kind === "gas" ? 100 : 10);
 
   // very rarely the whole planet is one rare element: a jackpot world
   if (r() < WHOLE_PLANET_RARE_CHANCE) {
+    // gas giants hold helium; other planets hold titanium (70%) or uranium
     const symbol = p.kind === "gas" ? "He" : r() < 0.7 ? "Ti" : "U";
 
     return { diameterKm, earths: diameterKm / 12742, composition: [{ symbol, name: ELEMENTS[symbol as Element].name, pct: 100 }] };
@@ -373,6 +395,7 @@ function computePlanetStats(seed: number): PlanetStats {
   const picked: [string, number][] = [];
 
   for (let i = 0; i < Math.max(1, n - rare.length) && pool.length; i++) {
+    // add up the weights of the elements, so one random roll can be mapped onto them
     let roll = r() * pool.reduce((sum, [, w]) => sum + w, 0);
     const idx = pool.findIndex(([, w]) => (roll -= w) < 0);
     picked.push(pool.splice(idx < 0 ? 0 : idx, 1)[0]);
@@ -380,6 +403,7 @@ function computePlanetStats(seed: number): PlanetStats {
 
   for (const sym of rare) picked.push([sym, 1]);
   const raw = picked.map(([sym, w]) => w * (0.3 + r() * 1.4) * (RARE.has(sym) ? 0.3 : 1)); // rare elements only ever make up a small share
+  // sum of the raw amounts, used to turn them into percentages
   const total = raw.reduce((a, b) => a + b, 0);
 
   // every element gets at least MIN_SHARE so its symbol always fits on the bar

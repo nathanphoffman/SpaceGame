@@ -2,6 +2,7 @@ import type { PlanetKind } from "../planetGen";
 import type { Look } from "./types";
 
 const note = "Solar System";
+
 const D = (name: string, orbit: number, kind: PlanetKind, diameterKm: number, composition: string, look: Look, extra: { shared?: boolean; start?: boolean } = {}) =>
   ({ name, orbit, kind, diameterKm, composition, look, note, ...extra });
 

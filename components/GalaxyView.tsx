@@ -23,7 +23,7 @@ export default function GalaxyView({ game, current, onSelect }: Props) {
           style={{ background: `rgba(76,194,255,${(0.05 + (stars / 40) * 0.35).toFixed(2)})` }}
           title={`Sector ${sx - CENTER}, ${sy - CENTER}${home ? " · Sol" : ""} · ${stars} stars`}
           onClick={() => onSelect(sx, sy)}>
-          {mine.has(`${sx},${sy}`) ? <b className="mine">●</b> : home ? "☉" : ""}
+          {mine.has(`${sx},${sy}`) ? <b className="mine">●</b> : home ? "☉" : ""} {/* mark a sector with a green dot if you have a base there, a sun if it is Sol's, otherwise nothing */}
         </button>,
       );
     }

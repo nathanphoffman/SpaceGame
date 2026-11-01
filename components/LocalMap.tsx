@@ -49,9 +49,10 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
 
             return <line key={f.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#4cc2ff55" strokeWidth="0.4" strokeDasharray="1.5 1.5" />;
           })}
+
         </svg>
         {systems.length === 0 && <div className="dim" style={{ padding: 12 }}>Surveying sector…</div>}
-        {systems.filter((s2) => { const point = pos.get(s2.id)!; return point.x > -5 && point.x < 105 && point.y > -5 && point.y < 105; }).map((sy2) => {
+        {systems.filter((s2) => { const point = pos.get(s2.id)!; return point.x > -5 && point.x < 105 && point.y > -5 && point.y < 105; }).map((sy2) => { // only draw stars inside the map box (plus a small margin) when zoomed in
           const st = starParams(sy2.seed);
           const rgb = `rgb(${st.color.map((c) => Math.round(c * 255)).join(",")})`;
           const owned = game.planets.filter((planet) => planet.kind === "player" && planet.systemId === sy2.id).length;
@@ -81,6 +82,7 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
             </span>
           );
         })}
+
       </div>
       <div className="dim" style={{ marginTop: 8 }}>Scroll or use +/− to zoom, drag to move, click a star to open its solar system. <b className="mine">●</b> = your bases there.</div>
     </div>

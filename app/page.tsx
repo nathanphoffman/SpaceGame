@@ -33,12 +33,15 @@ export default function Page() {
   const planet = mine.find((p) => p.id === planetId) ?? mine[0];
   const target = game.planets.find((p) => p.id === targetId && p.kind !== "player") ?? null;
   const viewed = game.planets.find((p) => p.id === viewId) ?? planet;
+
+  // look up a loaded system by id; one is always loaded for a planet we show
   const sysOf = (id: number) => game.systems.find((x) => x.id === id)!;
   const shownSystem = game.systems.find((x) => x.id === systemId) ?? sysOf(viewed.systemId); // (a just-clicked system arrives with the next update)
 
   const composition = planetStats(planet.seed).composition;
   const rate = productionRates(planet.buildings, composition);
   const sec = Math.max(0, (now - game.now) / 1000);
+
   const stock = (el: string) => (planet.resources[el] ?? 0) + (rate[el] ?? 0) * sec;
 
   // why something can't be bought right now (undefined = it can), used for the disabled-button tooltips
@@ -59,7 +62,11 @@ export default function Page() {
 
   const activeFleets = game.fleets.filter((fleet) => fleet.status !== "done");
   const reports = game.fleets.filter((fleet) => fleet.report).slice(-6).reverse();
+
+  // a planet's name from its id, or ? when that planet isn't loaded
   const planetName = (id: number) => game.planets.find((p) => p.id === id)?.name ?? "?";
+
+  // this planet's queue entries of one kind (buildings or ships)
   const queueOf = (kind: "building" | "ship") => game.queue.filter((q) => q.planetId === planet.id && q.kind === kind);
 
   const onSelectPlanet = (p: PlanetDTO) => { setViewId(p.id); if (p.kind === "player") setPlanetId(p.id); else setTargetId(p.id); };
@@ -68,7 +75,7 @@ export default function Page() {
     <>
       <TopBar
         planets={mine} current={planet} stock={stock} rate={rate}
-        onSelect={(id) => {
+        onSelect={(id) => { // picking one of your planets also moves the maps to its system and sector
           const home = sysOf(game.planets.find((p) => p.id === id)!.systemId);
           setPlanetId(id); setViewId(id); setSystemId(home.id); setSector([home.sectorX, home.sectorY]); setAtGalaxy(false);
         }}
@@ -89,11 +96,13 @@ export default function Page() {
           ) : (
             <SolarMap game={game} system={shownSystem} viewed={viewed} now={now} onSelect={onSelectPlanet} />
           )}
+
           {atGalaxy ? (
             <GalaxyView game={game} current={sector} onSelect={(sx, sy) => { setSector([sx, sy]); setAtGalaxy(false); }} />
           ) : (
             <LocalMap key={sector.join(",")} game={game} sector={sector} shownSystemId={shownSystem.id} now={now} onSelect={setSystemId} onBack={() => setAtGalaxy(true)} />
           )}
+
         </div>
 
         <div>

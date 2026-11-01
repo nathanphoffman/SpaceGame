@@ -34,6 +34,7 @@ export async function seedGalaxy(pool: Pool) {
 
     const real = s.bodies.map((b): PlanetRow => ({
       id: b.id, name: b.name, orbit: b.orbit, seed: b.seed, shared: !!b.shared, defense: 0,
+      // the starting planet belongs to the player and gets the starting resources
       kind: b.start ? "player" : "empty", ...(b.start ? START : NOTHING),
     }));
 

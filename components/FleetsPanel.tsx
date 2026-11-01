@@ -21,7 +21,7 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
         <div className="hangar">
           <div className="dim">Hangar — {planet.name}</div>
           {here.length === 0 && <div className="dim">No ships here.</div>}
-          {here.map((t) => {
+          {here.map((t) => { // one row per ship type waiting at this planet
             const n = planet.ships[t];
             const shown = Math.min(n, 300); // keep the page light if you build thousands
 
@@ -38,24 +38,26 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
               </div>
             );
           })}
+
         </div>
       )}
 
       {fleets.length === 0 && <div className="dim">None.</div>}
-      {fleets.map((f) => (
+      {fleets.map((f) => ( // one row per fleet in the air or on guard
         <div className="row" key={f.id}>
           <span className="icon"><img src={fleetIcon(f)} alt="" /></span>
           <div className="grow">
             {f.status === "outbound" ? `${f.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(f.targetId)}`
-              : f.status === "stationed" ? `Guarding ${planetName(f.targetId)}`
+              : f.status === "stationed" ? `Guarding ${planetName(f.targetId)}` // status text for a fleet: flying out, guarding, or flying home
               : `Returning to ${planetName(f.originId)}`}
-            <div className="sub"><ShipList ships={f.ships} />{Object.values(f.loot).some((n) => n > 0) && <> · loot <Cost cost={f.loot} /></>}</div>
+            <div className="sub"><ShipList ships={f.ships} />{Object.values(f.loot).some((n) => n > 0) && <> · loot <Cost cost={f.loot} /></>}</div> {/* show loot only when at least one resource was taken */}
           </div>
           {f.status === "stationed"
             ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: f.id })}>Recall</button>
             : <b>{fmtTime((f.status === "outbound" ? f.arriveAt : f.returnAt) - now)}</b>}
         </div>
       ))}
+
     </div>
   );
 }

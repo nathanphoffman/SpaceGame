@@ -11,6 +11,7 @@ type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: numbe
 export default function SystemView({ game, system, viewed, now, onSelect }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const engine = useRef<SystemEngine | null>(null);
+
   const select = useRef(onSelect);
   const latest = useRef(game);
   useEffect(() => { select.current = onSelect; latest.current = game; });
@@ -18,7 +19,7 @@ export default function SystemView({ game, system, viewed, now, onSelect }: Prop
 
   useEffect(() => {
     const e = new SystemEngine(box.current!, {
-      onPlanet: (id) => { const p = latest.current.planets.find((x) => x.id === id); if (p) select.current(p); },
+      onPlanet: (id) => { const p = latest.current.planets.find((x) => x.id === id); if (p) select.current(p); }, // clicks from the 3D scene come back as a planet id; look up the full planet and pass it up
     });
 
     engine.current = e;

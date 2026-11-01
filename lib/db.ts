@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS systems (
   y double precision NOT NULL,
   seed int NOT NULL              -- drives the star's look
 );
+
 CREATE TABLE IF NOT EXISTS planets (
   id int PRIMARY KEY,
   name text NOT NULL,
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS planets (
   seed int,                      -- drives how the planet looks in 3D
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
 ALTER TABLE planets ADD COLUMN IF NOT EXISTS seed int;
 ALTER TABLE planets ADD COLUMN IF NOT EXISTS resources jsonb NOT NULL DEFAULT '{}';
 ALTER TABLE planets ADD COLUMN IF NOT EXISTS system_id int REFERENCES systems(id);
@@ -51,6 +53,7 @@ CREATE TABLE IF NOT EXISTS queue (
   start_at timestamptz NOT NULL,
   finish_at timestamptz NOT NULL
 );
+
 CREATE TABLE IF NOT EXISTS fleets (
   id text PRIMARY KEY,
   origin_id int NOT NULL REFERENCES planets(id),
@@ -64,6 +67,7 @@ CREATE TABLE IF NOT EXISTS fleets (
   status text NOT NULL,          -- outbound | returning | done
   report text NOT NULL DEFAULT ''
 );
+
 `;
 
 // Games saved before the elements update used metal/crystal: Fe/Si are their direct replacements.
@@ -102,7 +106,7 @@ async function wipeIfStale() {
 }
 
 export function ready(): Promise<void> {
-  return (g.__ready ??= (async () => {
+  return (g.__ready ??= (async () => { // set up the database once per server process: later calls get the same promise
     await pool.query(SCHEMA);
     await migrateToElements();
     await wipeIfStale();

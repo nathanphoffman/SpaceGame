@@ -20,7 +20,7 @@ export default function Buildings({ planet, composition, types, queue, now, shor
     <div className="panel">
       <h2>{planet.name} — buildings</h2>
       <div className="tiles">
-        {types.map((t) => {
+        {types.map((t) => { // one row per building this planet can have
           const info = buildingInfo(t)!;
           const q = queue.filter((x) => x.type === t);
           const built = planet.buildings[t] ?? 0;
@@ -45,6 +45,7 @@ export default function Buildings({ planet, composition, types, queue, now, shor
                   ) : (
                     <img className="tile-icon" src={info.icon} alt="" />
                   )}
+
                   <b>{info.name}{!unbuilt && <span className="dim"> ({toRoman(built)})</span>}</b>
                 </div>
                 {unbuilt && <span className="notbuilt">(Not Built Yet)</span>}
@@ -53,11 +54,12 @@ export default function Buildings({ planet, composition, types, queue, now, shor
                 {Array.from({ length: level }, (_, i) => (
                   <span key={i} className={`dot-level ${i < built ? "on" : "queued"}`} />
                 ))}
+
               </div>
               {el && (
                 <div className="sub" title={`${el} makes up ${pct}% of this planet; richer deposits yield more per level`}>
                   <b style={{ color: elementColor(el) }}>{el}</b> {pct}% · +{mineRate(built, pct).toFixed(1)}/s
-                  {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>}
+                  {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>} {/* show the output gain of the next level only until the level cap */}
                 </div>
               )}
 
@@ -65,21 +67,23 @@ export default function Buildings({ planet, composition, types, queue, now, shor
                 <div className="sub good">Maximum level</div>
               ) : (
                 <>
-                  <div className="sub">Cost: <Cost cost={cost} /></div>
+                  <div className="sub">Cost: <Cost cost={cost} /></div> {/* the price of the next level */}
                   <div className="sub">{fmtTime(buildSeconds(t, level) * 1000)}</div>
                 </>
               )}
+
               {active && (
                 <div className="grow-fill">
                   <div className="sub good">{fmtTime(active.finishAt - now)}</div>
-                  <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div>
+                  <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div> {/* bar width = share of the build time that has already passed, capped at 100% */}
                 </div>
               )}
 
-              <button disabled={!!why} title={why} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>{maxed ? "Max level" : unbuilt ? "Build" : "Upgrade"}</button>
+              <button disabled={!!why} title={why} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>{maxed ? "Max level" : unbuilt ? "Build" : "Upgrade"}</button> {/* button text: max level, first build, or upgrade, depending on the building's state */}
             </div>
           );
         })}
+
       </div>
     </div>
   );

@@ -15,16 +15,20 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
   const star = starParams(system.seed);
   const planets = game.planets.filter((p) => p.systemId === system.id).sort((a, b) => a.orbit - b.orbit);
   const guarded = new Set(game.fleets.filter((f) => f.status === "stationed").map((f) => f.targetId));
+
+  // the system a planet is in
   const planetSystem = (id: number) => game.planets.find((p) => p.id === id)!.systemId;
   const local = flyingFleets(game).filter((f) => !isCrossSystem(game, f) && planetSystem(f.originId) === system.id);
 
   const slots = planets.length;
+
   const slotX = (i: number) => 12 + ((i + 0.5) * 86) / slots;
   const slotById = new Map(planets.map((p, i) => [p.id, slotX(i)]));
   const maxOrbit = Math.max(0.01, ...planets.map((p) => p.orbit));
   const auStep = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20].find((st) => maxOrbit / st <= 6) ?? 50;
   const auMax = Math.ceil(maxOrbit / auStep) * auStep;
   const auTicks = Array.from({ length: Math.round(auMax / auStep) + 1 }, (_, i) => Math.round(i * auStep * 1000) / 1000);
+
   const axisX = (au: number) => 6 + (au / auMax) * 92; // % across the map; 0 AU is the star's surface
 
   // the star is a big circle mostly off the left edge: small stars show a tight arch, big stars look nearly flat
@@ -41,6 +45,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
           background: `radial-gradient(circle closest-side, ${rgba(1)} 0, ${rgba(1)} 80%, #fff 100%)`,
           boxShadow: `0 0 6px 1px #fff, 0 0 26px 8px ${rgba(0.75)}, 0 0 70px 24px ${rgba(0.4)}, 0 0 140px 50px ${rgba(0.2)}`,
         }} />
+
         <div className="plane" style={{ top: `${SOLAR_Y}%` }} />
 
         {/* real-distance ruler along the bottom, with a line from each planet to its true position */}
@@ -50,6 +55,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
             <line key={p.id} x1={slotX(i)} y1={SOLAR_Y + 14} x2={axisX(p.orbit)} y2={AXIS_Y}
               stroke={p.id === viewed.id ? "#4cc2ff" : "#4b587866"} strokeWidth="1" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
           ))}
+
         </svg>
         {auTicks.map((au) => (
           <div key={au} className="tick" style={{ left: `${axisX(au)}%`, top: `${AXIS_Y}%` }}><span>{au === 0 ? "star" : `${au} AU`}</span></div>
@@ -59,7 +65,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
           <span key={p.id} className={`ruler-dot ${p.id === viewed.id ? "sel" : ""}`} style={{ left: `${axisX(p.orbit)}%`, top: `${AXIS_Y}%` }} />
         ))}
 
-        {planets.map((p, i) => {
+        {planets.map((p, i) => { // one clickable node per planet
           // planet diameter in px, proportional to its size and capped by how much room each slot has
           const cap = Math.max(14, (((544 * 86) / 100) / slots) * 0.85);
           const body = 8 + (planetParams(p.seed).radius / 1.45) * (cap - 8);
@@ -88,6 +94,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
             </span>
           );
         })}
+
       </div>
       <div className="dim" style={{ marginTop: 8 }}><b className="mine">●</b> yours · <b className="foe">●</b> enemy · no dot = neutral (colonize or guard). Planets are evenly spaced for readability; the ruler along the bottom shows their real distance from the star. Click a planet to view/target it.</div>
     </div>

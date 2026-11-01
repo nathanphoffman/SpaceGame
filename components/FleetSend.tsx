@@ -24,10 +24,10 @@ export default function FleetSend({ game, planet, target, act, onSent }: Props) 
           <div className="dim" style={{ marginBottom: 6 }}>
             {target.kind === "npc"
               ? `Attack · enemy defense ${target.defense} · survivors guard the planet`
-              : (qty.colony_ship ?? 0) > 0 ? "Colonize" : "Guard · add a Colony Ship to settle it"}
+              : (qty.colony_ship ?? 0) > 0 ? "Colonize" : "Guard · add a Colony Ship to settle it"} {/* mission preview: attack an enemy, colonise if a colony ship is in the fleet, otherwise just guard */}
             {" · "}flight {fmtTime(flightSeconds(planet, target, game.systems) * 1000)} each way
           </div>
-          {SHIP_TYPES.map((t) => (
+          {SHIP_TYPES.map((t) => ( // one row per ship type for choosing how many to send
             <div className="row" key={t}>
               <span className="icon"><img src={SHIPS[t].icon} alt="" /></span>
               <span className="grow">{SHIPS[t].name} <span className="sub">({planet.ships[t] ?? 0} available)</span></span>
@@ -41,10 +41,12 @@ export default function FleetSend({ game, planet, target, act, onSent }: Props) 
             setQty({});
             onSent();
           }}>
+
             Send fleet
           </button>
         </>
       )}
+
     </div>
   );
 }

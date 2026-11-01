@@ -25,10 +25,11 @@ function galacticXY(raH: number, raM: number, decD: number, decM: number, ly: nu
   return [ly * Math.cos(b) * Math.cos(l), ly * Math.cos(b) * Math.sin(l)];
 }
 
-export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly, spec, tempK, radius], i) => {
+export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly, spec, tempK, radius], i) => { // build one system per catalogue star, attaching the planets known for that star
   const id = i + 1;
   const [x, y] = galacticXY(raH, raM, decD, decM, ly);
   const bodies: BodySpec[] = [];
+
   const add = (b: Omit<BodySpec, "id" | "seed">) => {
     const n = bodies.length + 1;
     bodies.push({ ...b, id: id * 100 + n, seed: SEED_BASE + id * 100 + n });

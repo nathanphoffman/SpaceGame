@@ -19,6 +19,7 @@ const periodSeconds = (orbitAU: number) => Math.max(MIN_PERIOD_SECONDS, PERIOD_S
 /** each planet starts at a different, fixed point on its orbit */
 const startPhase = (seed: number) => (((seed * PHASE_HASH) % PHASE_STEPS) / PHASE_STEPS) * Math.PI * 2;
 
+// the farthest planet decides how big the system is on screen
 export const systemRadius = (planets: PlanetDTO[]) => Math.max(0, ...planets.map((p) => sceneDistance(p.orbit)));
 
 /** where a planet is at the given server time (ms) */

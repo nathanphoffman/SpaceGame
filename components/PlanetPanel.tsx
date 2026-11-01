@@ -21,6 +21,7 @@ export default function PlanetPanel({ planet, systemSeed, guards }: Props) {
               {e.symbol}
             </div>
           ))}
+
         </div>
       </div>
       <PlanetView seed={planet.seed} />
@@ -30,7 +31,7 @@ export default function PlanetPanel({ planet, systemSeed, guards }: Props) {
           {info.craters > 0 ? `${info.craters} craters` : "No craters"} · {info.rings ? "Rings" : "No rings"} · {info.atmosphere ? "Atmosphere" : "No atmosphere"}
         </div>
         <div className="dim">
-          {planet.kind === "player" ? "Your planet" : planet.kind === "npc" ? `Enemy · defense ${planet.defense}` : "Unclaimed"} · seed {planet.seed}
+          {planet.kind === "player" ? "Your planet" : planet.kind === "npc" ? `Enemy · defense ${planet.defense}` : "Unclaimed"} · seed {planet.seed} {/* ownership text: yours, an enemy (with defense) or unclaimed */}
         </div>
         <div className="dim">{bodyNote(planet.seed)}</div>
         {planet.shared && <div className="good">Safe haven · everyone can have a base here, and it can never be attacked</div>}
@@ -38,9 +39,10 @@ export default function PlanetPanel({ planet, systemSeed, guards }: Props) {
           <div><span className="dim">Diameter</span> <b>{stats.diameterKm.toLocaleString()} km</b> <span className="dim">({stats.earths.toFixed(2)} × Earth)</span></div>
           <div><span className="dim">Orbit</span> <b>{fmtAU(planet.orbit)}</b> <span className="dim">· ~{Math.round(equilibriumTempK(starParams(systemSeed), planet.orbit) - 273.15)} °C</span></div>
         </div>
-        {guards.map((f) => (
+        {guards.map((f) => ( // one line per fleet guarding this planet
           <div key={f.id} className="good">Guarded by your fleet: <ShipList ships={f.ships} /></div>
         ))}
+
       </div>
     </div>
   );

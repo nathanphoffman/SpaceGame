@@ -72,6 +72,7 @@ export function fillSystem(sys: { id: number; name: string; seed: number; comple
     out.push({
       id: sys.id * 100 + n,
       name: n < 26 ? `${sys.name} ${String.fromCharCode(97 + n)}` : planetName(seed),
+      // hostile planets are enemy bases, the rest are free to settle
       orbit, kind: hostile ? "npc" : "empty", resources, buildings,
       defense: hostile ? Math.round(10 + r() * r() * 400) : 0,
       seed,

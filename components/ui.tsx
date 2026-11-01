@@ -26,13 +26,15 @@ export const Cost = ({ cost }: { cost: Res }) => (
         <b style={{ color: elementColor(el) }}>{el}</b> {Math.round(n)}
       </span>
     ))}
+
   </>
 );
 
-export const ShipList = ({ ships }: { ships: Record<string, number> }) => {
+export const ShipList = ({ ships }: { ships: Record<string, number> }) => { // list the ship types present, skipping those with none
   const list = Object.entries(ships).filter(([, n]) => n > 0);
 
   if (list.length === 0) return <>—</>;
 
+  // one icon and count per ship type
   return <>{list.map(([t, n]) => <span key={t}><Ico src={SHIPS[t as ShipType].icon} /> ×{n} </span>)}</>;
 };
