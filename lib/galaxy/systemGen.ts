@@ -78,6 +78,31 @@ function arm(composition: { symbol: string }[], random: () => number) {
   return { buildings, resources };
 }
 
+/** an orbit for the planet in slot `index` of `want`: evenly spread on a log scale with some jitter, pushed out of the way of crowding orbits, or null if no room is left */
+function pickOrbit(index: number, want: number, scale: number, taken: number[], random: () => number) {
+  const spot = (index + HALF + (random() - HALF) * ORBIT_JITTER) / want; // 0..1 along the range of orbits, with some jitter
+  let orbit = INNERMOST_AU * scale * Math.pow(ORBIT_SPREAD, spot);
+
+  for (let nudges = 0; nudges < MAX_NUDGES && crowds(orbit, taken); nudges++) orbit *= ORBIT_NUDGE;
+
+  return crowds(orbit, taken) ? null : Math.round(orbit * MILLI) / MILLI;
+}
+
+/** one made-up planet: its seed, whether it is a hostile base, and what a hostile base owns */
+function makePlanet(system: { id: number; name: string }, number: number, orbit: number, random: () => number): Filler {
+  const seed = 1 + Math.floor(random() * SEED_RANGE);
+  const hostile = random() < HOSTILE_CHANCE;
+  const { buildings, resources } = hostile ? arm(planetStats(seed).composition, random) : { buildings: {}, resources: {} };
+
+  return {
+    id: system.id * SYSTEM_ID_STRIDE + number,
+    name: number < NAMED_LETTERS ? `${system.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}` : planetName(seed),
+    orbit, kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, resources, buildings, // hostile planets are enemy bases, the rest are free to settle
+    defense: hostile ? Math.round(BASE_DEFENSE + random() * random() * DEFENSE_RANGE) : 0,
+    seed,
+  };
+}
+
 /**
  * Generate the planets we don't know about. A system gets 2d6 planets in total, so a star with
  * several confirmed planets gets few extras. `known` are the real orbits, which stay where they are.
@@ -95,28 +120,12 @@ export function fillSystem(system: { id: number; name: string; seed: number; com
   const result: Filler[] = [];
 
   for (let index = 0; index < want; index++) {
-    const spot = (index + HALF + (random() - HALF) * ORBIT_JITTER) / want; // 0..1 along the range of orbits, with some jitter
-    let orbit = INNERMOST_AU * scale * Math.pow(ORBIT_SPREAD, spot);
+    const orbit = pickOrbit(index, want, scale, taken, random);
 
-    for (let nudges = 0; nudges < MAX_NUDGES && crowds(orbit, taken); nudges++) orbit *= ORBIT_NUDGE;
+    if (orbit === null) continue; // no room left here
 
-    if (crowds(orbit, taken)) continue; // no room left here
-
-    orbit = Math.round(orbit * MILLI) / MILLI;
     taken.push(orbit);
-
-    const seed = 1 + Math.floor(random() * SEED_RANGE);
-    const hostile = random() < HOSTILE_CHANCE;
-    const { buildings, resources } = hostile ? arm(planetStats(seed).composition, random) : { buildings: {}, resources: {} };
-    const number = known.length + result.length + 1;
-
-    result.push({
-      id: system.id * SYSTEM_ID_STRIDE + number,
-      name: number < NAMED_LETTERS ? `${system.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}` : planetName(seed),
-      orbit, kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, resources, buildings, // hostile planets are enemy bases, the rest are free to settle
-      defense: hostile ? Math.round(BASE_DEFENSE + random() * random() * DEFENSE_RANGE) : 0,
-      seed,
-    });
+    result.push(makePlanet(system, known.length + result.length + 1, orbit, random));
   }
 
   return result;
