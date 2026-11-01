@@ -1,5 +1,5 @@
 import { starParams } from "@/lib/planets/starParams";
-import type { FleetDTO, GameState, SystemDTO } from "@/lib/defs";
+import { type FleetDTO, type GameState, type SystemDTO, PLANET_KIND } from "@/lib/defs";
 import { flightOf, flyingFleets } from "@/lib/galaxy/flight";
 import { mapPositions } from "@/lib/galaxy/galaxyLayout";
 import { CENTER, SECTOR_LY, sectorCentre } from "@/lib/galaxy/sector";
@@ -107,7 +107,7 @@ export default function LocalMap({ game, sector, shownSystemId, nowMs: now, onSe
   const visible = systems.filter((system) => isOnMap(positions.get(system.id)!)); // only draw stars inside the map box (plus a small margin) when zoomed in
 
   // how many of your bases are in a system
-  const ownedIn = (systemId: number) => game.planets.filter((planet) => planet.kind === "player" && planet.systemId === systemId).length;
+  const ownedIn = (systemId: number) => game.planets.filter((planet) => planet.kind === PLANET_KIND.player && planet.systemId === systemId).length;
 
   return (
     <div className="panel">

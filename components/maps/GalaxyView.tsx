@@ -1,4 +1,4 @@
-import type { GameState } from "@/lib/defs";
+import { type GameState, PLANET_KIND } from "@/lib/defs";
 import { CENTER, GRID, SECTOR_LY, sectorStarCount } from "@/lib/galaxy/sector";
 import { SYSTEMS } from "@/lib/data/catalog";
 
@@ -8,7 +8,7 @@ type Props = { game: GameState; current: [number, number]; onSelect: (sx: number
 export default function GalaxyView({ game, current, onSelect }: Props) {
   // sectors where you own a planet
   const sectorOfSystem = new Map(game.systems.map((system) => [system.id, `${system.sectorX},${system.sectorY}`]));
-  const mine = new Set(game.planets.filter((planet) => planet.kind === "player").map((p) => sectorOfSystem.get(p.systemId)));
+  const mine = new Set(game.planets.filter((planet) => planet.kind === PLANET_KIND.player).map((p) => sectorOfSystem.get(p.systemId)));
 
   const rows = [];
 

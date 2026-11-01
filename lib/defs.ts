@@ -152,6 +152,17 @@ export function productionRates(buildings: Record<string, number>, composition: 
 }
 
 /** x, y: light-years from Sol in the galactic plane */
+// ---- the words used for who owns a planet, what a fleet is doing, and what a client asks the server to do ----
+export const PLANET_KIND = { player: "player", npc: "npc", empty: "empty" } as const;
+export const FLEET_STATUS = { outbound: "outbound", stationed: "stationed", returning: "returning", done: "done" } as const;
+export const MISSION = { attack: "attack", colonize: "colonize" } as const;
+export const QUEUE_KIND = { building: "building", ship: "ship" } as const;
+export const ACTION = { build: "build", ship: "ship", send: "send", recall: "recall", reset: "reset" } as const;
+export type Owner = keyof typeof PLANET_KIND;
+export type FleetStatus = keyof typeof FLEET_STATUS;
+export type Mission = keyof typeof MISSION;
+export type QueueKind = keyof typeof QUEUE_KIND;
+
 export type SystemDTO = { id: number; name: string; x: number; y: number; seed: number; sectorX: number; sectorY: number };
 
 type Placed = { systemId: number; orbit: number };
@@ -171,7 +182,7 @@ export type PlanetDTO = {
   name: string;
   systemId: number;
   orbit: number; // distance from the star in AU
-  kind: "player" | "npc" | "empty";
+  kind: Owner;
   resources: Res;
   buildings: Record<string, number>;
   ships: Record<string, number>;
@@ -180,18 +191,18 @@ export type PlanetDTO = {
   shared: boolean; // safe haven: everyone can have a base here and it can't be attacked
 };
 
-export type QueueDTO = { id: string; planetId: number; kind: "building" | "ship"; type: string; startAt: number; finishAt: number };
+export type QueueDTO = { id: string; planetId: number; kind: QueueKind; type: string; startAt: number; finishAt: number };
 export type FleetDTO = {
   id: string;
   originId: number;
   targetId: number;
-  mission: "attack" | "colonize";
+  mission: Mission;
   ships: Record<string, number>;
   loot: Res;
   departAt: number;
   arriveAt: number;
   returnAt: number;
-  status: "outbound" | "stationed" | "returning" | "done";
+  status: FleetStatus;
   report: string;
 };
 

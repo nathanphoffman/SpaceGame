@@ -3,7 +3,7 @@ import { describePlanet } from "@/lib/planets/names";
 import { equilibriumTempK, planetStats } from "@/lib/planets/planetStats";
 import { planetParams } from "@/lib/planets/planetParams";
 import { starParams } from "@/lib/planets/starParams";
-import type { FleetDTO, PlanetDTO } from "@/lib/defs";
+import { type FleetDTO, type PlanetDTO, PLANET_KIND } from "@/lib/defs";
 import { bodyNote } from "@/lib/data/catalog";
 import { ShipList, elementColor, fmtAU } from "@/components/ui";
 
@@ -13,9 +13,9 @@ const KELVIN_AT_ZERO_CELSIUS = 273.15;
 
 /** who the planet belongs to */
 function ownerText(planet: PlanetDTO) {
-  if (planet.kind === "player") return "Your planet";
+  if (planet.kind === PLANET_KIND.player) return "Your planet";
 
-  return planet.kind === "npc" ? `Enemy · defense ${planet.defense}` : "Unclaimed";
+  return planet.kind === PLANET_KIND.npc ? `Enemy · defense ${planet.defense}` : "Unclaimed";
 }
 
 /** a bar split by element, each segment as wide as that element's share */

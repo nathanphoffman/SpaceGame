@@ -1,17 +1,17 @@
 import type { PoolClient } from "pg";
-import type { Res, SystemDTO } from "@/lib/defs";
+import { type Res, type SystemDTO, FLEET_STATUS, type FleetStatus, type Mission, type Owner, type QueueKind } from "@/lib/defs";
 
 export type Planet = {
-  id: number; name: string; system_id: number; orbit: number; kind: "player" | "npc" | "empty";
+  id: number; name: string; system_id: number; orbit: number; kind: Owner;
   resources: Res; buildings: Record<string, number>; ships: Record<string, number>;
   defense: number; seed: number; shared: boolean; updated_at: Date;
 };
 
-export type QueueItem = { id: string; planet_id: number; kind: "building" | "ship"; type: string; start_at: Date; finish_at: Date };
+export type QueueItem = { id: string; planet_id: number; kind: QueueKind; type: string; start_at: Date; finish_at: Date };
 export type Fleet = {
-  id: string; origin_id: number; target_id: number; mission: "attack" | "colonize";
+  id: string; origin_id: number; target_id: number; mission: Mission;
   ships: Record<string, number>; loot: Res; depart_at: Date; arrive_at: Date; return_at: Date;
-  status: "outbound" | "stationed" | "returning" | "done"; report: string;
+  status: FleetStatus; report: string;
 };
 
 /** Only the part of the galaxy that matters right now is loaded, so the world can be huge. */
@@ -64,8 +64,8 @@ export async function save(c: PoolClient, world: World) {
   await c.query("DELETE FROM fleets");
 
   // keep only the last few finished fleets so the reports list doesn't grow forever
-  const done = world.fleets.filter((f) => f.status === "done").slice(-10);
-  const keep = [...world.fleets.filter((f) => f.status !== "done"), ...done];
+  const done = world.fleets.filter((f) => f.status === FLEET_STATUS.done).slice(-10);
+  const keep = [...world.fleets.filter((f) => f.status !== FLEET_STATUS.done), ...done];
 
   for (const f of keep) {
     await c.query(

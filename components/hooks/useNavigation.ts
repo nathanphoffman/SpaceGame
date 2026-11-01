@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PlanetDTO, SystemDTO } from "@/lib/defs";
+import { type PlanetDTO, type SystemDTO, PLANET_KIND } from "@/lib/defs";
 import { CENTER } from "@/lib/galaxy/sector";
 
 /** what the player is looking at, and the ways to change it */
@@ -15,7 +15,7 @@ export function useNavigation() {
   const selectPlanet = (planet: PlanetDTO) => {
     setViewId(planet.id);
 
-    if (planet.kind === "player") setPlanetId(planet.id);
+    if (planet.kind === PLANET_KIND.player) setPlanetId(planet.id);
     else setTargetId(planet.id);
   };
 

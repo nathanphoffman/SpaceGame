@@ -1,5 +1,5 @@
 // Fills the gaps in a star system: planets we haven't discovered yet are generated, deterministically.
-import { mineType } from "@/lib/defs";
+import { PLANET_KIND, mineType, type Owner } from "@/lib/defs";
 import { SUN_TEMP_K, STEFAN_BOLTZMANN_POWER } from "@/lib/planets/constants";
 import { mulberry32 } from "@/lib/planets/noise";
 import { planetName } from "@/lib/planets/names";
@@ -10,7 +10,7 @@ export type Filler = {
   id: number;
   name: string;
   orbit: number; // AU
-  kind: "npc" | "empty";
+  kind: Exclude<Owner, typeof PLANET_KIND.player>;
   resources: Record<string, number>;
   buildings: Record<string, number>;
   defense: number;
@@ -113,7 +113,7 @@ export function fillSystem(sys: { id: number; name: string; seed: number; comple
     out.push({
       id: sys.id * SYSTEM_ID_STRIDE + number,
       name: number < NAMED_LETTERS ? `${sys.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}` : planetName(seed),
-      orbit, kind: hostile ? "npc" : "empty", resources, buildings, // hostile planets are enemy bases, the rest are free to settle
+      orbit, kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, resources, buildings, // hostile planets are enemy bases, the rest are free to settle
       defense: hostile ? Math.round(BASE_DEFENSE + random() * random() * DEFENSE_RANGE) : 0,
       seed,
     });

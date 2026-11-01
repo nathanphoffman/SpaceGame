@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { MS_PER_SECOND, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
+import { MS_PER_SECOND, type GameState, type PlanetDTO, type SystemDTO, FLEET_STATUS } from "@/lib/defs";
 import { flightOf } from "@/lib/galaxy/flight";
 import { BACKDROP_RADIUS, backdrop } from "@/components/maps/three/glow";
 import { startFly, stepFly, type Fly } from "@/components/maps/three/cameraFlight";
@@ -186,7 +186,7 @@ export class SystemEngine {
   /** only fleets flying between two planets of this system are drawn */
   private syncShips(game: GameState, system: SystemDTO) {
     const local = game.fleets.filter((f) => {
-      if (f.status !== "outbound" && f.status !== "returning") return false;
+      if (f.status !== FLEET_STATUS.outbound && f.status !== FLEET_STATUS.returning) return false;
       const { from, to } = flightOf(game, f, this.nowMs());
 
       return from.systemId === system.id && to.systemId === system.id;
@@ -233,7 +233,7 @@ export class SystemEngine {
     const game = this.clock.game;
 
     for (const ship of this.world.ships.values()) {
-      const outbound = ship.fleet.status === "outbound";
+      const outbound = ship.fleet.status === FLEET_STATUS.outbound;
       const from = this.world.planets.get(outbound ? ship.fleet.originId : ship.fleet.targetId);
       const to = this.world.planets.get(outbound ? ship.fleet.targetId : ship.fleet.originId);
 

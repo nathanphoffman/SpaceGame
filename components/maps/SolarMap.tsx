@@ -1,7 +1,7 @@
 import { planetThumb, thumbDisplaySize } from "@/components/planet/planetThumb";
 import { planetParams } from "@/lib/planets/planetParams";
 import { starParams } from "@/lib/planets/starParams";
-import { SHIPS, type FleetDTO, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
+import { SHIPS, type FleetDTO, type GameState, type PlanetDTO, type SystemDTO, FLEET_STATUS } from "@/lib/defs";
 import { flightOf, flyingFleets, isCrossSystem } from "@/lib/galaxy/flight";
 import { fleetIcon, fmtAU } from "@/components/ui";
 
@@ -119,7 +119,7 @@ function FlyingFleet({ fleet, game, nowMs: now, slotById }: { fleet: FleetDTO; g
 export default function SolarMap({ game, system, viewed, nowMs: now, onSelect }: System & { nowMs: number; onSelect: (planet: PlanetDTO) => void }) {
   const star = starParams(system.seed);
   const planets = game.planets.filter((planet) => planet.systemId === system.id).sort((first, second) => first.orbit - second.orbit);
-  const guarded = new Set(game.fleets.filter((fleet) => fleet.status === "stationed").map((fleet) => fleet.targetId));
+  const guarded = new Set(game.fleets.filter((fleet) => fleet.status === FLEET_STATUS.stationed).map((fleet) => fleet.targetId));
 
   // the system a fleet's origin planet is in
   const originSystem = (id: number) => game.planets.find((planet) => planet.id === id)!.systemId;

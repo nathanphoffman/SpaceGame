@@ -1,3 +1,4 @@
+import { ACTION } from "@/lib/defs";
 import { NextResponse } from "next/server";
 import { resetGame } from "@/lib/server/db";
 import { GameError, startBuilding, buildShips, recallFleet, sendFleet, withGame } from "@/lib/server/engine";
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
   const body = await request.json();
 
   try {
-    if (body.action === "reset") await resetGame();
+    if (body.action === ACTION.reset) await resetGame();
 
     // load what the client is looking at, plus any planets the action itself refers to
     const planetIds = [body.planetId, body.originId, body.targetId].filter((n) => Number.isInteger(n));
@@ -21,13 +22,13 @@ export async function POST(request: Request) {
       switch (body.action) {
         case "build": return startBuilding(world, time, body.planetId, body.type);
 
-        case "ship": return buildShips(world, time, body.planetId, body.type, body.qty);
+        case ACTION.ship: return buildShips(world, time, body.planetId, body.type, body.qty);
 
         case "send": return sendFleet(world, time, body.originId, body.targetId, body.ships ?? {});
 
         case "recall": return recallFleet(world, time, body.fleetId);
 
-        case "reset": return;
+        case ACTION.reset: return;
 
         default: throw new GameError("Unknown action");
       }

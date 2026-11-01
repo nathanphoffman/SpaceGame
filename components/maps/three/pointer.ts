@@ -3,6 +3,7 @@ import * as THREE from "three";
 /** something the mouse can pick: a point in the scene with a screen-space click radius */
 export type Pickable = { id: number; object: THREE.Object3D; radiusPx: number };
 
+export const POINTER_EVENT = { down: "pointerdown", move: "pointermove", up: "pointerup" } as const;
 const DRAG_PIXELS = 5;
 const HALF = 0.5; // normalised device coordinates run -1..1; this maps them to 0..1
 const scratch = new THREE.Vector3();
@@ -35,12 +36,12 @@ export function bindPointer(el: HTMLElement, pick: (e: MouseEvent) => number | n
     const start = { x: down.clientX, y: down.clientY };
 
     const up = (e: PointerEvent) => {
-      window.removeEventListener("pointerup", up);
+      window.removeEventListener(POINTER_EVENT.up, up);
 
       if (Math.hypot(e.clientX - start.x, e.clientY - start.y) <= DRAG_PIXELS) onClick(pick(e));
     };
 
-    window.addEventListener("pointerup", up);
+    window.addEventListener(POINTER_EVENT.up, up);
   };
 
   const onMove = (e: PointerEvent) => {
@@ -52,8 +53,8 @@ export function bindPointer(el: HTMLElement, pick: (e: MouseEvent) => number | n
     el.style.cursor = id != null ? "pointer" : "";
   };
 
-  el.addEventListener("pointerdown", onDown);
-  el.addEventListener("pointermove", onMove);
+  el.addEventListener(POINTER_EVENT.down, onDown);
+  el.addEventListener(POINTER_EVENT.move, onMove);
 
-  return () => { el.removeEventListener("pointerdown", onDown); el.removeEventListener("pointermove", onMove); };
+  return () => { el.removeEventListener(POINTER_EVENT.down, onDown); el.removeEventListener(POINTER_EVENT.move, onMove); };
 }

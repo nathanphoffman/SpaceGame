@@ -1,3 +1,4 @@
+import { POINTER_EVENT } from "@/components/maps/three/pointer";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 
 const MAX_ZOOM = 12;
@@ -64,9 +65,9 @@ function startDrag(event: React.PointerEvent, box: RefObject<HTMLDivElement | nu
     setView((current) => keepInside({ ...current, cx: current.cx - dx / current.z, cy: current.cy - dy / current.z }));
   };
 
-  const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
-  window.addEventListener("pointermove", move);
-  window.addEventListener("pointerup", up);
+  const up = () => { window.removeEventListener(POINTER_EVENT.move, move); window.removeEventListener(POINTER_EVENT.up, up); };
+  window.addEventListener(POINTER_EVENT.move, move);
+  window.addEventListener(POINTER_EVENT.up, up);
 }
 
 /** Scroll-wheel zoom (toward the cursor), drag to pan, and zoom buttons for a map whose points are in 0..100 %. */

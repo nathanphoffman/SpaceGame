@@ -1,3 +1,4 @@
+import { type Owner, PLANET_KIND } from "@/lib/defs";
 import type { Pool } from "pg";
 import { SYSTEMS } from "@/lib/data/catalog";
 import { fillSystem } from "@/lib/galaxy/systemGen";
@@ -10,7 +11,7 @@ export type Q = { query(text: string, values?: unknown[]): Promise<{ rows: any[]
 const START = { resources: { Fe: 500, Si: 300 }, buildings: { mine_Fe: 1, mine_Si: 1 }, ships: { fighter: 2 } };
 const NOTHING = { resources: {}, buildings: {}, ships: {} };
 
-export type PlanetRow = Omit<Filler, "kind"> & { kind: "player" | "npc" | "empty"; shared: boolean; ships: Record<string, number> };
+export type PlanetRow = Omit<Filler, "kind"> & { kind: Owner; shared: boolean; ships: Record<string, number> };
 
 export async function insertPlanets(db: Q, systemId: number, rows: PlanetRow[]) {
   for (const planet of rows) {
@@ -35,7 +36,7 @@ export async function seedGalaxy(pool: Pool) {
     const real = system.bodies.map((body): PlanetRow => ({
       id: body.id, name: body.name, orbit: body.orbit, seed: body.seed, shared: !!body.shared, defense: 0,
       // the starting planet belongs to the player and gets the starting resources
-      kind: body.start ? "player" : "empty", ...(body.start ? START : NOTHING),
+      kind: body.start ? PLANET_KIND.player : PLANET_KIND.empty, ...(body.start ? START : NOTHING),
     }));
 
     const generated = fillSystem(system, system.bodies).map((filler): PlanetRow => ({ ...filler, shared: false, ships: {} }));

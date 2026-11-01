@@ -1,4 +1,4 @@
-import { ELEMENTS, MS_PER_SECOND, SECONDS_PER_MINUTE, SHIPS, type Element, type FleetDTO, type Res, type ShipType } from "@/lib/defs";
+import { ELEMENTS, MS_PER_SECOND, SECONDS_PER_MINUTE, SHIPS, type Element, type FleetDTO, type Res, type ShipType, MISSION } from "@/lib/defs";
 
 export const fmtTime = (ms: number) => {
   const seconds = Math.max(0, Math.ceil(ms / MS_PER_SECOND));
@@ -17,7 +17,7 @@ export const elementColor = (sym: string) => ELEMENTS[sym as Element]?.color ?? 
 export const SHIP_TYPES = Object.keys(SHIPS) as ShipType[];
 
 /** icon shown for a fleet on the maps and in the fleet list */
-export const fleetIcon = (fleet: FleetDTO) => (fleet.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon);
+export const fleetIcon = (fleet: FleetDTO) => (fleet.mission === MISSION.colonize ? SHIPS.colony_ship.icon : SHIPS.fighter.icon);
 
 export const Ico = ({ src, big }: { src: string; big?: boolean }) => <img src={src} alt="" className={big ? "ico big" : "ico"} />;
 

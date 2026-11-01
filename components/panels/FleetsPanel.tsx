@@ -1,4 +1,4 @@
-import { SHIPS, type FleetDTO, type PlanetDTO, type ShipType } from "@/lib/defs";
+import { SHIPS, type FleetDTO, type PlanetDTO, type ShipType, FLEET_STATUS, MISSION } from "@/lib/defs";
 import { Cost, SHIP_TYPES, ShipList, fleetIcon, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -46,16 +46,16 @@ function Hangar({ planet }: { planet: PlanetDTO }) {
 
 /** what a fleet is doing: flying out, guarding, or flying home */
 function statusText(fleet: FleetDTO, planetName: (id: number) => string) {
-  if (fleet.status === "outbound") return `${fleet.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(fleet.targetId)}`;
+  if (fleet.status === FLEET_STATUS.outbound) return `${fleet.mission === MISSION.colonize ? "Colonizing" : "Attacking"} ${planetName(fleet.targetId)}`;
 
-  if (fleet.status === "stationed") return `Guarding ${planetName(fleet.targetId)}`;
+  if (fleet.status === FLEET_STATUS.stationed) return `Guarding ${planetName(fleet.targetId)}`;
 
   return `Returning to ${planetName(fleet.originId)}`;
 }
 
 function FleetRow({ fleet, planetName, now, act }: { fleet: FleetDTO; planetName: Props["planetName"]; now: number; act: Props["sendAction"] }) {
   const hasLoot = Object.values(fleet.loot).some((amount) => amount > 0);
-  const arrival = fleet.status === "outbound" ? fleet.arriveAt : fleet.returnAt;
+  const arrival = fleet.status === FLEET_STATUS.outbound ? fleet.arriveAt : fleet.returnAt;
 
   return (
     <div className="row">
@@ -64,7 +64,7 @@ function FleetRow({ fleet, planetName, now, act }: { fleet: FleetDTO; planetName
         {statusText(fleet, planetName)}
         <div className="sub"><ShipList ships={fleet.ships} />{hasLoot && <> · loot <Cost cost={fleet.loot} /></>}</div> {/* loot is shown only when at least one resource was taken */}
       </div>
-      {fleet.status === "stationed"
+      {fleet.status === FLEET_STATUS.stationed
         ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: fleet.id })}>Recall</button>
         : <b>{fmtTime(arrival - now)}</b>}
     </div>

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { planetParams } from "@/lib/planets/planetParams";
 import { starParams } from "@/lib/planets/starParams";
-import type { FleetDTO, PlanetDTO, SystemDTO } from "@/lib/defs";
+import { type FleetDTO, type PlanetDTO, type SystemDTO, MISSION } from "@/lib/defs";
 import { createPlanetGroup } from "@/components/planet/planetMesh";
 import { glowSprite } from "@/components/maps/three/glow";
 
@@ -96,7 +96,7 @@ export function createPlanetNode(planet: PlanetDTO): PlanetNode {
 
 /** a small ship (a cone pointing the way it flies) and a dashed line to where it is going */
 export function createShip(fleet: FleetDTO): ShipNode {
-  const color = fleet.mission === "colonize" ? COLONY_COLOR : ATTACK_COLOR;
+  const color = fleet.mission === MISSION.colonize ? COLONY_COLOR : ATTACK_COLOR;
   const hull = new THREE.Mesh(new THREE.ConeGeometry(SHIP_WIDTH, SHIP_LENGTH, SHIP_SEGMENTS), new THREE.MeshBasicMaterial({ color }));
   hull.rotation.x = Math.PI / 2; // a cone points along +y; turn it to +z, the way lookAt() faces
   const holder = new THREE.Group();
@@ -104,7 +104,7 @@ export function createShip(fleet: FleetDTO): ShipNode {
 
   // total ships in the fleet: add up the count of every ship type
   const count = Object.values(fleet.ships).reduce((total, n) => total + n, 0);
-  addLabel(holder, `${fleet.mission === "colonize" ? "Colony" : "Fleet"} ×${count}`, "ship");
+  addLabel(holder, `${fleet.mission === MISSION.colonize ? "Colony" : "Fleet"} ×${count}`, "ship");
   const trailGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
   const trail = new THREE.Line(trailGeometry, new THREE.LineDashedMaterial({ color, transparent: true, opacity: TRAIL_OPACITY, dashSize: TRAIL_DASH.dash, gapSize: TRAIL_DASH.gap }));
 

@@ -1,9 +1,6 @@
 import { randomUUID } from "crypto";
 import { pool, ready } from "@/lib/server/db";
-import {
-  ELEMENTS, MAX_BUILDING_LEVEL, MS_PER_SECOND, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds,
-  type ShipType, type Res, type GameState,
-} from "@/lib/defs";
+import { ELEMENTS, MAX_BUILDING_LEVEL, MS_PER_SECOND, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds, type ShipType, type Res, type GameState, FLEET_STATUS, MISSION, PLANET_KIND, QUEUE_KIND } from "@/lib/defs";
 
 import { planetStats } from "@/lib/planets/planetStats";
 import { ensureSector, ensureSystem } from "@/lib/server/lazyGen";
@@ -21,10 +18,10 @@ const MAX_BATCH = 20;
 function accrue(planet: Planet, time: Date) {
   if (time <= planet.updated_at) return;
 
-  if (planet.kind !== "empty") {
+  if (planet.kind !== PLANET_KIND.empty) {
     const deltaSeconds = (time.getTime() - planet.updated_at.getTime()) / MS_PER_SECOND;
     const rate = productionRates(planet.buildings, planetStats(planet.seed).composition);
-    const cap = planet.kind === "npc" ? NPC_RESOURCE_CAP : Infinity;
+    const cap = planet.kind === PLANET_KIND.npc ? NPC_RESOURCE_CAP : Infinity;
 
     for (const [el, perSec] of Object.entries(rate)) planet.resources[el] = Math.min(cap, (planet.resources[el] ?? 0) + perSec * deltaSeconds);
   }
@@ -49,7 +46,7 @@ const DEFENSE_DAMAGE_SHARE = 0.5; // a losing fleet still knocks this share of i
 /** the fleet turns around and flies back the way it came */
 function sendHome(fleet: Fleet) {
   const flight = fleet.arrive_at.getTime() - fleet.depart_at.getTime();
-  fleet.status = "returning";
+  fleet.status = FLEET_STATUS.returning;
   fleet.return_at = new Date(fleet.arrive_at.getTime() + flight);
 }
 
@@ -74,7 +71,7 @@ function takeLoot(stockpile: Res, room: number) {
 
 /** settle an empty planet: the fleet and any fleet already guarding it join the new base */
 function colonize(world: World, fleet: Fleet, target: Planet) {
-  if (target.kind !== "empty") {
+  if (target.kind !== PLANET_KIND.empty) {
     fleet.report = `Colonization of ${target.name} failed: planet is already taken.`;
     sendHome(fleet);
 
@@ -82,15 +79,15 @@ function colonize(world: World, fleet: Fleet, target: Planet) {
   }
 
   fleet.ships.colony_ship -= 1;
-  target.kind = "player";
+  target.kind = PLANET_KIND.player;
   target.resources = { ...COLONY_START_RESOURCES };
   target.updated_at = fleet.arrive_at;
-  const joining = [fleet, ...world.fleets.filter((other) => other !== fleet && other.status === "stationed" && other.target_id === target.id)];
+  const joining = [fleet, ...world.fleets.filter((other) => other !== fleet && other.status === FLEET_STATUS.stationed && other.target_id === target.id)];
 
   for (const group of joining) {
     for (const [type, count] of Object.entries(group.ships)) target.ships[type] = (target.ships[type] ?? 0) + count;
     addRes(target.resources, group.loot);
-    group.status = "done";
+    group.status = FLEET_STATUS.done;
   }
 
   fleet.report = `Colonized ${target.name}! ${joining.length > 1 ? "The guarding fleet joined the new base." : ""}`.trim();
@@ -107,11 +104,11 @@ function winBattle(fleet: Fleet, target: Planet, power: number) {
   }
 
   fleet.loot = takeLoot(target.resources, fleetTotal(fleet.ships, "cargo"));
-  target.kind = "empty"; // the enemy base is destroyed and the fleet guards what is left
+  target.kind = PLANET_KIND.empty; // the enemy base is destroyed and the fleet guards what is left
   target.buildings = {};
   target.defense = 0;
   target.resources = {};
-  fleet.status = "stationed";
+  fleet.status = FLEET_STATUS.stationed;
   fleet.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${resText(fleet.loot)}. Lost: ${shipList(lost)}.`;
 }
 
@@ -119,7 +116,7 @@ function winBattle(fleet: Fleet, target: Planet, power: number) {
 function attack(fleet: Fleet, target: Planet) {
   const power = fleetTotal(fleet.ships, "attack");
 
-  if (target.kind !== "npc") {
+  if (target.kind !== PLANET_KIND.npc) {
     fleet.report = `Attack on ${target.name} aborted: nothing to attack.`;
     sendHome(fleet);
 
@@ -131,7 +128,7 @@ function attack(fleet: Fleet, target: Planet) {
   target.defense = Math.max(0, target.defense - Math.floor(power * DEFENSE_DAMAGE_SHARE));
   fleet.report = `Defeat at ${target.name}. Fleet lost (${shipList(fleet.ships)}). Their defense is now ${target.defense}.`;
   fleet.ships = {};
-  fleet.status = "done";
+  fleet.status = FLEET_STATUS.done;
 }
 
 /** a fleet reaches its target: colonise it, guard it if it is neutral, or fight it */
@@ -139,10 +136,10 @@ export function arrive(world: World, fleet: Fleet) {
   const target = world.planets.find((planet) => planet.id === fleet.target_id)!;
   accrue(target, fleet.arrive_at);
 
-  if (fleet.mission === "colonize") return colonize(world, fleet, target);
+  if (fleet.mission === MISSION.colonize) return colonize(world, fleet, target);
 
-  if (target.kind === "empty") { // neutral planet: nothing to fight, so the fleet just guards it
-    fleet.status = "stationed";
+  if (target.kind === PLANET_KIND.empty) { // neutral planet: nothing to fight, so the fleet just guards it
+    fleet.status = FLEET_STATUS.stationed;
     fleet.report = `Your fleet arrived at ${target.name} and is guarding it.`;
 
     return;
@@ -156,7 +153,7 @@ function finishQueueItem(world: World, item: World["queue"][number]) {
   const planet = world.planets.find((candidate) => candidate.id === item.planet_id)!;
   accrue(planet, item.finish_at);
 
-  if (item.kind === "building") planet.buildings[item.type] = (planet.buildings[item.type] ?? 0) + 1;
+  if (item.kind === QUEUE_KIND.building) planet.buildings[item.type] = (planet.buildings[item.type] ?? 0) + 1;
   else planet.ships[item.type] = (planet.ships[item.type] ?? 0) + 1;
 
   world.queue = world.queue.filter((queued) => queued !== item);
@@ -170,7 +167,7 @@ function returnHome(world: World, fleet: Fleet) {
   for (const [type, count] of Object.entries(fleet.ships)) origin.ships[type] = (origin.ships[type] ?? 0) + count;
 
   addRes(origin.resources, fleet.loot);
-  fleet.status = "done";
+  fleet.status = FLEET_STATUS.done;
 }
 
 /** the action for the earliest thing that has already happened by `now` (queue items win ties), or null when nothing is due */
@@ -186,9 +183,9 @@ function earliestDue(world: World, currentTime: Date) {
   for (const item of world.queue) consider(item.finish_at, () => finishQueueItem(world, item));
 
   for (const fleet of world.fleets) {
-    if (fleet.status === "outbound") consider(fleet.arrive_at, () => arrive(world, fleet));
+    if (fleet.status === FLEET_STATUS.outbound) consider(fleet.arrive_at, () => arrive(world, fleet));
 
-    if (fleet.status === "returning") consider(fleet.return_at, () => returnHome(world, fleet));
+    if (fleet.status === FLEET_STATUS.returning) consider(fleet.return_at, () => returnHome(world, fleet));
   }
 
   // the compiler can't see that the closure assigned it, so say what it is
@@ -258,7 +255,7 @@ function toState(w: World, now: Date): GameState {
 function ownPlanet(w: World, id: number) {
   const p = w.planets.find((x) => x.id === id);
 
-  if (!p || p.kind !== "player") throw new GameError("Not your planet");
+  if (!p || p.kind !== PLANET_KIND.player) throw new GameError("Not your planet");
 
   return p;
 }
@@ -284,14 +281,14 @@ export function startBuilding(w: World, now: Date, planetId: number, type: strin
     throw new GameError(`There is no ${ELEMENTS[element].name} on this planet to mine`);
   }
 
-  const queued = w.queue.filter((q) => q.planet_id === p.id && q.kind === "building" && q.type === type).length;
+  const queued = w.queue.filter((q) => q.planet_id === p.id && q.kind === QUEUE_KIND.building && q.type === type).length;
   const level = (p.buildings[type] ?? 0) + queued;
 
   if (level >= MAX_BUILDING_LEVEL) throw new GameError(`${buildingInfo(type)!.name} is already at the maximum level (${MAX_BUILDING_LEVEL})`);
   pay(p, buildCost(type, level));
-  const start = lastFinish(w, p.id, "building", now);
+  const start = lastFinish(w, p.id, QUEUE_KIND.building, now);
   const finish = new Date(start.getTime() + buildSeconds(type, level) * MS_PER_SECOND);
-  w.queue.push({ id: randomUUID(), planet_id: p.id, kind: "building", type, start_at: start, finish_at: finish });
+  w.queue.push({ id: randomUUID(), planet_id: p.id, kind: QUEUE_KIND.building, type, start_at: start, finish_at: finish });
 }
 
 export function buildShips(w: World, now: Date, planetId: number, type: ShipType, qty: number) {
@@ -304,11 +301,11 @@ export function buildShips(w: World, now: Date, planetId: number, type: ShipType
   if (!(qty >= MIN_BATCH && qty <= MAX_BATCH)) throw new GameError(`Quantity must be ${MIN_BATCH}-${MAX_BATCH}`);
   const s = SHIPS[type];
   pay(p, Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
-  let start = lastFinish(w, p.id, "ship", now);
+  let start = lastFinish(w, p.id, QUEUE_KIND.ship, now);
 
   for (let index = 0; index < qty; index++) {
     const finish = new Date(start.getTime() + shipSeconds(type, p.buildings.shipyard) * MS_PER_SECOND);
-    w.queue.push({ id: randomUUID(), planet_id: p.id, kind: "ship", type, start_at: start, finish_at: finish });
+    w.queue.push({ id: randomUUID(), planet_id: p.id, kind: QUEUE_KIND.ship, type, start_at: start, finish_at: finish });
     start = finish;
   }
 }
@@ -319,7 +316,7 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
 
   if (!target) throw new GameError("Unknown target");
 
-  if (target.kind === "player") throw new GameError("That planet is already yours");
+  if (target.kind === PLANET_KIND.player) throw new GameError("That planet is already yours");
   const sent: Record<string, number> = {};
 
   for (const [t, n] of Object.entries(ships)) {
@@ -334,7 +331,7 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
   if (Object.keys(sent).length === 0) throw new GameError("Select at least one ship");
 
   // a colony ship settles a neutral planet; any other fleet fights what is there and then guards it
-  const mission = target.kind === "empty" && sent.colony_ship > 0 ? "colonize" : "attack";
+  const mission = target.kind === PLANET_KIND.empty && sent.colony_ship > 0 ? MISSION.colonize : MISSION.attack;
 
   for (const [t, n] of Object.entries(sent)) origin.ships[t] -= n;
   const flight =
@@ -342,17 +339,17 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
   w.fleets.push({
     id: randomUUID(), origin_id: origin.id, target_id: target.id, mission, ships: sent,
     loot: {}, depart_at: now, arrive_at: new Date(now.getTime() + flight),
-    return_at: new Date(now.getTime() + flight * 2), status: "outbound", report: "",
+    return_at: new Date(now.getTime() + flight * 2), status: FLEET_STATUS.outbound, report: "",
   });
 }
 
 export function recallFleet(w: World, now: Date, fleetId: string) {
   const f = w.fleets.find((x) => x.id === fleetId);
 
-  if (!f || f.status !== "stationed") throw new GameError("That fleet isn't guarding anything");
+  if (!f || f.status !== FLEET_STATUS.stationed) throw new GameError("That fleet isn't guarding anything");
   const flight = f.arrive_at.getTime() - f.depart_at.getTime();
   f.arrive_at = now; // start of the return leg
   f.return_at = new Date(now.getTime() + flight);
-  f.status = "returning";
+  f.status = FLEET_STATUS.returning;
   f.report = "Fleet recalled.";
 }

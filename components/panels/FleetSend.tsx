@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MS_PER_SECOND, SHIPS, flightSeconds, type GameState, type PlanetDTO, type ShipType } from "@/lib/defs";
+import { MS_PER_SECOND, SHIPS, flightSeconds, type GameState, type PlanetDTO, type ShipType, PLANET_KIND } from "@/lib/defs";
 import { SHIP_TYPES, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -14,7 +14,7 @@ type Quantities = Record<string, number>;
 
 /** what sending these ships would do: attack an enemy, colonise if a colony ship is along, otherwise just guard */
 function missionText(target: PlanetDTO, quantities: Quantities) {
-  if (target.kind === "npc") return `Attack · enemy defense ${target.defense} · survivors guard the planet`;
+  if (target.kind === PLANET_KIND.npc) return `Attack · enemy defense ${target.defense} · survivors guard the planet`;
 
   return (quantities.colony_ship ?? 0) > 0 ? "Colonize" : "Guard · add a Colony Ship to settle it";
 }
