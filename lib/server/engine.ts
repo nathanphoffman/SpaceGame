@@ -148,46 +148,52 @@ export function arrive(world: World, fleet: Fleet) {
   attack(fleet, target);
 }
 
-function settle(w: World, now: Date) {
-  for (;;) {
-    let t: Date | null = null;
-    // `consider` keeps the earliest event that is already due (and what to do for it); the loop repeats until none is left
-    let run: (() => void) | null = null;
-    const consider = (when: Date, fn: () => void) => {
-      if (when <= now && (!t || when < t)) { t = when; run = fn; }
-    };
+/** a building or ship in the queue finishes: the planet gets it */
+function finishQueueItem(world: World, item: World["queue"][number]) {
+  const planet = world.planets.find((candidate) => candidate.id === item.planet_id)!;
+  accrue(planet, item.finish_at);
 
-    for (const queueItem of w.queue) {
-      consider(queueItem.finish_at, () => { // a building or ship finishes
-        const p = w.planets.find((x) => x.id === queueItem.planet_id)!;
-        accrue(p, queueItem.finish_at);
+  if (item.kind === "building") planet.buildings[item.type] = (planet.buildings[item.type] ?? 0) + 1;
+  else planet.ships[item.type] = (planet.ships[item.type] ?? 0) + 1;
 
-        if (queueItem.kind === "building") p.buildings[queueItem.type] = (p.buildings[queueItem.type] ?? 0) + 1;
-        else p.ships[queueItem.type] = (p.ships[queueItem.type] ?? 0) + 1;
-        w.queue = w.queue.filter((x) => x !== queueItem);
-      });
-    }
+  world.queue = world.queue.filter((queued) => queued !== item);
+}
 
-    for (const f of w.fleets) {
-      if (f.status === "outbound") consider(f.arrive_at, () => arrive(w, f));
+/** a fleet gets back home: its ships and loot join the planet it left from */
+function returnHome(world: World, fleet: Fleet) {
+  const origin = world.planets.find((planet) => planet.id === fleet.origin_id)!;
+  accrue(origin, fleet.return_at);
 
-      if (f.status === "returning") {
-        consider(f.return_at, () => { // a fleet gets back home
-          const origin = w.planets.find((p) => p.id === f.origin_id)!;
-          accrue(origin, f.return_at);
+  for (const [type, count] of Object.entries(fleet.ships)) origin.ships[type] = (origin.ships[type] ?? 0) + count;
 
-          for (const [type, n] of Object.entries(f.ships)) origin.ships[type] = (origin.ships[type] ?? 0) + n;
-          addRes(origin.resources, f.loot);
-          f.status = "done";
-        });
-      }
-    }
+  addRes(origin.resources, fleet.loot);
+  fleet.status = "done";
+}
 
-    if (!run) break;
-    (run as () => void)();
+/** the action for the earliest thing that has already happened by `now` (queue items win ties), or null when nothing is due */
+function earliestDue(world: World, now: Date) {
+  let earliest: Date | null = null;
+  let action: (() => void) | null = null;
+  const consider = (when: Date, run: () => void) => {
+    if (when <= now && (!earliest || when < earliest)) { earliest = when; action = run; }
+  };
+
+  for (const item of world.queue) consider(item.finish_at, () => finishQueueItem(world, item));
+
+  for (const fleet of world.fleets) {
+    if (fleet.status === "outbound") consider(fleet.arrive_at, () => arrive(world, fleet));
+
+    if (fleet.status === "returning") consider(fleet.return_at, () => returnHome(world, fleet));
   }
 
-  for (const p of w.planets) accrue(p, now);
+  return action as (() => void) | null;
+}
+
+/** play out everything that happened since the last visit, oldest first, then bring every planet's stock up to date */
+export function settle(world: World, now: Date) {
+  for (let next = earliestDue(world, now); next; next = earliestDue(world, now)) next();
+
+  for (const planet of world.planets) accrue(planet, now);
 }
 
 // ---------- entry point ----------

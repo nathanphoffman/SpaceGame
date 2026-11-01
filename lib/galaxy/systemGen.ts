@@ -25,59 +25,83 @@ export function planetCount(starSeed: number) {
   return 2 + Math.floor(random() * 6) + Math.floor(random() * 6); // two d6 (each 0..5, +1 each)
 }
 
+const MAX_STAR_SCALE = 3;
+const MIN_STAR_SCALE = 0.15;
+const INNERMOST_AU = 0.3;
+const ORBIT_SPREAD = 40; // the outermost generated orbit is about this many times the innermost
+const TOO_CLOSE = 1.35; // two orbits closer than this ratio would crowd each other
+const MAX_NUDGES = 3;
+const HOSTILE_CHANCE = 0.3;
+const SEED_RANGE = 99999;
+const STOCKPILE_PER_LEVEL = 300;
+const MAX_MINE_LEVEL = 6;
+const NAMED_LETTERS = 26;
+const WARM_UP_DRAWS = 4;
+const SEED_MULTIPLIER = 4801;
+const SEED_OFFSET = 29;
+const SUN_TEMP_K = 5772;
+
+const crowds = (orbit: number, taken: number[]) => taken.some((other) => orbit / other < TOO_CLOSE && other / orbit < TOO_CLOSE);
+
+/** dim stars have their zone of orbits closer in: scale the orbit range with the star's brightness */
+function orbitScale(star: { radius: number; temp: number }) {
+  const luminosity = star.radius * star.radius * Math.pow(star.temp / SUN_TEMP_K, 4);
+
+  return Math.min(MAX_STAR_SCALE, Math.max(MIN_STAR_SCALE, Math.sqrt(luminosity)));
+}
+
+/** hostile bases run mines on their planet's most common elements and sit on a stockpile */
+function arm(seed: number, random: () => number) {
+  const buildings: Record<string, number> = {};
+  const resources: Record<string, number> = {};
+  const composition = planetStats(seed).composition;
+
+  for (const { symbol } of composition.slice(0, Math.min(1 + Math.floor(random() * 3), composition.length))) {
+    const level = 1 + Math.floor(random() * MAX_MINE_LEVEL);
+    buildings[mineType(symbol)] = level;
+    resources[symbol] = STOCKPILE_PER_LEVEL * level;
+  }
+
+  return { buildings, resources };
+}
+
 /**
  * Generate the planets we don't know about. A system gets 2d6 planets in total, so a star with
  * several confirmed planets gets few extras. `known` are the real orbits, which stay where they are.
  */
 export function fillSystem(sys: { id: number; name: string; seed: number; complete: boolean }, known: { orbit: number; id: number }[]): Filler[] {
   if (sys.complete) return [];
+
   const want = Math.max(0, planetCount(sys.seed) - known.length);
-  const r = mulberry32(sys.seed * 4801 + 29);
+  const random = mulberry32(sys.seed * SEED_MULTIPLIER + SEED_OFFSET);
 
-  for (let i = 0; i < 4; i++) r();
+  for (let draw = 0; draw < WARM_UP_DRAWS; draw++) random();
 
-  // dim stars have their zone of orbits closer in: scale the orbit range with the star's brightness
-  const star = starParams(sys.seed);
-  const lum = star.radius * star.radius * Math.pow(star.temp / 5772, 4);
-  const scale = Math.min(3, Math.max(0.15, Math.sqrt(lum)));
-  const taken = known.map((k) => k.orbit);
-
+  const scale = orbitScale(starParams(sys.seed));
+  const taken = known.map((planet) => planet.orbit);
   const out: Filler[] = [];
 
-  for (let i = 0; i < want; i++) {
-    const e = (i + 0.5 + (r() - 0.5) * 0.5) / want;
-    let orbit = 0.3 * scale * Math.pow(40, e);
+  for (let index = 0; index < want; index++) {
+    const spot = (index + 0.5 + (random() - 0.5) * 0.5) / want; // 0..1 along the range of orbits, with some jitter
+    let orbit = INNERMOST_AU * scale * Math.pow(ORBIT_SPREAD, spot);
 
-    for (let tries = 0; tries < 3 && taken.some((t) => orbit / t < 1.35 && t / orbit < 1.35); tries++) orbit *= 1.5;
+    for (let nudges = 0; nudges < MAX_NUDGES && crowds(orbit, taken); nudges++) orbit *= 1.5;
 
-    if (taken.some((t) => orbit / t < 1.35 && t / orbit < 1.35)) continue; // no room left here
+    if (crowds(orbit, taken)) continue; // no room left here
+
     orbit = Math.round(orbit * 1000) / 1000;
     taken.push(orbit);
 
-    const seed = 1 + Math.floor(r() * 99999);
-    const hostile = r() < 0.3;
+    const seed = 1 + Math.floor(random() * SEED_RANGE);
+    const hostile = random() < HOSTILE_CHANCE;
+    const { buildings, resources } = hostile ? arm(seed, random) : { buildings: {}, resources: {} };
+    const number = known.length + out.length + 1;
 
-    // hostile bases run mines on their planet's most common elements and sit on a stockpile
-    const buildings: Record<string, number> = {};
-    const resources: Record<string, number> = {};
-
-    if (hostile) {
-      const comp = planetStats(seed).composition;
-
-      for (const { symbol } of comp.slice(0, Math.min(1 + Math.floor(r() * 3), comp.length))) {
-        const level = 1 + Math.floor(r() * 6);
-        buildings[mineType(symbol)] = level;
-        resources[symbol] = 300 * level;
-      }
-    }
-
-    const n = known.length + out.length + 1;
     out.push({
-      id: sys.id * 100 + n,
-      name: n < 26 ? `${sys.name} ${String.fromCharCode(97 + n)}` : planetName(seed),
-      // hostile planets are enemy bases, the rest are free to settle
-      orbit, kind: hostile ? "npc" : "empty", resources, buildings,
-      defense: hostile ? Math.round(10 + r() * r() * 400) : 0,
+      id: sys.id * 100 + number,
+      name: number < NAMED_LETTERS ? `${sys.name} ${String.fromCharCode(97 + number)}` : planetName(seed),
+      orbit, kind: hostile ? "npc" : "empty", resources, buildings, // hostile planets are enemy bases, the rest are free to settle
+      defense: hostile ? Math.round(10 + random() * random() * 400) : 0,
       seed,
     });
   }

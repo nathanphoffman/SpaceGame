@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrive } from "@/lib/server/engine";
+import { arrive, settle } from "@/lib/server/engine";
 import type { Fleet, Planet, World } from "@/lib/server/world";
 
 const start = new Date("2030-01-01T00:00:00Z");
@@ -60,5 +60,45 @@ describe("fleet arrives", () => {
     arrive(world([target], [colonists]), colonists);
     expect(colonists.status).toBe("returning");
     expect(colonists.return_at.getTime()).toBe(arriveAt.getTime() + 60_000);
+  });
+});
+
+describe("settling time", () => {
+  const later = new Date(start.getTime() + 600_000);
+
+  it("finishes a queued building once its time has passed", () => {
+    const home = planet({ id: 1, kind: "player", buildings: {} });
+    const state = world([home], []);
+    state.queue = [{ id: "q1", planet_id: 1, kind: "building", type: "shipyard", start_at: start, finish_at: arriveAt }];
+    settle(state, later);
+    expect(home.buildings.shipyard).toBe(1);
+    expect(state.queue).toHaveLength(0);
+  });
+
+  it("leaves queue items that are not finished yet", () => {
+    const home = planet({ id: 1, kind: "player", buildings: {} });
+    const state = world([home], []);
+    state.queue = [{ id: "q1", planet_id: 1, kind: "ship", type: "fighter", start_at: start, finish_at: later }];
+    settle(state, arriveAt);
+    expect(home.ships.fighter).toBeUndefined();
+    expect(state.queue).toHaveLength(1);
+  });
+
+  it("plays out a whole trip: arrive, fight, and nothing left to do", () => {
+    const home = planet({ id: 1, kind: "player", buildings: {} });
+    const target = planet({ id: 2, defense: 10 });
+    const attacker = fleet({ ships: { fighter: 20 } });
+    settle(world([home, target], [attacker]), later);
+    expect(target.kind).toBe("empty");
+    expect(attacker.status).toBe("stationed");
+  });
+
+  it("brings a returning fleet home with its ships", () => {
+    const home = planet({ id: 1, kind: "player", buildings: {}, ships: {} });
+    const returning = fleet({ status: "returning", ships: { fighter: 3 }, loot: { Fe: 40 }, return_at: arriveAt });
+    settle(world([home, planet({ id: 2 })], [returning]), later);
+    expect(home.ships.fighter).toBe(3);
+    expect(home.resources.Fe).toBeGreaterThanOrEqual(40);
+    expect(returning.status).toBe("done");
   });
 });
