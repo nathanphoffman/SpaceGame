@@ -1,4 +1,4 @@
-import type { PlanetKind, RGB } from "@/lib/planetGen";
+import type { PlanetKind, RGB } from "@/lib/planets/types";
 
 /** Hand-picked appearance for a real body. Anything left out falls back to a seeded random value. */
 export type Look = {

@@ -1,5 +1,5 @@
 import { ELEMENTS, type Element } from "@/lib/defs";
-import type { PlanetKind, PlanetParams } from "@/lib/planetGen";
+import type { PlanetKind, PlanetParams } from "@/lib/planets/types";
 import type { BodySpec } from "@/lib/data/types";
 
 /** on-screen size (game units, ~0.35 .. 1.45) from a real diameter */

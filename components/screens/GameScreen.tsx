@@ -12,7 +12,7 @@ import type { Navigation } from "@/components/hooks/useNavigation";
 import type { useGame } from "@/components/hooks/useGame";
 import { buildableTypes, shortfallText, stockAfter } from "@/lib/economy";
 import { productionRates, type FleetDTO, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
-import { planetStats } from "@/lib/planetGen";
+import { planetStats } from "@/lib/planets/planetStats";
 import Reports from "./Reports";
 
 type Act = ReturnType<typeof useGame>["act"];

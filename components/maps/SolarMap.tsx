@@ -1,5 +1,6 @@
 import { planetThumb, thumbDisplaySize } from "@/components/planet/planetThumb";
-import { planetParams, starParams } from "@/lib/planetGen";
+import { planetParams } from "@/lib/planets/planetParams";
+import { starParams } from "@/lib/planets/starParams";
 import { SHIPS, type FleetDTO, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
 import { flightOf, flyingFleets, isCrossSystem } from "@/lib/galaxy/flight";
 import { fleetIcon, fmtAU } from "@/components/ui";

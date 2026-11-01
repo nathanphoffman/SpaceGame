@@ -1,4 +1,4 @@
-import { starParams } from "@/lib/planetGen";
+import { starParams } from "@/lib/planets/starParams";
 import type { GameState } from "@/lib/defs";
 import { flightOf, flyingFleets } from "@/lib/galaxy/flight";
 import { mapPositions } from "@/lib/galaxy/galaxyLayout";

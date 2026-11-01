@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { planetParams } from "@/lib/planetGen";
+import { planetParams } from "@/lib/planets/planetParams";
 import { createPlanetGroup } from "@/components/planet/planetMesh";
 
 const MAX_FPS = 30;

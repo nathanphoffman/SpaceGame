@@ -1,4 +1,4 @@
-import type { PlanetKind } from "@/lib/planetGen";
+import type { PlanetKind } from "@/lib/planets/types";
 import type { Look } from "@/lib/data/types";
 
 const note = "Solar System";

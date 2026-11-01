@@ -1,5 +1,8 @@
 import PlanetView from "@/components/planet/PlanetView";
-import { describePlanet, equilibriumTempK, planetParams, planetStats, starParams } from "@/lib/planetGen";
+import { describePlanet } from "@/lib/planets/names";
+import { equilibriumTempK, planetStats } from "@/lib/planets/planetStats";
+import { planetParams } from "@/lib/planets/planetParams";
+import { starParams } from "@/lib/planets/starParams";
 import type { FleetDTO, PlanetDTO } from "@/lib/defs";
 import { bodyNote } from "@/lib/data/catalog";
 import { ShipList, elementColor, fmtAU } from "@/components/ui";

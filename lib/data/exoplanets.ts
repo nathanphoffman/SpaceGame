@@ -1,4 +1,4 @@
-import type { PlanetKind } from "@/lib/planetGen";
+import type { PlanetKind } from "@/lib/planets/types";
 
 // Known planets outside the solar system. Sizes are estimated from the measured minimum mass
 // (radius ~ mass^0.27 for rocky worlds); composition and appearance are not known, so the game generates those.

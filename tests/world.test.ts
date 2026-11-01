@@ -3,7 +3,8 @@ import { CENTER, GRID, SECTOR_LY, sectorCentre, sectorOf, sectorStarCount, secto
 import { mapPositions } from "@/lib/galaxy/galaxyLayout";
 import { flightSeconds, productionRates, buildCost, toRoman, shipSeconds } from "@/lib/defs";
 import { fillSystem, planetCount } from "@/lib/galaxy/systemGen";
-import { planetParams, planetStats } from "@/lib/planetGen";
+import { planetParams } from "@/lib/planets/planetParams";
+import { planetStats } from "@/lib/planets/planetStats";
 
 describe("sectors", () => {
   it("puts Sol in the middle of the grid", () => {

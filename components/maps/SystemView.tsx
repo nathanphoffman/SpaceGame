@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { starParams } from "@/lib/planetGen";
+import { starParams } from "@/lib/planets/starParams";
 import type { GameState, PlanetDTO, SystemDTO } from "@/lib/defs";
 import { SystemEngine } from "@/components/maps/three/SystemEngine";
 

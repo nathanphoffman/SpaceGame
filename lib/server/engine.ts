@@ -5,7 +5,7 @@ import {
   type ShipType, type Res, type GameState,
 } from "@/lib/defs";
 
-import { planetStats } from "@/lib/planetGen";
+import { planetStats } from "@/lib/planets/planetStats";
 import { ensureSector, ensureSystem } from "@/lib/server/lazyGen";
 import { validSector } from "@/lib/galaxy/sector";
 import { load, save, type Fleet, type Planet, type View, type World } from "@/lib/server/world";

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { planetParams } from "@/lib/planetGen";
+import { planetParams } from "@/lib/planets/planetParams";
 import { createPlanetGroup, planetExtent } from "@/components/planet/planetMesh";
 
 // One shared offscreen renderer renders every planet once to a PNG, so the solar map

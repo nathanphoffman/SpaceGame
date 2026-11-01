@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { fbm, noise3, type PlanetParams, type RGB } from "@/lib/planetGen";
+import { fbm, noise3 } from "@/lib/planets/noise";
+import { type PlanetParams, type RGB } from "@/lib/planets/types";
 
 const SPHERE_WIDTH_SEGMENTS = 160;
 const SPHERE_HEIGHT_SEGMENTS = 110;
