@@ -1,4 +1,5 @@
 import { EXOPLANETS } from "./exoplanets";
+import { bodyRadius } from "./realBodies";
 import { SOL_BODIES } from "./sol";
 import { STARS } from "./stars";
 import type { BodySpec, SystemSpec } from "./types";
@@ -30,9 +31,9 @@ export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly,
   const [x, y] = galacticXY(raH, raM, decD, decM, ly);
   const bodies: BodySpec[] = [];
 
-  const add = (b: Omit<BodySpec, "id" | "seed">) => {
+  const add = (b: Omit<BodySpec, "id" | "seed" | "radius">) => {
     const n = bodies.length + 1;
-    bodies.push({ ...b, id: id * 100 + n, seed: SEED_BASE + id * 100 + n });
+    bodies.push({ ...b, radius: bodyRadius(b.kind, b.diameterKm), id: id * 100 + n, seed: SEED_BASE + id * 100 + n });
   };
 
   if (name === "Sol") for (const b of SOL_BODIES) add(b);

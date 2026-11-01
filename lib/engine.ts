@@ -249,7 +249,7 @@ const lastFinish = (w: World, planetId: number, kind: string, now: Date) => // q
   // the latest finish time in the queue, or now if the queue is empty
   w.queue.filter((q) => q.planet_id === planetId && q.kind === kind).reduce((m, q) => (q.finish_at > m ? q.finish_at : m), now);
 
-export function build(w: World, now: Date, planetId: number, type: string) {
+export function startBuilding(w: World, now: Date, planetId: number, type: string) {
   if (!buildingInfo(type)) throw new GameError("Unknown building");
   const p = ownPlanet(w, planetId);
   const element = mineElement(type);

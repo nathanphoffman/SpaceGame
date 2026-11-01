@@ -7,7 +7,7 @@ import { BACKDROP_RADIUS, backdrop } from "./glow";
 import { startFly, stepFly, type Fly } from "./cameraFlight";
 import { orbitRing, planetPosition, systemRadius } from "./orbits";
 import { bindPointer, pickAt, type Pickable } from "./pointer";
-import { HIGH_DETAIL, createPlanetNode, createShip, createStar, disposeTree, placeShip, setDetail, type PlanetNode, type ShipNode } from "./systemParts";
+import { HIGH_DETAIL, LOW_DETAIL, createPlanetNode, createShip, createStar, disposeTree, placeShip, setDetail, type PlanetNode, type ShipNode } from "./systemParts";
 
 const FIELD_OF_VIEW = 50;
 const MAX_PIXEL_RATIO = 2;
@@ -127,6 +127,7 @@ export class SystemEngine {
 
     for (const dto of planets) {
       const node = createPlanetNode(dto);
+      setDetail(node, LOW_DETAIL);
       this.content.add(node.holder, orbitRing(dto.orbit, ORBIT_SEGMENTS));
       this.world.planets.set(dto.id, node);
       this.world.pickables.push({ id: dto.id, object: node.holder, radiusPx: PLANET_PICK_RADIUS_PX });

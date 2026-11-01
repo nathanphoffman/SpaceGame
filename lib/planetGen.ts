@@ -48,33 +48,27 @@ export function mulberry32(seed: number) {
 
 // ---- value noise ----
 
-function hash3(x: number, y: number, z: number, s: number) {
-  // mix the four inputs: multiply each by a large odd number and combine them with xor
-  let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(z, 2147483647) ^ Math.imul(s, 1274126177);
-  // scramble the bits again so close inputs give unrelated outputs
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  // fold the high bits into the low bits
-  h ^= h >>> 16;
-
-  // make it unsigned and scale to 0..1
-  return (h >>> 0) / 4294967295;
-}
-
-const smooth = (t: number) => t * t * (3 - 2 * t);
-
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
+/** smooth 3D value noise: random values at whole-number points, blended between them (all inline so it stays a leaf function) */
 export function noise3(x: number, y: number, z: number, s: number) {
   const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
-  const u = smooth(x - xi), v = smooth(y - yi), w = smooth(z - zi);
+  const fade = [x - xi, y - yi, z - zi].map((t) => t * t * (3 - 2 * t)); // ease each fraction so the blend has no visible grid lines
+  const corners: number[] = [];
 
-  const c = (dx: number, dy: number, dz: number) => hash3(xi + dx, yi + dy, zi + dz, s);
+  for (let corner = 0; corner < 8; corner++) {
+    // mix the corner's coordinates and the seed: multiply each by a large odd number and combine them with xor
+    let h = Math.imul(xi + (corner & 1), 374761393) ^ Math.imul(yi + ((corner >> 1) & 1), 668265263) ^ Math.imul(zi + (corner >> 2), 2147483647) ^ Math.imul(s, 1274126177);
+    h = Math.imul(h ^ (h >>> 13), 1274126177); // scramble the bits again so close inputs give unrelated outputs
+    h ^= h >>> 16; // fold the high bits into the low bits
+    corners.push((h >>> 0) / 4294967295); // make it unsigned and scale to 0..1
+  }
 
-  return lerp(
-    lerp(lerp(c(0, 0, 0), c(1, 0, 0), u), lerp(c(0, 1, 0), c(1, 1, 0), u), v),
-    lerp(lerp(c(0, 0, 1), c(1, 0, 1), u), lerp(c(0, 1, 1), c(1, 1, 1), u), v),
-    w,
-  );
+  const [u, v, w] = fade;
+  // blend neighbouring corners along x, then y, then z (each step is low + (high - low) * t)
+  const x00 = corners[0] + (corners[1] - corners[0]) * u, x10 = corners[2] + (corners[3] - corners[2]) * u;
+  const x01 = corners[4] + (corners[5] - corners[4]) * u, x11 = corners[6] + (corners[7] - corners[6]) * u;
+  const near = x00 + (x10 - x00) * v, far = x01 + (x11 - x01) * v;
+
+  return near + (far - near) * w;
 }
 
 /** fractal noise, roughly 0..1 with contrast boosted around 0.5 */
@@ -353,23 +347,23 @@ export type PlanetStats = {
 const statsCache = new Map<number, PlanetStats>();
 
 export function planetStats(seed: number): PlanetStats {
-  const hit = statsCache.get(seed);
+  const cached = statsCache.get(seed);
 
-  if (hit) return hit;
-  const stats = computePlanetStats(seed);
+  if (cached) return cached;
+
+  const stats = buildStats(seed, planetParams(seed));
   statsCache.set(seed, stats);
 
   return stats;
 }
 
-function computePlanetStats(seed: number): PlanetStats {
+function buildStats(seed: number, p: PlanetParams): PlanetStats {
   const real = BODY_BY_SEED.get(seed);
 
   if (real?.composition) {
     return { diameterKm: real.diameterKm, earths: real.diameterKm / 12742, composition: parseComposition(real.composition) };
   }
 
-  const p = planetParams(seed);
   const r = mulberry32(seed * 2246822519 + 97);
 
   for (let i = 0; i < 4; i++) r();

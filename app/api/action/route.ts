@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { resetGame } from "@/lib/db";
-import { GameError, build, buildShips, recallFleet, sendFleet, withGame } from "@/lib/engine";
+import { GameError, startBuilding, buildShips, recallFleet, sendFleet, withGame } from "@/lib/engine";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const view = { sx: v.sx, sy: v.sy, system: v.system, planets: ids };
     const { state } = await withGame((world, time) => {
       switch (body.action) {
-        case "build": return build(world, time, body.planetId, body.type);
+        case "build": return startBuilding(world, time, body.planetId, body.type);
 
         case "ship": return buildShips(world, time, body.planetId, body.type, body.qty);
 

@@ -78,10 +78,7 @@ export function createPlanetNode(planet: PlanetDTO): PlanetNode {
   dot.material.sizeAttenuation = false;
   dot.scale.setScalar(OWNER_DOT_SIZE);
   holder.add(mesh, dot);
-  const node: PlanetNode = { dto: planet, holder, mesh, spin: params.spin, radius: params.radius * PLANET_SCALE, detail: 0, label: addLabel(holder, planet.name, `body ${planet.kind}`) };
-  setDetail(node, LOW_DETAIL);
-
-  return node;
+  return { dto: planet, holder, mesh, spin: params.spin, radius: params.radius * PLANET_SCALE, detail: 0, label: addLabel(holder, planet.name, `body ${planet.kind}`) };
 }
 
 /** a small ship (a cone pointing the way it flies) and a dashed line to where it is going */

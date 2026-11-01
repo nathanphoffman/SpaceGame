@@ -21,6 +21,7 @@ export type BodySpec = {
   orbit: number;           // AU from its star
   kind: PlanetKind;
   diameterKm: number;
+  radius: number;          // on-screen size in game units, worked out from the diameter when the catalog is built
   composition?: string;    // e.g. "Fe30 O28 Si18"; left out = generated from the seed
   look?: Look;
   note: string;            // where the data comes from, shown in the planet panel

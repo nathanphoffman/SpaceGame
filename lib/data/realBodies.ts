@@ -21,7 +21,7 @@ export function parseComposition(text: string) {
 
 /** Pin a seeded random world to what we know about a real one. Bodies with a `look` are fully specified. */
 export function applyLook(params: PlanetParams, body: BodySpec): PlanetParams {
-  const radius = bodyRadius(body.kind, body.diameterKm);
+  const radius = body.radius;
   const L = body.look;
 
   if (!L) return { ...params, radius };
