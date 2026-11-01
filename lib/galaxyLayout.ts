@@ -22,5 +22,5 @@ export function mapPositions(systems: { id: number; x: number; y: number }[], ce
     }
   }
   const clamp = (v: number) => Math.min(96, Math.max(4, v));
-  return new Map(pts.map((p) => [p.id, { x: clamp(p.x), y: clamp(p.y) }]));
+  return new Map(pts.map((point) => [point.id, { x: clamp(point.x), y: clamp(point.y) }]));
 }

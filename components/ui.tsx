@@ -15,7 +15,6 @@ export const SHIP_TYPES = Object.keys(SHIPS) as ShipType[];
 /** icon shown for a fleet on the maps and in the fleet list */
 export const fleetIcon = (f: FleetDTO) => (f.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon);
 
-// eslint-disable-next-line @next/next/no-img-element
 export const Ico = ({ src, big }: { src: string; big?: boolean }) => <img src={src} alt="" className={big ? "ico big" : "ico"} />;
 
 /** a bundle of resources as coloured element symbols, e.g. "Fe 60  Si 15" */

@@ -13,8 +13,7 @@ export default function SystemView({ game, system, viewed, now, onSelect }: Prop
   const engine = useRef<SystemEngine | null>(null);
   const select = useRef(onSelect);
   const latest = useRef(game);
-  select.current = onSelect;
-  latest.current = game;
+  useEffect(() => { select.current = onSelect; latest.current = game; });
   const star = starParams(system.seed);
 
   useEffect(() => {

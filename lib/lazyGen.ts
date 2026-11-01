@@ -21,6 +21,6 @@ export async function ensureSystem(q: Q, id: number) {
   const s = rows[0];
   if (!s || s.explored) return;
   const planets = fillSystem({ id, name: s.name, seed: s.seed, complete: false }, []);
-  await insertPlanets(q, id, planets.map((f): PlanetRow => ({ ...f, shared: false, ships: {} })));
+  await insertPlanets(q, id, planets.map((filler): PlanetRow => ({ ...filler, shared: false, ships: {} })));
   await q.query("UPDATE systems SET explored=true WHERE id=$1", [id]);
 }

@@ -15,9 +15,9 @@ export default function TopBar({ planets, current, stock, rate, onSelect, onRese
     <div className="topbar">
       <h1>Space Game</h1>
       <div className="tabs">
-        {planets.map((p) => (
-          <button key={p.id} className={p.id === current.id ? "on" : ""} onClick={() => onSelect(p.id)}>
-            <Ico src="/icons/planet_player.svg" /> {p.name}
+        {planets.map((planet) => (
+          <button key={planet.id} className={planet.id === current.id ? "on" : ""} onClick={() => onSelect(planet.id)}>
+            <Ico src="/icons/planet_player.svg" /> {planet.name}
           </button>
         ))}
       </div>

@@ -1,9 +1,8 @@
 import { randomUUID } from "crypto";
-import type { PoolClient } from "pg";
 import { pool, ready } from "./db";
 import {
   ELEMENTS, MAX_BUILDING_LEVEL, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds,
-  type ShipType, type Res, type GameState, type SystemDTO,
+  type ShipType, type Res, type GameState,
 } from "./defs";
 import { planetStats } from "./planetGen";
 import { ensureSector, ensureSystem } from "./lazyGen";

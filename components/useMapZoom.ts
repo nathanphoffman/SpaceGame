@@ -63,6 +63,6 @@ export function useMapZoom() {
     zoomOut: () => zoomAt(1 / 1.6),
     reset: () => setV({ z: 1, cx: 50, cy: 50 }),
     /** map % position -> where it is drawn now */
-    project: (p: { x: number; y: number }) => ({ x: 50 + (p.x - v.cx) * v.z, y: 50 + (p.y - v.cy) * v.z }),
+    project: (point: { x: number; y: number }) => ({ x: 50 + (point.x - v.cx) * v.z, y: 50 + (point.y - v.cy) * v.z }),
   };
 }

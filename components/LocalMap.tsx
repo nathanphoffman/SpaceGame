@@ -21,7 +21,7 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
   const systems = game.systems.filter((s) => s.sectorX === sx && s.sectorY === sy);
   const view = useMapZoom();
   const base = mapPositions(systems, sectorCentre(sx, sy), SECTOR_LY / 2);
-  const pos = new Map([...base].map(([id, p]) => [id, view.project(p)])); // where each star is drawn at this zoom
+  const pos = new Map([...base].map(([id, point]) => [id, view.project(point)])); // where each star is drawn at this zoom
   const flying = flyingFleets(game).filter((f) => {
     const { from, to } = flightOf(game, f, now);
     return pos.has(from.systemId) && pos.has(to.systemId) && from.systemId !== to.systemId;
@@ -48,10 +48,10 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
           })}
         </svg>
         {systems.length === 0 && <div className="dim" style={{ padding: 12 }}>Surveying sector…</div>}
-        {systems.filter((s2) => { const p = pos.get(s2.id)!; return p.x > -5 && p.x < 105 && p.y > -5 && p.y < 105; }).map((sy2) => {
+        {systems.filter((s2) => { const point = pos.get(s2.id)!; return point.x > -5 && point.x < 105 && point.y > -5 && point.y < 105; }).map((sy2) => {
           const st = starParams(sy2.seed);
           const rgb = `rgb(${st.color.map((c) => Math.round(c * 255)).join(",")})`;
-          const owned = game.planets.filter((p) => p.kind === "player" && p.systemId === sy2.id).length;
+          const owned = game.planets.filter((planet) => planet.kind === "player" && planet.systemId === sy2.id).length;
           const at = pos.get(sy2.id)!;
           // diameter on a log scale of the real stellar radius: small stars are near a point of light,
           // supergiants about 6x that (kept modest so stars are easy to click and tell apart)

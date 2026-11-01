@@ -34,7 +34,7 @@ export async function seedGalaxy(pool: Pool) {
       id: b.id, name: b.name, orbit: b.orbit, seed: b.seed, shared: !!b.shared, defense: 0,
       kind: b.start ? "player" : "empty", ...(b.start ? START : NOTHING),
     }));
-    const generated = fillSystem(s, s.bodies).map((f): PlanetRow => ({ ...f, shared: false, ships: {} }));
+    const generated = fillSystem(s, s.bodies).map((filler): PlanetRow => ({ ...filler, shared: false, ships: {} }));
     await insertPlanets(pool, s.id, [...real, ...generated]);
   }
 }

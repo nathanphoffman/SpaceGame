@@ -31,17 +31,17 @@ export async function load(c: PoolClient, view: View): Promise<World> {
   )).rows as Planet[];
   const rows = (await c.query(
     "SELECT * FROM systems WHERE id = ANY($1) OR id = $2 OR (sector_x = $3 AND sector_y = $4) ORDER BY id",
-    [[...new Set(planets.map((p) => p.system_id))], view.system ?? null, view.sx ?? null, view.sy ?? null],
+    [[...new Set(planets.map((planet) => planet.system_id))], view.system ?? null, view.sx ?? null, view.sy ?? null],
   )).rows;
   const systems: SystemDTO[] = rows.map((r) => ({ id: r.id, name: r.name, x: r.x, y: r.y, seed: r.seed, sectorX: r.sector_x, sectorY: r.sector_y }));
   return { systems, planets, queue, fleets };
 }
 
 export async function save(c: PoolClient, w: World) {
-  for (const p of w.planets) {
+  for (const planet of w.planets) {
     await c.query(
       `UPDATE planets SET name=$2, kind=$3, resources=$4, buildings=$5, ships=$6, defense=$7, updated_at=$8 WHERE id=$1`,
-      [p.id, p.name, p.kind, JSON.stringify(p.resources), JSON.stringify(p.buildings), JSON.stringify(p.ships), p.defense, p.updated_at],
+      [planet.id, planet.name, planet.kind, JSON.stringify(planet.resources), JSON.stringify(planet.buildings), JSON.stringify(planet.ships), planet.defense, planet.updated_at],
     );
   }
   await c.query("DELETE FROM queue");

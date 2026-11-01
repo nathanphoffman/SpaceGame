@@ -54,8 +54,8 @@ export default function Page() {
     ...Object.keys(planet.buildings).filter((t) => buildingInfo(t)),
   ]));
 
-  const activeFleets = game.fleets.filter((f) => f.status !== "done");
-  const reports = game.fleets.filter((f) => f.report).slice(-6).reverse();
+  const activeFleets = game.fleets.filter((fleet) => fleet.status !== "done");
+  const reports = game.fleets.filter((fleet) => fleet.report).slice(-6).reverse();
   const planetName = (id: number) => game.planets.find((p) => p.id === id)?.name ?? "?";
   const queueOf = (kind: "building" | "ship") => game.queue.filter((q) => q.planetId === planet.id && q.kind === kind);
 
@@ -75,7 +75,7 @@ export default function Page() {
         <div>
           <PlanetPanel
             planet={viewed} systemSeed={sysOf(viewed.systemId).seed}
-            guards={activeFleets.filter((f) => f.status === "stationed" && f.targetId === viewed.id)}
+            guards={activeFleets.filter((fleet) => fleet.status === "stationed" && fleet.targetId === viewed.id)}
           />
           <div style={{ textAlign: "right", marginBottom: 6 }}>
             <button className="ghost" onClick={() => setView3d(!view3d)}>{view3d ? "Show flat map" : "Show 3D view"}</button>
@@ -104,7 +104,7 @@ export default function Page() {
           <div className="panel">
             <h2>Reports</h2>
             {reports.length === 0 && <div className="dim">No reports yet.</div>}
-            {reports.map((f) => <div className="report" key={f.id}>{f.report}</div>)}
+            {reports.map((fleet) => <div className="report" key={fleet.id}>{fleet.report}</div>)}
           </div>
         </div>
       </div>
