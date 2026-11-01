@@ -40,98 +40,112 @@ const resText = (r: Res) => // turn a resource bundle into text like "60 Fe, 15 
 const shipList = (s: Record<string, number>) => // turn a ship bundle into text like "3 Cruiser"
   Object.entries(s).filter(([, n]) => n > 0).map(([t, n]) => `${n} ${SHIPS[t as ShipType].name}`).join(", ") || "nothing";
 
-function arrive(world: World, fleet: Fleet) {
-  const target = world.planets.find((p) => p.id === fleet.target_id)!;
-  accrue(target, fleet.arrive_at);
+const COLONY_START_RESOURCES: Res = { Fe: 100, Si: 50 };
+const LOSS_SHARE_OF_WIN = 0.6; // a winning fleet loses ships in proportion to how strong the defense was, scaled by this
+const DEFENSE_DAMAGE_SHARE = 0.5; // a losing fleet still knocks this share of its attack power off the defense
+
+/** the fleet turns around and flies back the way it came */
+function sendHome(fleet: Fleet) {
   const flight = fleet.arrive_at.getTime() - fleet.depart_at.getTime();
+  fleet.status = "returning";
+  fleet.return_at = new Date(fleet.arrive_at.getTime() + flight);
+}
 
-  const goHome = () => {
-    fleet.status = "returning";
-    fleet.return_at = new Date(fleet.arrive_at.getTime() + flight);
-  };
+/** total of one ship stat (attack or cargo) over every ship in the fleet */
+const fleetTotal = (ships: Record<string, number>, stat: "attack" | "cargo") =>
+  Object.entries(ships).reduce((sum, [type, count]) => sum + count * SHIPS[type as ShipType][stat], 0);
 
-  if (fleet.mission === "colonize") {
-    if (target.kind !== "empty") {
-      fleet.report = `Colonization of ${target.name} failed: planet is already taken.`;
+/** take the biggest stockpiles first until the cargo holds are full */
+function takeLoot(stockpile: Res, room: number) {
+  const loot: Res = {};
+  let space = room;
 
-      return goHome();
-    }
+  for (const [element, amount] of Object.entries(stockpile).sort((first, second) => second[1] - first[1])) {
+    const take = Math.min(Math.floor(amount), space);
 
-    fleet.ships.colony_ship -= 1;
-    target.kind = "player";
-    target.resources = { Fe: 100, Si: 50 };
-    target.updated_at = fleet.arrive_at;
+    if (take > 0) { loot[element] = take; space -= take; }
+  }
 
-    // the rest of this fleet, and any fleet already guarding the planet, join the new base
-    const joining = [fleet, ...world.fleets.filter((g) => g !== fleet && g.status === "stationed" && g.target_id === target.id)];
+  return loot;
+}
 
-    for (const g of joining) {
-      for (const [t, n] of Object.entries(g.ships)) target.ships[t] = (target.ships[t] ?? 0) + n;
-      addRes(target.resources, g.loot);
-      g.status = "done";
-    }
-
-    fleet.report = `Colonized ${target.name}! ${joining.length > 1 ? "The guarding fleet joined the new base." : ""}`.trim();
+/** settle an empty planet: the fleet and any fleet already guarding it join the new base */
+function colonize(world: World, fleet: Fleet, target: Planet) {
+  if (target.kind !== "empty") {
+    fleet.report = `Colonization of ${target.name} failed: planet is already taken.`;
+    sendHome(fleet);
 
     return;
   }
 
-  // neutral planet: nothing to fight, so the fleet just guards it
-  if (target.kind === "empty") {
+  fleet.ships.colony_ship -= 1;
+  target.kind = "player";
+  target.resources = { ...COLONY_START_RESOURCES };
+  target.updated_at = fleet.arrive_at;
+  const joining = [fleet, ...world.fleets.filter((other) => other !== fleet && other.status === "stationed" && other.target_id === target.id)];
+
+  for (const group of joining) {
+    for (const [type, count] of Object.entries(group.ships)) target.ships[type] = (target.ships[type] ?? 0) + count;
+    addRes(target.resources, group.loot);
+    group.status = "done";
+  }
+
+  fleet.report = `Colonized ${target.name}! ${joining.length > 1 ? "The guarding fleet joined the new base." : ""}`.trim();
+}
+
+/** the fleet wins: it loses some ships, loots the base, and the planet becomes neutral */
+function winBattle(fleet: Fleet, target: Planet, power: number) {
+  const lossRatio = (target.defense / power) * LOSS_SHARE_OF_WIN;
+  const lost: Record<string, number> = {};
+
+  for (const type of Object.keys(fleet.ships)) {
+    lost[type] = Math.round(fleet.ships[type] * lossRatio);
+    fleet.ships[type] -= lost[type];
+  }
+
+  fleet.loot = takeLoot(target.resources, fleetTotal(fleet.ships, "cargo"));
+  target.kind = "empty"; // the enemy base is destroyed and the fleet guards what is left
+  target.buildings = {};
+  target.defense = 0;
+  target.resources = {};
+  fleet.status = "stationed";
+  fleet.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${resText(fleet.loot)}. Lost: ${shipList(lost)}.`;
+}
+
+/** attack an enemy base: win and loot it, or be destroyed after wearing the defense down */
+function attack(fleet: Fleet, target: Planet) {
+  const power = fleetTotal(fleet.ships, "attack");
+
+  if (target.kind !== "npc") {
+    fleet.report = `Attack on ${target.name} aborted: nothing to attack.`;
+    sendHome(fleet);
+
+    return;
+  }
+
+  if (power > target.defense) return winBattle(fleet, target, power);
+
+  target.defense = Math.max(0, target.defense - Math.floor(power * DEFENSE_DAMAGE_SHARE));
+  fleet.report = `Defeat at ${target.name}. Fleet lost (${shipList(fleet.ships)}). Their defense is now ${target.defense}.`;
+  fleet.ships = {};
+  fleet.status = "done";
+}
+
+/** a fleet reaches its target: colonise it, guard it if it is neutral, or fight it */
+export function arrive(world: World, fleet: Fleet) {
+  const target = world.planets.find((planet) => planet.id === fleet.target_id)!;
+  accrue(target, fleet.arrive_at);
+
+  if (fleet.mission === "colonize") return colonize(world, fleet, target);
+
+  if (target.kind === "empty") { // neutral planet: nothing to fight, so the fleet just guards it
     fleet.status = "stationed";
     fleet.report = `Your fleet arrived at ${target.name} and is guarding it.`;
 
     return;
   }
 
-  // enemy planet: fight
-  const power = Object.entries(fleet.ships).reduce((sum, [t, n]) => sum + n * SHIPS[t as ShipType].attack, 0);
-
-  if (target.kind !== "npc") {
-    fleet.report = `Attack on ${target.name} aborted: nothing to attack.`;
-
-    return goHome();
-  }
-
-  if (power > target.defense) {
-    const lossRatio = (target.defense / power) * 0.6;
-    const lost: Record<string, number> = {};
-
-    for (const t of Object.keys(fleet.ships)) {
-      lost[t] = Math.round(fleet.ships[t] * lossRatio);
-      fleet.ships[t] -= lost[t];
-    }
-
-    // total cargo space: each ship's cargo times how many of it there are
-    const cargo = Object.entries(fleet.ships).reduce((s, [t, n]) => s + n * SHIPS[t as ShipType].cargo, 0);
-
-    // take the biggest stockpiles first until the cargo holds are full
-    let room = cargo;
-    const loot: Res = {};
-
-    for (const [el, amount] of Object.entries(target.resources).sort((a, b) => b[1] - a[1])) {
-      const take = Math.min(Math.floor(amount), room);
-
-      if (take > 0) { loot[el] = take; room -= take; }
-    }
-
-    fleet.loot = loot;
-
-    // the enemy base is destroyed; the planet becomes neutral and the fleet guards it
-    target.kind = "empty";
-    target.buildings = {};
-    target.defense = 0;
-    target.resources = {};
-    fleet.status = "stationed";
-    fleet.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${resText(fleet.loot)}. Lost: ${shipList(lost)}.`;
-
-    return;
-  }
-
-  target.defense = Math.max(0, target.defense - Math.floor(power * 0.5));
-  fleet.report = `Defeat at ${target.name}. Fleet lost (${shipList(fleet.ships)}). Their defense is now ${target.defense}.`;
-  fleet.ships = {};
-  fleet.status = "done";
+  attack(fleet, target);
 }
 
 function settle(w: World, now: Date) {
