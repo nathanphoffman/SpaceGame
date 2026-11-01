@@ -28,6 +28,7 @@ export default function TopBar({ planets, current, stock, rate, onSelect, onRese
           {rate[el] > 0 && <small>+{rate[el].toFixed(1)}/s</small>}
         </div>
       ))}
+
       <button className="ghost" onClick={onReset}>Reset</button>
     </div>
   );

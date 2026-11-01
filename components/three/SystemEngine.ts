@@ -187,6 +187,7 @@ export class SystemEngine {
 
       return from.systemId === system.id && to.systemId === system.id;
     });
+
     const ids = new Set(local.map((f) => f.id));
 
     for (const [id, ship] of this.world.ships) {

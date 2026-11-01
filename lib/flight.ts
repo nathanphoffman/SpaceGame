@@ -13,5 +13,6 @@ export function flightOf(game: GameState, fleet: FleetDTO, now: number) {
   const o = planetOf(game, fleet.originId);
   const t = planetOf(game, fleet.targetId);
   const [from, to, a, b] = fleet.status === "outbound" ? [o, t, fleet.departAt, fleet.arriveAt] : [t, o, fleet.arriveAt, fleet.returnAt];
+
   return { from, to, k: Math.min(1, Math.max(0, (now - a) / (b - a))) };
 }

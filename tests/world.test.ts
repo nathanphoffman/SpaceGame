@@ -23,6 +23,7 @@ describe("sectors", () => {
     expect(first).toEqual(second);
     expect(first).toHaveLength(sectorStarCount(3, 4));
     const centre = sectorCentre(3, 4);
+
     for (const star of first) {
       expect(Math.abs(star.x - centre.x)).toBeLessThanOrEqual(SECTOR_LY / 2);
       expect(Math.abs(star.y - centre.y)).toBeLessThanOrEqual(SECTOR_LY / 2);
@@ -35,10 +36,12 @@ describe("local map layout", () => {
     const systems = [{ id: 1, x: 0, y: 0 }, { id: 2, x: 0.2, y: 0 }, { id: 3, x: 10, y: -5 }];
     const positions = [...mapPositions(systems, { x: 0, y: 0 }, SECTOR_LY / 2).values()];
     expect(positions).toHaveLength(3);
+
     for (const point of positions) {
       expect(point.x).toBeGreaterThan(0);
       expect(point.x).toBeLessThan(100);
     }
+
     expect(Math.hypot(positions[0].x - positions[1].x, positions[0].y - positions[1].y)).toBeGreaterThan(3);
   });
 });

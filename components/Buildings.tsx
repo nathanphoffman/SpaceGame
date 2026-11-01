@@ -2,6 +2,7 @@ import {
   MAX_BUILDING_LEVEL, buildCost, buildSeconds, buildingInfo, mineElement, mineRate, toRoman,
   type PlanetDTO, type QueueDTO, type Res,
 } from "@/lib/defs";
+
 import { Cost, elementColor, fmtTime } from "./ui";
 
 type Props = {
@@ -31,6 +32,7 @@ export default function Buildings({ planet, composition, types, queue, now, shor
           const why = maxed ? `Already at the maximum level (${toRoman(MAX_BUILDING_LEVEL)})` : shortfall(cost);
           const el = mineElement(t);
           const pct = composition.find((c) => c.symbol === el)?.pct ?? 0;
+
           return (
             <div className="tile" key={t} title={info.desc}>
               <div className="tile-top">
@@ -58,6 +60,7 @@ export default function Buildings({ planet, composition, types, queue, now, shor
                   {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>}
                 </div>
               )}
+
               {maxed ? (
                 <div className="sub good">Maximum level</div>
               ) : (
@@ -72,6 +75,7 @@ export default function Buildings({ planet, composition, types, queue, now, shor
                   <div className="bar"><div style={{ width: `${Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100)}%` }} /></div>
                 </div>
               )}
+
               <button disabled={!!why} title={why} onClick={() => act({ action: "build", planetId: planet.id, type: t })}>{maxed ? "Max level" : unbuilt ? "Build" : "Upgrade"}</button>
             </div>
           );

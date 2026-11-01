@@ -10,6 +10,7 @@ const SIZE = 192;
 
 export function planetThumb(seed: number): string {
   const hit = cache.get(seed);
+
   if (hit) return hit;
 
   renderer ??= new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -40,12 +41,15 @@ export function planetThumb(seed: number): string {
       (o.material as THREE.Material).dispose();
     }
   });
+
   cache.set(seed, url);
+
   return url;
 }
 
 /** Display width (px) so the planet body is `bodyPx` across, with room for rings/atmosphere. */
 export function thumbDisplaySize(seed: number, bodyPx: number) {
   const p = planetParams(seed);
+
   return bodyPx * ((planetExtent(p) * 1.05) / p.radius);
 }

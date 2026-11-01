@@ -20,9 +20,12 @@ export const generatedSystemId = (sx: number, sy: number, n: number) => 1000 + (
 
 const sectorRng = (sx: number, sy: number) => {
   const r = mulberry32((sx * 131 + sy * 977 + 5) * 7919 + 101);
+
   for (let i = 0; i < 5; i++) r();
+
   return r;
 };
+
 const countFrom = (r: () => number) => 18 + Math.floor(r() * 18);
 
 /** how many stars a (generated) sector has: cheap, so the galaxy view can shade every square */
@@ -36,15 +39,20 @@ export function sectorStars(sx: number, sy: number): SectorStar[] {
   const count = countFrom(r);
   const c = sectorCentre(sx, sy);
   const out: SectorStar[] = [];
+
   for (let n = 0; n < count; n++) {
     let x = 0, y = 0;
+
     for (let tries = 0; tries < 8; tries++) { // keep stars from sitting on top of each other
       x = c.x + (r() - 0.5) * SECTOR_LY * 0.94;
       y = c.y + (r() - 0.5) * SECTOR_LY * 0.94;
+
       if (out.every((o) => Math.hypot(o.x - x, o.y - y) > 1.8)) break;
     }
+
     const seed = 1 + Math.floor(r() * 99999);
     out.push({ id: generatedSystemId(sx, sy, n), name: starName(seed), seed, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 });
   }
+
   return out;
 }

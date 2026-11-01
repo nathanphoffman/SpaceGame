@@ -40,13 +40,16 @@ export default function Page() {
   const rate = productionRates(planet.buildings, composition);
   const sec = Math.max(0, (now - game.now) / 1000);
   const stock = (el: string) => (planet.resources[el] ?? 0) + (rate[el] ?? 0) * sec;
+
   // why something can't be bought right now (undefined = it can), used for the disabled-button tooltips
   const shortfall = (cost: Res) => {
     const missing = Object.entries(cost)
       .filter(([el, n]) => stock(el) < n)
       .map(([el, n]) => `${Math.ceil(n - stock(el))} more ${ELEMENTS[el as Element]?.name ?? el}`);
+
     return missing.length ? `Not enough resources: need ${missing.join(" and ")}` : undefined;
   };
+
   // what this planet can build: a shipyard, a mine for each element it is made of, and any mines it already has
   const buildingTypes = Array.from(new Set([
     "shipyard",
@@ -69,6 +72,7 @@ export default function Page() {
           const home = sysOf(game.planets.find((p) => p.id === id)!.systemId);
           setPlanetId(id); setViewId(id); setSystemId(home.id); setSector([home.sectorX, home.sectorY]); setAtGalaxy(false);
         }}
+
         onReset={() => confirm("Reset the whole game?") && act({ action: "reset" })}
       />
       <div className="layout">
@@ -99,6 +103,7 @@ export default function Page() {
           {viewed.kind === "player" && (
             <Buildings planet={planet} composition={composition} types={buildingTypes} queue={queueOf("building")} now={now} shortfall={shortfall} act={act} />
           )}
+
           <Shipyard show={viewed.kind === "player"} planet={planet} queue={queueOf("ship")} now={now} shortfall={shortfall} act={act} />
           <FleetsPanel planet={planet} showHangar={viewed.kind === "player"} fleets={activeFleets} planetName={planetName} now={now} act={act} />
           <div className="panel">

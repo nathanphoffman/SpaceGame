@@ -71,13 +71,16 @@ async function migrateToElements() {
   const { rows } = await pool.query(
     "SELECT 1 FROM information_schema.columns WHERE table_name='planets' AND column_name='metal'",
   );
+
   if (rows.length) {
     await pool.query("UPDATE planets SET resources = jsonb_build_object('Fe', metal, 'Si', crystal)");
     await pool.query("ALTER TABLE planets DROP COLUMN metal, DROP COLUMN crystal");
   }
+
   await pool.query(`UPDATE planets SET buildings = (buildings - 'metal_mine' - 'crystal_mine')
       || jsonb_strip_nulls(jsonb_build_object('mine_Fe', buildings->'metal_mine', 'mine_Si', buildings->'crystal_mine'))
     WHERE buildings ? 'metal_mine' OR buildings ? 'crystal_mine'`);
+
   // ship upgrades were tried and removed
   await pool.query("DELETE FROM queue WHERE kind='upgrade'");
   await pool.query("ALTER TABLE planets DROP COLUMN IF EXISTS ship_levels");
@@ -91,6 +94,7 @@ async function migrateToElements() {
 /** A saved game from an older galaxy (different stars/planets) can't be carried over: start fresh. */
 async function wipeIfStale() {
   const { rows } = await pool.query("SELECT value FROM meta WHERE key='galaxy'");
+
   if (rows[0]?.value === GALAXY_VERSION) return;
   await pool.query("TRUNCATE queue, fleets, planets, systems, sectors");
   await pool.query("ALTER TABLE systems ALTER COLUMN x TYPE double precision, ALTER COLUMN y TYPE double precision");
@@ -105,6 +109,7 @@ export function ready(): Promise<void> {
     await seedGalaxy(pool);
   })().catch((e) => {
     g.__ready = undefined;
+
     throw e;
   }));
 }

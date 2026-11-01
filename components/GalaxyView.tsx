@@ -11,7 +11,9 @@ export default function GalaxyView({ game, current, onSelect }: Props) {
   const mine = new Set(game.planets.filter((p) => p.kind === "player").map((p) => sectorOfSystem.get(p.systemId)));
 
   const rows = [];
+
   for (let sy = GRID - 1; sy >= 0; sy--) { // north (high y) at the top
+
     for (let sx = 0; sx < GRID; sx++) {
       const home = sx === CENTER && sy === CENTER;
       const stars = home ? SYSTEMS.length : sectorStarCount(sx, sy);
@@ -26,6 +28,7 @@ export default function GalaxyView({ game, current, onSelect }: Props) {
       );
     }
   }
+
   return (
     <div className="panel">
       <h2>Galaxy map <span className="dim">({GRID} × {GRID} sectors, {SECTOR_LY} ly each)</span></h2>

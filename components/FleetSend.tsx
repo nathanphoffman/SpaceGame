@@ -13,6 +13,7 @@ type Props = {
 /** pick ships at the current planet and send them to the targeted planet */
 export default function FleetSend({ game, planet, target, act, onSent }: Props) {
   const [qty, setQty] = useState<Record<string, number>>({});
+
   return (
     <div className="panel">
       <h2>Fleet {target ? `→ ${target.name}` : ""}</h2>
@@ -34,6 +35,7 @@ export default function FleetSend({ game, planet, target, act, onSent }: Props) 
                 onChange={(e) => setQty({ ...qty, [t]: Number(e.target.value) })} />
             </div>
           ))}
+
           <button style={{ marginTop: 8 }} onClick={async () => {
             await act({ action: "send", originId: planet.id, targetId: target.id, ships: qty });
             setQty({});

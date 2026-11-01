@@ -5,6 +5,7 @@ type View = { z: number; cx: number; cy: number }; // zoom, and the map point (i
 
 const keepInside = (v: View): View => {
   const half = 50 / v.z;
+
   return { z: v.z, cx: Math.min(100 - half, Math.max(half, v.cx)), cy: Math.min(100 - half, Math.max(half, v.cy)) };
 };
 
@@ -19,20 +20,25 @@ export function useMapZoom() {
     setV((cur) => {
       const z = Math.min(MAX_ZOOM, Math.max(1, cur.z * factor));
       const wx = cur.cx + (u - 50) / cur.z, wy = cur.cy + (w - 50) / cur.z;
+
       return keepInside({ z, cx: wx - (u - 50) / z, cy: wy - (w - 50) / z });
     });
   }, []);
 
   useEffect(() => {
     const el = ref.current;
+
     if (!el) return;
+
     // needs a non-passive listener, otherwise the page scrolls as well
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const r = el.getBoundingClientRect();
       zoomAt(Math.exp(-e.deltaY * 0.0015), ((e.clientX - r.left) / r.width) * 100, ((e.clientY - r.top) / r.height) * 100);
     };
+
     el.addEventListener("wheel", onWheel, { passive: false });
+
     return () => el.removeEventListener("wheel", onWheel);
   }, [zoomAt]);
 
@@ -44,11 +50,13 @@ export function useMapZoom() {
     let last = start;
     const move = (m: PointerEvent) => {
       if (Math.hypot(m.clientX - start.x, m.clientY - start.y) > 4) moved.current = true;
+
       if (!moved.current) return;
       const dx = ((m.clientX - last.x) / r.width) * 100, dy = ((m.clientY - last.y) / r.height) * 100;
       last = { x: m.clientX, y: m.clientY };
       setV((cur) => keepInside({ ...cur, cx: cur.cx - dx / cur.z, cy: cur.cy - dy / cur.z }));
     };
+
     const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);

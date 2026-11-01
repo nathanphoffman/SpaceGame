@@ -11,12 +11,16 @@ export function pickAt(e: MouseEvent, el: HTMLElement, pickables: Pickable[], ca
   const r = el.getBoundingClientRect();
   const mx = e.clientX - r.left, my = e.clientY - r.top;
   let best: number | null = null, bestD = Infinity;
+
   for (const p of pickables) {
     p.object.getWorldPosition(scratch).project(camera);
+
     if (scratch.z > 1) continue; // behind the camera
     const d = Math.hypot((scratch.x * 0.5 + 0.5) * r.width - mx, (-scratch.y * 0.5 + 0.5) * r.height - my);
+
     if (d < p.radiusPx && d < bestD) { best = p.id; bestD = d; }
   }
+
   return best;
 }
 
@@ -28,18 +32,24 @@ export function bindPointer(el: HTMLElement, pick: (e: MouseEvent) => number | n
     const start = { x: down.clientX, y: down.clientY };
     const up = (e: PointerEvent) => {
       window.removeEventListener("pointerup", up);
+
       if (Math.hypot(e.clientX - start.x, e.clientY - start.y) <= DRAG_PIXELS) onClick(pick(e));
     };
+
     window.addEventListener("pointerup", up);
   };
+
   const onMove = (e: PointerEvent) => {
     if (e.buttons) return;
     const id = pick(e);
+
     if (id === hover) return;
     hover = id;
     el.style.cursor = id != null ? "pointer" : "";
   };
+
   el.addEventListener("pointerdown", onDown);
   el.addEventListener("pointermove", onMove);
+
   return () => { el.removeEventListener("pointerdown", onDown); el.removeEventListener("pointermove", onMove); };
 }

@@ -24,8 +24,10 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
   const pos = new Map([...base].map(([id, point]) => [id, view.project(point)])); // where each star is drawn at this zoom
   const flying = flyingFleets(game).filter((f) => {
     const { from, to } = flightOf(game, f, now);
+
     return pos.has(from.systemId) && pos.has(to.systemId) && from.systemId !== to.systemId;
   });
+
   const title = sx === CENTER && sy === CENTER ? "Local map — Sol's sector" : `Local map — sector ${sx - CENTER}, ${sy - CENTER}`;
 
   return (
@@ -44,6 +46,7 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
           {flying.map((f) => {
             const { from, to } = flightOf(game, f, now);
             const a = pos.get(from.systemId)!, b = pos.get(to.systemId)!;
+
             return <line key={f.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#4cc2ff55" strokeWidth="0.4" strokeDasharray="1.5 1.5" />;
           })}
         </svg>
@@ -53,9 +56,11 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
           const rgb = `rgb(${st.color.map((c) => Math.round(c * 255)).join(",")})`;
           const owned = game.planets.filter((planet) => planet.kind === "player" && planet.systemId === sy2.id).length;
           const at = pos.get(sy2.id)!;
+
           // diameter on a log scale of the real stellar radius: small stars are near a point of light,
           // supergiants about 6x that (kept modest so stars are easy to click and tell apart)
           const d = Math.min(25, Math.max(4.25, 6.6 + 5.75 * Math.log10(st.radius / 0.1)));
+
           return (
             <button key={sy2.id} className={`gnode ${sy2.id === shownSystemId ? "sel" : ""} ${owned > 0 ? "home" : ""}`} style={{ left: `${at.x}%`, top: `${at.y}%` }}
               onClick={() => !view.moved.current && onSelect(sy2.id)} title={`${sy2.name} · ${st.spectral} ${st.label} · ${st.temp} K · ${st.radius < 0.1 ? st.radius.toFixed(3) : st.radius.toFixed(1)} R☉`}>
@@ -64,10 +69,12 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
             </button>
           );
         })}
+
         {flying.map((f) => {
           const { from, to, k } = flightOf(game, f, now);
           const a = pos.get(from.systemId)!, b = pos.get(to.systemId)!;
           const angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + 90;
+
           return (
             <span key={f.id} className="fleet" style={{ left: `${a.x + (b.x - a.x) * k}%`, top: `${a.y + (b.y - a.y) * k}%`, transform: `translate(-50%,-50%) rotate(${angle}deg)` }}>
               <img src={fleetIcon(f)} alt="" />

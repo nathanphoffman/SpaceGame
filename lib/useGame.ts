@@ -16,9 +16,11 @@ export function useGame(view: GameView) {
     setGame(g);
     setOffset(g.now - Date.now());
   };
+
   const refresh = useCallback(async () => {
     try {
       const r = await fetch(`/api/state?sx=${sx}&sy=${sy}${system ? `&system=${system}` : ""}`);
+
       if (r.ok) apply(await r.json());
       else setError((await r.json()).error ?? "Could not load game (is the database running?)");
     } catch {
@@ -30,12 +32,14 @@ export function useGame(view: GameView) {
     refresh();
     const a = setInterval(refresh, 2000);
     const b = setInterval(() => setClock(Date.now()), 250);
+
     return () => { clearInterval(a); clearInterval(b); };
   }, [refresh]);
 
   const act = async (body: object) => {
     const r = await fetch("/api/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, view: { sx, sy, system } }) });
     const j = await r.json();
+
     if (!r.ok) setError(j.error);
     else { setError(""); apply(j); }
   };

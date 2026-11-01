@@ -25,15 +25,18 @@ export async function insertPlanets(q: Q, systemId: number, rows: PlanetRow[]) {
 /** The hand-made centre of the galaxy: Sol and its neighbours. Idempotent. Everything else is generated when first visited (see lazyGen.ts). */
 export async function seedGalaxy(pool: Pool) {
   await pool.query("INSERT INTO sectors (x,y) VALUES (10,10) ON CONFLICT DO NOTHING");
+
   for (const s of SYSTEMS) {
     await pool.query(
       "INSERT INTO systems (id,name,x,y,seed,sector_x,sector_y,explored) VALUES ($1,$2,$3,$4,$5,10,10,true) ON CONFLICT (id) DO NOTHING",
       [s.id, s.name, s.x, s.y, s.seed],
     );
+
     const real = s.bodies.map((b): PlanetRow => ({
       id: b.id, name: b.name, orbit: b.orbit, seed: b.seed, shared: !!b.shared, defense: 0,
       kind: b.start ? "player" : "empty", ...(b.start ? START : NOTHING),
     }));
+
     const generated = fillSystem(s, s.bodies).map((filler): PlanetRow => ({ ...filler, shared: false, ships: {} }));
     await insertPlanets(pool, s.id, [...real, ...generated]);
   }

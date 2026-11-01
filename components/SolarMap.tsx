@@ -54,6 +54,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
         {auTicks.map((au) => (
           <div key={au} className="tick" style={{ left: `${axisX(au)}%`, top: `${AXIS_Y}%` }}><span>{au === 0 ? "star" : `${au} AU`}</span></div>
         ))}
+
         {planets.map((p) => (
           <span key={p.id} className={`ruler-dot ${p.id === viewed.id ? "sel" : ""}`} style={{ left: `${axisX(p.orbit)}%`, top: `${AXIS_Y}%` }} />
         ))}
@@ -63,6 +64,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
           const cap = Math.max(14, (((544 * 86) / 100) / slots) * 0.85);
           const body = 8 + (planetParams(p.seed).radius / 1.45) * (cap - 8);
           const size = thumbDisplaySize(p.seed, body);
+
           return (
             <button key={p.id} className={`snode ${p.id === viewed.id ? "sel" : ""} ${i % 2 ? "below" : "above"}`}
               style={{ left: `${slotX(i)}%`, top: `${SOLAR_Y}%`, ["--body" as string]: `${body}px` }}
@@ -74,10 +76,12 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
             </button>
           );
         })}
+
         {local.map((f) => {
           const { from, to, k } = flightOf(game, f, now);
           const fx = slotById.get(from.id) ?? 12;
           const tx = slotById.get(to.id) ?? 12;
+
           return (
             <span key={f.id} className="fleet" style={{ left: `${fx + (tx - fx) * k}%`, top: `${SOLAR_Y}%`, transform: `translate(-50%,-50%) rotate(${tx >= fx ? 90 : -90}deg)` }}>
               <img src={fleetIcon(f)} alt="" />

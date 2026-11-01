@@ -20,7 +20,9 @@ export default function SystemView({ game, system, viewed, now, onSelect }: Prop
     const e = new SystemEngine(box.current!, {
       onPlanet: (id) => { const p = latest.current.planets.find((x) => x.id === id); if (p) select.current(p); },
     });
+
     engine.current = e;
+
     return () => { e.dispose(); engine.current = null; };
   }, []);
 

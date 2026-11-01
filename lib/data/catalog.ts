@@ -5,6 +5,7 @@ import type { BodySpec, SystemSpec } from "./types";
 
 /** bump this when the catalog changes: a stored game from an older version is wiped and re-seeded */
 export const GALAXY_VERSION = "local-neighbourhood-3";
+
 /** real bodies and stars get seeds from here up; generated planets use 1..99999 */
 export const SEED_BASE = 1_000_000;
 
@@ -20,6 +21,7 @@ function galacticXY(raH: number, raM: number, decD: number, decM: number, ly: nu
     Math.cos(dec) * Math.sin(ra - pole.ra),
     Math.sin(dec) * Math.cos(pole.dec) - Math.cos(dec) * Math.sin(pole.dec) * Math.cos(ra - pole.ra),
   );
+
   return [ly * Math.cos(b) * Math.cos(l), ly * Math.cos(b) * Math.sin(l)];
 }
 
@@ -31,10 +33,13 @@ export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly,
     const n = bodies.length + 1;
     bodies.push({ ...b, id: id * 100 + n, seed: SEED_BASE + id * 100 + n });
   };
+
   if (name === "Sol") for (const b of SOL_BODIES) add(b);
+
   for (const [star, pName, orbit, kind, diameterKm, candidate] of EXOPLANETS) {
     if (star === name) add({ name: pName, orbit, kind, diameterKm, note: candidate ? "Candidate exoplanet (not yet confirmed)" : "Confirmed exoplanet" });
   }
+
   return { id, seed: SEED_BASE + id, name, spec, tempK, radius, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, ly, bodies, complete: name === "Sol" };
 });
 

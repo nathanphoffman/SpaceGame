@@ -36,6 +36,7 @@ describe("fleet flights", () => {
     planets: [planet(1, 1, 1), planet(2, 5, 1), planet(3, 1, 2)],
     fleets: [] as FleetDTO[],
   } as GameState;
+
   const fleet = (over: Partial<FleetDTO>): FleetDTO => ({ id: "f", originId: 1, targetId: 2, mission: "attack", ships: {}, loot: {}, departAt: 0, arriveAt: 100, returnAt: 200, status: "outbound", report: "", ...over });
 
   it("reports how far along a flight is", () => {

@@ -13,6 +13,7 @@ type Props = {
 /** ships sitting at the planet, plus every fleet that is flying or guarding somewhere */
 export default function FleetsPanel({ planet, showHangar, fleets, planetName, now, act }: Props) {
   const here = SHIP_TYPES.filter((t) => planet.ships[t] > 0);
+
   return (
     <div className="panel">
       <h2>Fleets</h2>
@@ -23,6 +24,7 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
           {here.map((t) => {
             const n = planet.ships[t];
             const shown = Math.min(n, 300); // keep the page light if you build thousands
+
             return (
               <div className="hangar-row" key={t} title={`${n} × ${SHIPS[t].name}`}>
                 <div className="hangar-label">{SHIPS[t].name} <b>×{n}</b></div>
@@ -30,6 +32,7 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
                   {Array.from({ length: shown }, (_, i) => (
                     <img key={i} src={SHIPS[t].icon} style={{ width: 22 * SHIPS[t].size, height: 22 * SHIPS[t].size }} alt="" />
                   ))}
+
                   {n > shown && <span className="dim"> +{n - shown} more</span>}
                 </div>
               </div>
@@ -37,6 +40,7 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
           })}
         </div>
       )}
+
       {fleets.length === 0 && <div className="dim">None.</div>}
       {fleets.map((f) => (
         <div className="row" key={f.id}>

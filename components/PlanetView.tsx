@@ -38,6 +38,7 @@ export default function PlanetView({ seed }: { seed: number }) {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     };
+
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(el);
@@ -47,11 +48,13 @@ export default function PlanetView({ seed }: { seed: number }) {
     const frameMs = 1000 / MAX_FPS;
     const loop = (t: number) => {
       raf = requestAnimationFrame(loop);
+
       if (t - last < frameMs - 1) return; // skip frames above the cap
       planet.rotation.y += ((t - last) / 1000) * p.spin;
       last = t;
       renderer.render(scene, camera);
     };
+
     raf = requestAnimationFrame(loop);
 
     return () => {
@@ -63,6 +66,7 @@ export default function PlanetView({ seed }: { seed: number }) {
           (o.material as THREE.Material).dispose();
         }
       });
+
       renderer.dispose();
       el.removeChild(renderer.domElement);
     };

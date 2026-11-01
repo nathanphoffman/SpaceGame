@@ -13,7 +13,9 @@ export const ELEMENTS = {
   U: { name: "Uranium", color: "#7fd04f", rare: true },
   He: { name: "Helium-3", color: "#5fd0c8", rare: true },
 } as const;
+
 export type Element = keyof typeof ELEMENTS;
+
 /** display order: common first, then rare */
 export const ELEMENT_ORDER = Object.keys(ELEMENTS) as Element[];
 
@@ -26,6 +28,7 @@ export const MINE_PREFIX = "mine_";
 export const mineType = (el: string) => `${MINE_PREFIX}${el}`;
 export const mineElement = (type: string): Element | null => {
   const el = type.startsWith(MINE_PREFIX) ? type.slice(MINE_PREFIX.length) : null;
+
   return el && el in ELEMENTS ? (el as Element) : null;
 };
 
@@ -39,9 +42,12 @@ export function buildingInfo(type: string): BuildingInfo | null {
   if (type === "shipyard") {
     return { name: "Shipyard", icon: "/icons/shipyard.svg", cost: { Fe: 200, Si: 100 }, time: 20, desc: "Builds ships faster per level" };
   }
+
   const el = mineElement(type);
+
   if (!el) return null;
   const m = MINE_COST_MULT[el] ?? 1;
+
   return {
     name: `${ELEMENTS[el].name} Mine`,
     icon: GAS_MINES.has(el) ? "/icons/gas_mine.svg" : GEM_MINES.has(el) ? "/icons/crystal_mine.svg" : "/icons/metal_mine.svg",
@@ -54,18 +60,23 @@ export function buildingInfo(type: string): BuildingInfo | null {
 export const MAX_BUILDING_LEVEL = 10;
 
 const ROMAN: [number, string][] = [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+
 /** 1 -> "I", 9 -> "IX", 10 -> "X" (0 has no roman numeral, so it shows as "0") */
 export const toRoman = (n: number) => {
   if (n <= 0) return "0";
   let out = "";
+
   for (const [v, sym] of ROMAN) while (n >= v) { out += sym; n -= v; }
+
   return out;
 };
 
 export const buildCost = (type: string, level: number): Res => {
   const base = buildingInfo(type)!.cost;
+
   return Object.fromEntries(Object.entries(base).map(([el, n]) => [el, Math.round(n * 1.6 ** level)]));
 };
+
 export const buildSeconds = (type: string, level: number) => Math.round(buildingInfo(type)!.time * 1.5 ** level);
 
 // ---- ships ----
@@ -90,6 +101,7 @@ export const SHIPS = {
   support_ship: { name: "Support Ship", icon: "/icons/support_ship.svg", size: 0.9, cost: { Fe: 200, Si: 120, Al: 40 } as Res, time: 30, attack: 3, cargo: 100, speed: 5, health: 4, desc: "A repair vessel that patches up friendly ships. Best kept inside a fleet." },
   colony_ship: { name: "Colony Ship", icon: "/icons/colony_ship.svg", size: 0.95, cost: { Fe: 500, Si: 300 } as Res, time: 40, attack: 0, cargo: 100, speed: 3, health: 4, desc: "Carries settlers to found a new colony on an empty planet." },
 } as const;
+
 export type ShipType = keyof typeof SHIPS;
 
 export const shipSeconds = (t: ShipType, shipyardLevel: number) =>
@@ -98,18 +110,22 @@ export const shipSeconds = (t: ShipType, shipyardLevel: number) =>
 // ---- production ----
 /** every base trickles a little iron and silicon so nothing can soft-lock */
 export const BASE_INCOME: Res = { Fe: 0.2, Si: 0.1 };
+
 /** richer deposits (bigger share of the planet) produce more per level */
 export const mineRate = (level: number, sharePct: number) => 0.4 * level * 1.1 ** level * (0.5 + sharePct / 25);
 
 /** resources per second for a planet, given its buildings and its composition */
 export function productionRates(buildings: Record<string, number>, composition: { symbol: string; pct: number }[]): Res {
   const out: Res = { ...BASE_INCOME };
+
   for (const [type, level] of Object.entries(buildings)) {
     const el = mineElement(type);
+
     if (!el || !(level > 0)) continue;
     const pct = composition.find((c) => c.symbol === el)?.pct ?? 0;
     out[el] = (out[el] ?? 0) + mineRate(level, pct);
   }
+
   return out;
 }
 
@@ -118,11 +134,13 @@ export type SystemDTO = { id: number; name: string; x: number; y: number; seed: 
 
 type Placed = { systemId: number; orbit: number };
 const SECONDS_PER_LY = 4;
+
 /** Seconds to fly between two planets: short inside a system, longer between stars. */
 export const flightSeconds = (a: Placed, b: Placed, systems: { id: number; x: number; y: number }[]) => {
   if (a.systemId === b.systemId) return Math.max(5, Math.round(5 + Math.abs(a.orbit - b.orbit) * 6));
   const sa = systems.find((s) => s.id === a.systemId)!;
   const sb = systems.find((s) => s.id === b.systemId)!;
+
   return Math.round(15 + Math.hypot(sa.x - sb.x, sa.y - sb.y) * SECONDS_PER_LY + (Math.min(a.orbit, 12) + Math.min(b.orbit, 12)) * 3);
 };
 
@@ -139,6 +157,7 @@ export type PlanetDTO = {
   seed: number;
   shared: boolean; // safe haven: everyone can have a base here and it can't be attacked
 };
+
 export type QueueDTO = { id: string; planetId: number; kind: "building" | "ship"; type: string; startAt: number; finishAt: number };
 export type FleetDTO = {
   id: string;
@@ -153,4 +172,5 @@ export type FleetDTO = {
   status: "outbound" | "stationed" | "returning" | "done";
   report: string;
 };
+
 export type GameState = { now: number; systems: SystemDTO[]; planets: PlanetDTO[]; queue: QueueDTO[]; fleets: FleetDTO[] };

@@ -10,6 +10,7 @@ type Props = { planet: PlanetDTO; systemSeed: number; guards: FleetDTO[] };
 export default function PlanetPanel({ planet, systemSeed, guards }: Props) {
   const info = describePlanet(planetParams(planet.seed));
   const stats = planetStats(planet.seed);
+
   return (
     <div className="panel">
       <h2>{planet.name}</h2>

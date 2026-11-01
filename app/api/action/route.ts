@@ -6,8 +6,10 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const body = await req.json();
+
   try {
     if (body.action === "reset") await resetGame();
+
     // load what the client is looking at, plus any planets the action itself refers to
     const ids = [body.planetId, body.originId, body.targetId].filter((n) => Number.isInteger(n));
     const v = body.view ?? {};
@@ -22,10 +24,12 @@ export async function POST(req: Request) {
         default: throw new GameError("Unknown action");
       }
     }, view);
+
     return NextResponse.json(state);
   } catch (e) {
     if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
     console.error(e);
+
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

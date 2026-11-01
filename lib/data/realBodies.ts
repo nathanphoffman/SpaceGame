@@ -5,6 +5,7 @@ import type { BodySpec } from "./types";
 /** on-screen size (game units, ~0.35 .. 1.45) from a real diameter */
 export function bodyRadius(kind: PlanetKind, km: number) {
   if (kind === "gas") return Math.min(1.45, Math.max(1.0, 1.0 + (0.45 * (km - 40000)) / 100000));
+
   return Math.min(1.25, Math.max(0.35, 0.45 + 0.32 * Math.log2(km / 3000)));
 }
 
@@ -12,6 +13,7 @@ export function bodyRadius(kind: PlanetKind, km: number) {
 export function parseComposition(text: string) {
   return text.split(/\s+/).map((tok) => {
     const [, symbol, pct] = /^([A-Za-z]+)([\d.]+)$/.exec(tok)!;
+
     return { symbol, name: ELEMENTS[symbol as Element].name, pct: Number(pct) };
   }).sort((a, b) => b.pct - a.pct);
 }
@@ -20,7 +22,9 @@ export function parseComposition(text: string) {
 export function applyLook(p: PlanetParams, b: BodySpec): PlanetParams {
   const radius = bodyRadius(b.kind, b.diameterKm);
   const L = b.look;
+
   if (!L) return { ...p, radius };
+
   return {
     ...p,
     radius,

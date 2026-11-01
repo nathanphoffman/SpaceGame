@@ -14,9 +14,11 @@ type Props = {
 export default function Shipyard({ show, planet, queue, now, shortfall, act }: Props) {
   const [qtys, setQtys] = useState<Record<string, number>>({});
   const [infoShip, setInfoShip] = useState<ShipType | null>(null); // ship whose description is open
+
   if (!show) return null;
   const level = planet.buildings.shipyard ?? 0;
   const info = infoShip && SHIPS[infoShip];
+
   return (
     <div className="panel">
       <h2>Shipyard {level ? `(Lv ${level})` : ""}</h2>
@@ -32,6 +34,7 @@ export default function Shipyard({ show, planet, queue, now, shortfall, act }: P
           <button className="ghost" onClick={() => setInfoShip(null)}>Close</button>
         </div>
       )}
+
       <div className="tiles">
         {SHIP_TYPES.map((t) => {
           const s = SHIPS[t];
@@ -42,6 +45,7 @@ export default function Shipyard({ show, planet, queue, now, shortfall, act }: P
             : !(qty >= 1 && qty <= 20)
               ? "Quantity must be between 1 and 20"
               : shortfall(Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
+
           return (
             <div className="tile" key={t}>
               <button className="ship-link" title="Click for details" onClick={() => setInfoShip(infoShip === t ? null : t)}>
