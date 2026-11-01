@@ -35,27 +35,46 @@ export const mineElement = (type: string): Element | null => {
 };
 
 const MINE_COST_MULT: Partial<Record<Element, number>> = { Al: 1.2, Ti: 3, U: 5, He: 8 };
+const SHIPYARD_COST: Res = { Fe: 200, Si: 100 };
+const SHIPYARD_SECONDS = 20;
+const MINE_BASE_COST: Res = { Fe: 60, Si: 15 };
+const MINE_BASE_SECONDS = 10;
+const COST_GROWTH_PER_LEVEL = 1.6; // each level costs this many times more than the last
+const TIME_GROWTH_PER_LEVEL = 1.5;
+const SHIPYARD_SPEEDUP_PER_LEVEL = 0.25;
+const MIN_SHIP_SECONDS = 2;
+const MINE_OUTPUT_PER_LEVEL = 0.4;
+const MINE_LEVEL_GROWTH = 1.1; // output grows a little faster than linearly with level
+const MINE_RICHNESS = { base: 0.5, pctDivisor: 25 }; // richer deposits (a bigger share of the planet) produce more
+const SAME_SYSTEM_FLIGHT = { min: 5, base: 5, perAU: 6 };
+const CROSS_SYSTEM_FLIGHT = { base: 15, maxOrbitAU: 12, perOrbitAU: 3 };
+export const MS_PER_SECOND = 1000;
+export const SECONDS_PER_MINUTE = 60;
+const MINE_ICONS = { gas: "/icons/buildings/gas_mine.svg", gem: "/icons/buildings/crystal_mine.svg", metal: "/icons/buildings/metal_mine.svg" };
 const GAS_MINES = new Set(["H", "O", "He"]);
 const GEM_MINES = new Set(["Si", "C"]);
+
+/** gas, gem or metal mine icon depending on the element */
+const mineIcon = (element: string) => (GAS_MINES.has(element) ? MINE_ICONS.gas : GEM_MINES.has(element) ? MINE_ICONS.gem : MINE_ICONS.metal);
 
 export type BuildingInfo = { name: string; icon: string; cost: Res; time: number; desc: string };
 
 export function buildingInfo(type: string): BuildingInfo | null {
   if (type === "shipyard") {
-    return { name: "Shipyard", icon: "/icons/buildings/shipyard.svg", cost: { Fe: 200, Si: 100 }, time: 20, desc: "Builds ships faster per level" };
+    return { name: "Shipyard", icon: "/icons/buildings/shipyard.svg", cost: SHIPYARD_COST, time: SHIPYARD_SECONDS, desc: "Builds ships faster per level" };
   }
 
   const el = mineElement(type);
 
   if (!el) return null;
-  const m = MINE_COST_MULT[el] ?? 1;
+  const multiplier = MINE_COST_MULT[el] ?? 1;
 
   return {
     name: `${ELEMENTS[el].name} Mine`,
     // gas, gem or metal mine icon depending on the element
-    icon: GAS_MINES.has(el) ? "/icons/buildings/gas_mine.svg" : GEM_MINES.has(el) ? "/icons/buildings/crystal_mine.svg" : "/icons/buildings/metal_mine.svg",
-    cost: { Fe: Math.round(60 * m), Si: Math.round(15 * m) },
-    time: Math.round(10 * Math.sqrt(m)),
+    icon: mineIcon(el),
+    cost: Object.fromEntries(Object.entries(MINE_BASE_COST).map(([symbol, amount]) => [symbol, Math.round(amount * multiplier)])),
+    time: Math.round(MINE_BASE_SECONDS * Math.sqrt(multiplier)),
     desc: `Extracts ${ELEMENTS[el].name}`,
   };
 }
@@ -77,10 +96,10 @@ export const toRoman = (n: number) => {
 export const buildCost = (type: string, level: number): Res => { // the cost of a level: the base cost grows by 1.6x for each level already built
   const base = buildingInfo(type)!.cost;
 
-  return Object.fromEntries(Object.entries(base).map(([el, n]) => [el, Math.round(n * 1.6 ** level)]));
+  return Object.fromEntries(Object.entries(base).map(([el, n]) => [el, Math.round(n * COST_GROWTH_PER_LEVEL ** level)]));
 };
 
-export const buildSeconds = (type: string, level: number) => Math.round(buildingInfo(type)!.time * 1.5 ** level);
+export const buildSeconds = (type: string, level: number) => Math.round(buildingInfo(type)!.time * TIME_GROWTH_PER_LEVEL ** level);
 
 // ---- ships ----
 // size is the on-screen icon scale (1 = cruiser). speed and health (1-10) are shown in the UI; combat currently only uses attack and cargo.
@@ -108,14 +127,14 @@ export const SHIPS = {
 export type ShipType = keyof typeof SHIPS;
 
 export const shipSeconds = (t: ShipType, shipyardLevel: number) =>
-  Math.max(2, Math.round(SHIPS[t].time / (1 + 0.25 * shipyardLevel)));
+  Math.max(MIN_SHIP_SECONDS, Math.round(SHIPS[t].time / (1 + SHIPYARD_SPEEDUP_PER_LEVEL * shipyardLevel)));
 
 // ---- production ----
 /** every base trickles a little iron and silicon so nothing can soft-lock */
 export const BASE_INCOME: Res = { Fe: 0.2, Si: 0.1 };
 
 /** richer deposits (bigger share of the planet) produce more per level */
-export const mineRate = (level: number, sharePct: number) => 0.4 * level * 1.1 ** level * (0.5 + sharePct / 25);
+export const mineRate = (level: number, sharePct: number) => MINE_OUTPUT_PER_LEVEL * level * MINE_LEVEL_GROWTH ** level * (MINE_RICHNESS.base + sharePct / MINE_RICHNESS.pctDivisor);
 
 /** resources per second for a planet, given its buildings and its composition */
 export function productionRates(buildings: Record<string, number>, composition: { symbol: string; pct: number }[]): Res {
@@ -140,11 +159,11 @@ const SECONDS_PER_LY = 4;
 
 /** Seconds to fly between two planets: short inside a system, longer between stars. */
 export const flightSeconds = (a: Placed, b: Placed, systems: { id: number; x: number; y: number }[]) => {
-  if (a.systemId === b.systemId) return Math.max(5, Math.round(5 + Math.abs(a.orbit - b.orbit) * 6));
+  if (a.systemId === b.systemId) return Math.max(SAME_SYSTEM_FLIGHT.min, Math.round(SAME_SYSTEM_FLIGHT.base + Math.abs(a.orbit - b.orbit) * SAME_SYSTEM_FLIGHT.perAU));
   const sa = systems.find((s) => s.id === a.systemId)!;
   const sb = systems.find((s) => s.id === b.systemId)!;
 
-  return Math.round(15 + Math.hypot(sa.x - sb.x, sa.y - sb.y) * SECONDS_PER_LY + (Math.min(a.orbit, 12) + Math.min(b.orbit, 12)) * 3);
+  return Math.round(CROSS_SYSTEM_FLIGHT.base + Math.hypot(sa.x - sb.x, sa.y - sb.y) * SECONDS_PER_LY + (Math.min(a.orbit, CROSS_SYSTEM_FLIGHT.maxOrbitAU) + Math.min(b.orbit, CROSS_SYSTEM_FLIGHT.maxOrbitAU)) * CROSS_SYSTEM_FLIGHT.perOrbitAU);
 };
 
 export type PlanetDTO = {

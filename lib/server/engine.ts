@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { pool, ready } from "@/lib/server/db";
 import {
-  ELEMENTS, MAX_BUILDING_LEVEL, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds,
+  ELEMENTS, MAX_BUILDING_LEVEL, MS_PER_SECOND, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds,
   type ShipType, type Res, type GameState,
 } from "@/lib/defs";
 
@@ -13,6 +13,8 @@ import { load, save, type Fleet, type Planet, type View, type World } from "@/li
 export class GameError extends Error {}
 
 const NPC_RESOURCE_CAP = 3000;
+const MIN_BATCH = 1; // ships per order
+const MAX_BATCH = 20;
 
 // ---------- simulation ----------
 
@@ -20,7 +22,7 @@ function accrue(planet: Planet, time: Date) {
   if (time <= planet.updated_at) return;
 
   if (planet.kind !== "empty") {
-    const deltaSeconds = (time.getTime() - planet.updated_at.getTime()) / 1000;
+    const deltaSeconds = (time.getTime() - planet.updated_at.getTime()) / MS_PER_SECOND;
     const rate = productionRates(planet.buildings, planetStats(planet.seed).composition);
     const cap = planet.kind === "npc" ? NPC_RESOURCE_CAP : Infinity;
 
@@ -288,7 +290,7 @@ export function startBuilding(w: World, now: Date, planetId: number, type: strin
   if (level >= MAX_BUILDING_LEVEL) throw new GameError(`${buildingInfo(type)!.name} is already at the maximum level (${MAX_BUILDING_LEVEL})`);
   pay(p, buildCost(type, level));
   const start = lastFinish(w, p.id, "building", now);
-  const finish = new Date(start.getTime() + buildSeconds(type, level) * 1000);
+  const finish = new Date(start.getTime() + buildSeconds(type, level) * MS_PER_SECOND);
   w.queue.push({ id: randomUUID(), planet_id: p.id, kind: "building", type, start_at: start, finish_at: finish });
 }
 
@@ -299,13 +301,13 @@ export function buildShips(w: World, now: Date, planetId: number, type: ShipType
   if (!(p.buildings.shipyard > 0)) throw new GameError("Build a shipyard first");
   qty = Math.floor(qty);
 
-  if (!(qty >= 1 && qty <= 20)) throw new GameError("Quantity must be 1-20");
+  if (!(qty >= MIN_BATCH && qty <= MAX_BATCH)) throw new GameError(`Quantity must be ${MIN_BATCH}-${MAX_BATCH}`);
   const s = SHIPS[type];
   pay(p, Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
   let start = lastFinish(w, p.id, "ship", now);
 
   for (let index = 0; index < qty; index++) {
-    const finish = new Date(start.getTime() + shipSeconds(type, p.buildings.shipyard) * 1000);
+    const finish = new Date(start.getTime() + shipSeconds(type, p.buildings.shipyard) * MS_PER_SECOND);
     w.queue.push({ id: randomUUID(), planet_id: p.id, kind: "ship", type, start_at: start, finish_at: finish });
     start = finish;
   }
@@ -336,7 +338,7 @@ export function sendFleet(w: World, now: Date, originId: number, targetId: numbe
 
   for (const [t, n] of Object.entries(sent)) origin.ships[t] -= n;
   const flight =
-    flightSeconds({ systemId: origin.system_id, orbit: origin.orbit }, { systemId: target.system_id, orbit: target.orbit }, w.systems) * 1000;
+    flightSeconds({ systemId: origin.system_id, orbit: origin.orbit }, { systemId: target.system_id, orbit: target.orbit }, w.systems) * MS_PER_SECOND;
   w.fleets.push({
     id: randomUUID(), origin_id: origin.id, target_id: target.id, mission, ships: sent,
     loot: {}, depart_at: now, arrive_at: new Date(now.getTime() + flight),

@@ -1,13 +1,15 @@
-import { ELEMENTS, SHIPS, type Element, type FleetDTO, type Res, type ShipType } from "@/lib/defs";
+import { ELEMENTS, MS_PER_SECOND, SECONDS_PER_MINUTE, SHIPS, type Element, type FleetDTO, type Res, type ShipType } from "@/lib/defs";
 
 export const fmtTime = (ms: number) => {
-  const s = Math.max(0, Math.ceil(ms / 1000));
+  const seconds = Math.max(0, Math.ceil(ms / MS_PER_SECOND));
 
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  return `${Math.floor(seconds / SECONDS_PER_MINUTE)}:${String(seconds % SECONDS_PER_MINUTE).padStart(2, "0")}`;
 };
 
 /** orbit distance: more decimals for the tight orbits of red-dwarf planets */
-export const fmtAU = (au: number) => `${au < 0.1 ? au.toFixed(3) : au < 10 ? au.toFixed(2) : au.toFixed(1)} AU`;
+const AU_DECIMALS = [[0.1, 3], [10, 2]]; // [orbit below this, decimals shown]; further out one decimal is enough
+const FAR_AU_DECIMALS = 1;
+export const fmtAU = (au: number) => `${au.toFixed(AU_DECIMALS.find(([limit]) => au < limit)?.[1] ?? FAR_AU_DECIMALS)} AU`;
 
 export const elementColor = (sym: string) => ELEMENTS[sym as Element]?.color ?? "#777";
 

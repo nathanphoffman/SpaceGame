@@ -2,11 +2,14 @@ import { ELEMENTS, type Element } from "@/lib/defs";
 import type { PlanetKind, PlanetParams } from "@/lib/planets/types";
 import type { BodySpec } from "@/lib/data/types";
 
+const GAS_RADIUS = { min: 1.0, max: 1.45, fromKm: 40000, perKm: 0.45, perKmDivisor: 100000 }; // gas giants grow from 1.0 at 40,000 km
+const ROCK_RADIUS = { min: 0.35, max: 1.25, base: 0.45, perDoubling: 0.32, referenceKm: 3000 }; // other worlds grow with each doubling of diameter
+
 /** on-screen size (game units, ~0.35 .. 1.45) from a real diameter */
 export function bodyRadius(kind: PlanetKind, km: number) {
-  if (kind === "gas") return Math.min(1.45, Math.max(1.0, 1.0 + (0.45 * (km - 40000)) / 100000));
+  if (kind === "gas") return Math.min(GAS_RADIUS.max, Math.max(GAS_RADIUS.min, GAS_RADIUS.min + (GAS_RADIUS.perKm * (km - GAS_RADIUS.fromKm)) / GAS_RADIUS.perKmDivisor));
 
-  return Math.min(1.25, Math.max(0.35, 0.45 + 0.32 * Math.log2(km / 3000)));
+  return Math.min(ROCK_RADIUS.max, Math.max(ROCK_RADIUS.min, ROCK_RADIUS.base + ROCK_RADIUS.perDoubling * Math.log2(km / ROCK_RADIUS.referenceKm)));
 }
 
 /** "Fe30 O28 Si18" -> composition list, biggest share first */

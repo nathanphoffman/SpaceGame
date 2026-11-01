@@ -11,12 +11,19 @@ export const GALAXY_VERSION = "local-neighbourhood-3";
 export const SEED_BASE = 1_000_000;
 
 const D2R = Math.PI / 180;
+const MINUTES_PER_DEGREE = 60; // arc-minutes in a degree, and minutes in an hour of right ascension
+const DEGREES_PER_HOUR = 15; // the sky turns 15 degrees per hour of right ascension
+// the north galactic pole in J2000 equatorial coordinates (degrees)
+const GALACTIC_POLE_RA = 192.85948;
+const GALACTIC_POLE_DEC = 27.12825;
+const GALACTIC_POLE_L = 122.93192;
+const HUNDREDTHS = 100;
 
 /** J2000 equatorial coordinates -> position in the galactic plane (light-years, Sol at the origin) */
 function galacticXY(raH: number, raM: number, decD: number, decM: number, ly: number): [number, number] {
-  const ra = (raH + raM / 60) * 15 * D2R;
-  const dec = (decD < 0 ? -1 : 1) * (Math.abs(decD) + decM / 60) * D2R;
-  const pole = { ra: 192.85948 * D2R, dec: 27.12825 * D2R, l: 122.93192 * D2R }; // north galactic pole
+  const ra = (raH + raM / MINUTES_PER_DEGREE) * DEGREES_PER_HOUR * D2R;
+  const dec = (decD < 0 ? -1 : 1) * (Math.abs(decD) + decM / MINUTES_PER_DEGREE) * D2R;
+  const pole = { ra: GALACTIC_POLE_RA * D2R, dec: GALACTIC_POLE_DEC * D2R, l: GALACTIC_POLE_L * D2R };
   const b = Math.asin(Math.sin(dec) * Math.sin(pole.dec) + Math.cos(dec) * Math.cos(pole.dec) * Math.cos(ra - pole.ra));
   const l = pole.l - Math.atan2(
     Math.cos(dec) * Math.sin(ra - pole.ra),
@@ -42,7 +49,7 @@ export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly,
     if (star === name) add({ name: pName, orbit, kind, diameterKm, note: candidate ? "Candidate exoplanet (not yet confirmed)" : "Confirmed exoplanet" });
   }
 
-  return { id, seed: SEED_BASE + id, name, spec, tempK, radius, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, ly, bodies, complete: name === "Sol" };
+  return { id, seed: SEED_BASE + id, name, spec, tempK, radius, x: Math.round(x * HUNDREDTHS) / HUNDREDTHS, y: Math.round(y * HUNDREDTHS) / HUNDREDTHS, ly, bodies, complete: name === "Sol" };
 });
 
 export const BODY_BY_SEED = new Map(SYSTEMS.flatMap((system) => system.bodies).map((body) => [body.seed, body]));
