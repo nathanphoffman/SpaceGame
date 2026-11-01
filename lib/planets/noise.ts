@@ -22,6 +22,8 @@ const OCTAVE_SEED_STEP = 101; // each octave of fractal noise uses its own seed
 const DEFAULT_OCTAVES = 5;
 const CONTRAST = 1.7;
 const HALF = 0.5;
+const SMOOTHSTEP = { cubic: 3, quadratic: 2 }; // 3t^2 - 2t^3 eases a 0..1 fraction so the blend has no visible grid lines
+const CORNER = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7 }; // positions of the eight cube corners
 
 export function mulberry32(seed: number) {
   // force the seed into an unsigned 32-bit number (>>> 0)
@@ -48,7 +50,7 @@ export function mulberry32(seed: number) {
 /** smooth 3D value noise: random values at whole-number points, blended between them (all inline so it stays a leaf function) */
 export function noise3(coordX: number, coordY: number, coordZ: number, seed: number) {
   const cellX = Math.floor(coordX), cellY = Math.floor(coordY), cellZ = Math.floor(coordZ);
-  const fade = [coordX - cellX, coordY - cellY, coordZ - cellZ].map((fraction) => fraction * fraction * (3 - 2 * fraction)); // ease each fraction so the blend has no visible grid lines
+  const fade = [coordX - cellX, coordY - cellY, coordZ - cellZ].map((fraction) => fraction * fraction * (SMOOTHSTEP.cubic - SMOOTHSTEP.quadratic * fraction)); // ease each fraction so the blend has no visible grid lines
   const corners: number[] = [];
 
   for (let corner = 0; corner < CORNERS; corner++) {
@@ -62,8 +64,8 @@ export function noise3(coordX: number, coordY: number, coordZ: number, seed: num
   const [fadeX, fadeY, fadeZ] = fade;
 
   // blend neighbouring corners along x, then y, then z (each step is low + (high - low) * t)
-  const lowLow = corners[0] + (corners[1] - corners[0]) * fadeX, highLow = corners[2] + (corners[3] - corners[2]) * fadeX;
-  const lowHigh = corners[4] + (corners[5] - corners[4]) * fadeX, highHigh = corners[6] + (corners[7] - corners[6]) * fadeX;
+  const lowLow = corners[0] + (corners[CORNER.first] - corners[0]) * fadeX, highLow = corners[CORNER.second] + (corners[CORNER.third] - corners[CORNER.second]) * fadeX;
+  const lowHigh = corners[CORNER.fourth] + (corners[CORNER.fifth] - corners[CORNER.fourth]) * fadeX, highHigh = corners[CORNER.sixth] + (corners[CORNER.seventh] - corners[CORNER.sixth]) * fadeX;
   const near = lowLow + (highLow - lowLow) * fadeY, far = lowHigh + (highHigh - lowHigh) * fadeY;
 
   return near + (far - near) * fadeZ;

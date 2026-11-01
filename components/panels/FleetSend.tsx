@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SHIPS, flightSeconds, type GameState, type PlanetDTO, type ShipType } from "@/lib/defs";
+import { MS_PER_SECOND, SHIPS, flightSeconds, type GameState, type PlanetDTO, type ShipType } from "@/lib/defs";
 import { SHIP_TYPES, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -47,7 +47,7 @@ export default function FleetSend({ game, planet, target, sendAction: act, onSen
         <>
           <div className="dim" style={{ marginBottom: 6 }}>
             {missionText(target, quantities)}
-            {" · "}flight {fmtTime(flightSeconds(planet, target, game.systems) * 1000)} each way
+            {" · "}flight {fmtTime(flightSeconds(planet, target, game.systems) * MS_PER_SECOND)} each way
           </div>
           {SHIP_TYPES.map((type) => ( // one row per ship type for choosing how many to send
             <ShipRow key={type} type={type} available={planet.ships[type] ?? 0} value={quantities[type] ?? 0} onChange={(value) => setQuantities({ ...quantities, [type]: value })} />

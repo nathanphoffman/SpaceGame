@@ -24,6 +24,7 @@ const MAP_SIZE = 100; // the map box is 0..100 %
 const RGB_MAX = 255;
 const HALF_TURN_DEGREES = 180;
 const QUARTER_TURN_DEGREES = 90; // the fleet icon points up, so it is turned a quarter to face along the flight
+const SMALL_STAR_DECIMALS = 3;
 const SMALL_STAR_RADIUS = 0.1; // below this (solar radii) a star radius is shown with three decimals
 const STAR_SIZE_LOOK = { base: 6.6, perDecade: 5.75 };
 
@@ -65,7 +66,7 @@ type StarProps = { system: SystemDTO; at: Point; owned: number; selected: boolea
 function StarButton({ system, at, owned, selected, onOpen }: StarProps) {
   const star = starParams(system.seed);
   const color = `rgb(${star.color.map((channel) => Math.round(channel * RGB_MAX)).join(",")})`;
-  const radius = star.radius < SMALL_STAR_RADIUS ? star.radius.toFixed(3) : star.radius.toFixed(1);
+  const radius = star.radius < SMALL_STAR_RADIUS ? star.radius.toFixed(SMALL_STAR_DECIMALS) : star.radius.toFixed(1);
 
   return (
     <button className={`gnode ${selected ? "sel" : ""} ${owned > 0 ? "home" : ""}`} style={{ left: `${at.x}%`, top: `${at.y}%` }}

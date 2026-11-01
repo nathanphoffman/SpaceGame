@@ -4,6 +4,7 @@ const MAX_ZOOM = 12;
 const BUTTON_ZOOM_STEP = 1.6;
 const WHEEL_ZOOM_SPEED = 0.0015;
 const DRAG_PIXELS = 4; // moving further than this between press and release makes it a drag, not a click
+const PERCENT = 100;
 const CENTRE = 50; // the map is 0..100 %, so its middle is 50
 const START_VIEW: View = { z: 1, cx: CENTRE, cy: CENTRE };
 
@@ -13,7 +14,7 @@ type SetView = Dispatch<SetStateAction<View>>;
 const keepInside = (view: View): View => {
   const half = CENTRE / view.z;
 
-  return { z: view.z, cx: Math.min(100 - half, Math.max(half, view.cx)), cy: Math.min(100 - half, Math.max(half, view.cy)) };
+  return { z: view.z, cx: Math.min(PERCENT - half, Math.max(half, view.cx)), cy: Math.min(PERCENT - half, Math.max(half, view.cy)) };
 };
 
 /** zoom by `factor`, keeping the point under (u, w) (% of the map box) where it is */
@@ -34,7 +35,7 @@ function useWheelZoom(box: RefObject<HTMLDivElement | null>, zoomAt: (factor: nu
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
       const rect = element.getBoundingClientRect();
-      zoomAt(Math.exp(-event.deltaY * WHEEL_ZOOM_SPEED), ((event.clientX - rect.left) / rect.width) * 100, ((event.clientY - rect.top) / rect.height) * 100);
+      zoomAt(Math.exp(-event.deltaY * WHEEL_ZOOM_SPEED), ((event.clientX - rect.left) / rect.width) * PERCENT, ((event.clientY - rect.top) / rect.height) * PERCENT);
     };
 
     element.addEventListener("wheel", onWheel, { passive: false });
@@ -58,7 +59,7 @@ function startDrag(event: React.PointerEvent, box: RefObject<HTMLDivElement | nu
 
     if (!moved.current) return;
 
-    const dx = ((drag.clientX - last.x) / rect.width) * 100, dy = ((drag.clientY - last.y) / rect.height) * 100;
+    const dx = ((drag.clientX - last.x) / rect.width) * PERCENT, dy = ((drag.clientY - last.y) / rect.height) * PERCENT;
     last = { x: drag.clientX, y: drag.clientY };
     setView((current) => keepInside({ ...current, cx: current.cx - dx / current.z, cy: current.cy - dy / current.z }));
   };

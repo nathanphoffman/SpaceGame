@@ -11,7 +11,7 @@ import SystemView from "@/components/maps/SystemView";
 import type { Navigation } from "@/components/hooks/useNavigation";
 import type { useGame } from "@/components/hooks/useGame";
 import { buildableTypes, shortfallText, stockAfter } from "@/lib/economy";
-import { productionRates, type FleetDTO, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
+import { MS_PER_SECOND, productionRates, type FleetDTO, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
 import { planetStats } from "@/lib/planets/planetStats";
 import Reports from "./Reports";
 
@@ -30,7 +30,7 @@ function describeScene(game: GameState, navigation: Navigation, nowMs: number) {
   const shown = game.systems.find((system) => system.id === navigation.systemId) ?? systemOf(viewed.systemId); // (a just-clicked system arrives with the next update)
   const composition = planetStats(planet.seed).composition;
   const rate = productionRates(planet.buildings, composition);
-  const stock = stockAfter(planet, rate, Math.max(0, (nowMs - game.nowMs) / 1000));
+  const stock = stockAfter(planet, rate, Math.max(0, (nowMs - game.nowMs) / MS_PER_SECOND));
 
   return { mine, planet, viewed, target, systemOf, shown, composition, rate, stock };
 }

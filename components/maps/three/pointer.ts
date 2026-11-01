@@ -4,6 +4,7 @@ import * as THREE from "three";
 export type Pickable = { id: number; object: THREE.Object3D; radiusPx: number };
 
 const DRAG_PIXELS = 5;
+const HALF = 0.5; // normalised device coordinates run -1..1; this maps them to 0..1
 const scratch = new THREE.Vector3();
 
 /** The pickable closest to the pointer, if the pointer is inside its click radius. */
@@ -16,7 +17,7 @@ export function pickAt(event: MouseEvent, element: HTMLElement, pickables: Picka
     p.object.getWorldPosition(scratch).project(camera);
 
     if (scratch.z > 1) continue; // behind the camera
-    const d = Math.hypot((scratch.x * 0.5 + 0.5) * r.width - mx, (-scratch.y * 0.5 + 0.5) * r.height - my);
+    const d = Math.hypot((scratch.x * HALF + HALF) * r.width - mx, (-scratch.y * HALF + HALF) * r.height - my);
 
     if (d < p.radiusPx && d < bestD) { best = p.id; bestD = d; }
   }

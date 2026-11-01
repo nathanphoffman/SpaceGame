@@ -6,7 +6,9 @@ export type Fly = { t: number; dur: number; fromPos: THREE.Vector3; toPos: THREE
 const FLY_SECONDS = 1.1;
 
 /** starts slow, ends gentle: 1 - (1 - t)^3 */
-const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+const EASE_POWER = 3;
+
+const ease = (t: number) => 1 - Math.pow(1 - t, EASE_POWER);
 
 /** Plans a smooth move from where the camera is now to `pos`, looking at `target`. */
 export function startFly(camera: THREE.Camera, controls: OrbitControls, pos: THREE.Vector3, target: THREE.Vector3): Fly {

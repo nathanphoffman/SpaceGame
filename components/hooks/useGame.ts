@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GameState } from "@/lib/defs";
 
+const REFRESH_MS = 2000; // how often the game state is fetched from the server
+const CLOCK_TICK_MS = 250; // how often the on-screen clock moves
+
 /** what the player is looking at: the server only sends (and generates) that part of the galaxy */
 export type GameView = { sx: number; sy: number; system?: number };
 
@@ -31,8 +34,8 @@ export function useGame(view: GameView) {
 
   useEffect(() => {
     refresh();
-    const a = setInterval(refresh, 2000);
-    const b = setInterval(() => setClock(Date.now()), 250);
+    const a = setInterval(refresh, REFRESH_MS);
+    const b = setInterval(() => setClock(Date.now()), CLOCK_TICK_MS);
 
     return () => { clearInterval(a); clearInterval(b); };
   }, [refresh]);

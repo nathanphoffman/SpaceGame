@@ -21,6 +21,7 @@ const SHIP_WIDTH = 0.16;
 const COLONY_COLOR = 0x5be08a;
 const ATTACK_COLOR = 0x4cc2ff;
 const OWNER_COLOR = { player: 0x5be08a, npc: 0xff6b6b, empty: 0x8794b5 } as const;
+const WHITE_HEX = 0xffffff;
 const white = new THREE.Color(1, 1, 1);
 const STAR_SEGMENTS = { around: 48, across: 32 };
 const STAR_GLOW_OPACITY = 0.9;
@@ -69,7 +70,7 @@ export function createStar(system: SystemDTO) {
   addLabel(star, system.name, "star");
   const light = new THREE.PointLight(color.clone().lerp(white, LIGHT_WHITEN), LIGHT_INTENSITY, 0, 0);
 
-  return { star, lights: [light, new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY)] };
+  return { star, lights: [light, new THREE.AmbientLight(WHITE_HEX, AMBIENT_INTENSITY)] };
 }
 
 /** swaps the planet's mesh for one built at the given detail level */

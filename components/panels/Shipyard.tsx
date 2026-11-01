@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SHIPS, shipSeconds, type PlanetDTO, type QueueDTO, type Res, type ShipType } from "@/lib/defs";
+import { MS_PER_SECOND, SHIPS, shipSeconds, type PlanetDTO, type QueueDTO, type Res, type ShipType } from "@/lib/defs";
 import { Cost, SHIP_TYPES, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -56,7 +56,7 @@ function ShipTile({ type, props, level, quantity, onQuantity, onInfo }: TileProp
       </button>
       <span className="dim">×{props.planet.ships[type] ?? 0} · Atk {ship.attack} · Cargo {ship.cargo}</span>
       <div className="sub"><Cost cost={ship.cost} /></div> {/* price of one ship */}
-      <div className="sub">{fmtTime(shipSeconds(type, level) * 1000)} each</div>
+      <div className="sub">{fmtTime(shipSeconds(type, level) * MS_PER_SECOND)} each</div>
       {queued[0] && <div className="sub good">+{queued.length} · next {fmtTime(queued[0].finishAt - props.nowMs)}</div>}
       <div className="tile-actions">
         <input type="number" min={MIN_BATCH} max={MAX_BATCH} value={quantity} onChange={(event) => onQuantity(Number(event.target.value))} />

@@ -28,6 +28,7 @@ const PALETTES: Record<PlanetKind, { low: RGB; high: RGB }> = {
 const SEED_MULTIPLIER = 7919;
 const SEED_OFFSET = 17;
 const DEFAULT_JITTER = 0.08;
+const HALF = 0.5;
 const OCEAN_COLOR: RGB = [0.1, 0.25, 0.5];
 const OCEAN_JITTER = 0.05;
 const RING_COLOR: RGB = [0.75, 0.7, 0.62];
@@ -101,7 +102,7 @@ export function planetParams(seed: number): PlanetParams {
   const range: Range = (low, high) => low + (high - low) * random();
 
   // nudge each colour channel by up to +-amount at random and keep it within 0..1
-  const jitter: Jitter = (color, amount = DEFAULT_JITTER) => color.map((channel) => Math.min(1, Math.max(0, channel + (random() - 0.5) * amount * 2))) as RGB;
+  const jitter: Jitter = (color, amount = DEFAULT_JITTER) => color.map((channel) => Math.min(1, Math.max(0, channel + (random() - HALF) * amount * 2))) as RGB;
 
   const roll = random(); // always drawn, even for real bodies, so their other values stay the same
   const kind = real?.kind ?? kindFromRoll(roll);

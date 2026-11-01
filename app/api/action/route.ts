@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { resetGame } from "@/lib/server/db";
 import { GameError, startBuilding, buildShips, recallFleet, sendFleet, withGame } from "@/lib/server/engine";
 
+const BAD_REQUEST = 400;
+const SERVER_ERROR = 500;
+
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
@@ -32,9 +35,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(state);
   } catch (e) {
-    if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
+    if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: BAD_REQUEST });
     console.error(e);
 
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server error" }, { status: SERVER_ERROR });
   }
 }

@@ -2,12 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { MS_PER_SECOND } from "@/lib/defs";
 import { planetParams } from "@/lib/planets/planetParams";
 import type { PlanetParams } from "@/lib/planets/types";
 import { createPlanetGroup } from "@/components/planet/planetMesh";
 import { disposeScene, lightScene } from "@/components/planet/sceneParts";
 
 const MAX_FPS = 30;
+const CAMERA = { fieldOfView: 40, near: 0.1, far: 100, height: 0.4, distance: 5.5 };
 const MAX_PIXEL_RATIO = 2;
 const DEFAULT_SIZE_PX = 300;
 
@@ -23,8 +25,8 @@ function createRenderer(element: HTMLElement) {
 /** the planet, its lights and a camera that looks at it from a little above */
 function createScene(params: PlanetParams) {
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-  camera.position.set(0, 0.4, 5.5); // closer than a square view so the planet still fills the shorter frame
+  const camera = new THREE.PerspectiveCamera(CAMERA.fieldOfView, 1, CAMERA.near, CAMERA.far);
+  camera.position.set(0, CAMERA.height, CAMERA.distance); // closer than a square view so the planet still fills the shorter frame
   camera.lookAt(0, 0, 0);
   lightScene(scene);
   const { group, planet } = createPlanetGroup(params);
@@ -54,14 +56,14 @@ function followSize(element: HTMLElement, renderer: THREE.WebGLRenderer, camera:
 function startLoop(render: () => void, spin: (seconds: number) => void) {
   let frame = 0;
   let last = performance.now();
-  const frameMs = 1000 / MAX_FPS;
+  const frameMs = MS_PER_SECOND / MAX_FPS;
 
   const loop = (time: number) => {
     frame = requestAnimationFrame(loop);
 
     if (time - last < frameMs - 1) return;
 
-    spin((time - last) / 1000);
+    spin((time - last) / MS_PER_SECOND);
     last = time;
     render();
   };

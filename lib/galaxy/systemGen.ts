@@ -20,6 +20,7 @@ export type Filler = {
 const COUNT_SEED = { multiplier: 977, offset: 13 };
 const COUNT_WARM_UP_DRAWS = 3;
 const DICE_SIDES = 6;
+const HALF = 0.5;
 const ORBIT_NUDGE = 1.5; // a crowded orbit is moved this many times further out
 const ORBIT_JITTER = 0.5; // how far (in slots) a planet may stray from its even spacing
 const MILLI = 1000; // orbits are rounded to a thousandth of an AU
@@ -94,7 +95,7 @@ export function fillSystem(sys: { id: number; name: string; seed: number; comple
   const out: Filler[] = [];
 
   for (let index = 0; index < want; index++) {
-    const spot = (index + 0.5 + (random() - 0.5) * ORBIT_JITTER) / want; // 0..1 along the range of orbits, with some jitter
+    const spot = (index + HALF + (random() - HALF) * ORBIT_JITTER) / want; // 0..1 along the range of orbits, with some jitter
     let orbit = INNERMOST_AU * scale * Math.pow(ORBIT_SPREAD, spot);
 
     for (let nudges = 0; nudges < MAX_NUDGES && crowds(orbit, taken); nudges++) orbit *= ORBIT_NUDGE;

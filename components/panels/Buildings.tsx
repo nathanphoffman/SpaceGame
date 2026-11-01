@@ -1,9 +1,11 @@
 import {
-  MAX_BUILDING_LEVEL, buildCost, buildSeconds, buildingInfo, mineElement, mineRate, toRoman,
+  MAX_BUILDING_LEVEL, MS_PER_SECOND, buildCost, buildSeconds, buildingInfo, mineElement, mineRate, toRoman,
   type BuildingInfo, type PlanetDTO, type QueueDTO, type Res,
 } from "@/lib/defs";
 
 import { Cost, elementColor, fmtTime } from "@/components/ui";
+
+const PERCENT = 100;
 
 type Props = {
   planet: PlanetDTO;
@@ -76,7 +78,7 @@ function NextLevel({ tile, cost }: { tile: TileState; cost: Res }) {
   return (
     <>
       <div className="sub">Cost: <Cost cost={cost} /></div> {/* the price of the next level */}
-      <div className="sub">{fmtTime(buildSeconds(tile.type, tile.level) * 1000)}</div>
+      <div className="sub">{fmtTime(buildSeconds(tile.type, tile.level) * MS_PER_SECOND)}</div>
     </>
   );
 }
@@ -85,7 +87,7 @@ function NextLevel({ tile, cost }: { tile: TileState; cost: Res }) {
 function BuildProgress({ active, now }: { active: QueueDTO | undefined; now: number }) {
   if (!active) return null;
 
-  const share = Math.min(100, ((now - active.startAt) / (active.finishAt - active.startAt)) * 100);
+  const share = Math.min(PERCENT, ((now - active.startAt) / (active.finishAt - active.startAt)) * PERCENT);
 
   return (
     <div className="grow-fill">

@@ -26,7 +26,8 @@ const PLACEMENT_TRIES = 8;
 const USABLE_SECTOR_SHARE = 0.94; // stars stay a little inside the sector edge
 const MIN_STAR_GAP_LY = 1.8;
 const SEED_RANGE = 99999;
-const HUNDREDTHS = 100; // positions are rounded to a hundredth of a light-year
+const HUNDREDTHS = 100;
+const HALF = 0.5; // positions are rounded to a hundredth of a light-year
 
 /** system ids: 1..99 are the hand-made catalog; every generated sector gets its own block of 100 */
 const generatedSystemId = (sectorX: number, sectorY: number, number: number) => FIRST_GENERATED_ID + (sectorY * GRID + sectorX) * IDS_PER_SECTOR + number;
@@ -57,8 +58,8 @@ export function sectorStars(sectorX: number, sectorY: number): SectorStar[] {
     let x = 0, y = 0;
 
     for (let tries = 0; tries < PLACEMENT_TRIES; tries++) { // keep stars from sitting on top of each other
-      x = centre.x + (random() - 0.5) * SECTOR_LY * USABLE_SECTOR_SHARE;
-      y = centre.y + (random() - 0.5) * SECTOR_LY * USABLE_SECTOR_SHARE;
+      x = centre.x + (random() - HALF) * SECTOR_LY * USABLE_SECTOR_SHARE;
+      y = centre.y + (random() - HALF) * SECTOR_LY * USABLE_SECTOR_SHARE;
 
       if (out.every((other) => Math.hypot(other.x - x, other.y - y) > MIN_STAR_GAP_LY)) break;
     }

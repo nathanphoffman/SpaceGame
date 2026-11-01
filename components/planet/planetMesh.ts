@@ -40,6 +40,7 @@ type Vec3 = [number, number, number];
 const RGB_CHANNELS = 3;
 const HALF = 0.5;
 const SURFACE_ROUGHNESS = 0.95;
+const BAND_COLORS = { first: 0, second: 1, third: 2, fourth: 3 };
 const GAS_BLEND_SCALE = { x: 6, y: 1.5 }; // the second band pattern is stretched along the poles
 
 const mixColors = (first: RGB, second: RGB, t: number): RGB => [first[0] + (second[0] - first[0]) * t, first[1] + (second[1] - first[1]) * t, first[2] + (second[2] - first[2]) * t];
@@ -50,7 +51,7 @@ function gasColor(params: PlanetParams, north: number, warp: number, blend: numb
   const band = Math.sin(latitude * Math.PI) * HALF + HALF;
   const band2 = Math.sin(latitude * Math.PI * GAS_BAND2_FREQ + GAS_BAND2_PHASE) * HALF + HALF;
 
-  return mixColors(mixColors(params.bands[0], params.bands[1], band), mixColors(params.bands[2], params.bands[3], band2), GAS_BLEND_BASE + GAS_BLEND_NOISE * blend);
+  return mixColors(mixColors(params.bands[BAND_COLORS.first], params.bands[BAND_COLORS.second], band), mixColors(params.bands[BAND_COLORS.third], params.bands[BAND_COLORS.fourth], band2), GAS_BLEND_BASE + GAS_BLEND_NOISE * blend);
 }
 
 /** how much the craters push the ground up or down at a point, and how dark they make it */

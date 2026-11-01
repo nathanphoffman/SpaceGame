@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import type { GameState, PlanetDTO, SystemDTO } from "@/lib/defs";
+import { MS_PER_SECOND, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
 import { flightOf } from "@/lib/galaxy/flight";
 import { BACKDROP_RADIUS, backdrop } from "@/components/maps/three/glow";
 import { startFly, stepFly, type Fly } from "@/components/maps/three/cameraFlight";
@@ -10,6 +10,9 @@ import { bindPointer, pickAt, type Pickable } from "@/components/maps/three/poin
 import { HIGH_DETAIL, LOW_DETAIL, createPlanetNode, createShip, createStar, disposeTree, placeShip, setDetail, type PlanetNode, type ShipNode } from "@/components/maps/three/systemParts";
 
 const FIELD_OF_VIEW = 50;
+const FAR_PLANE = 4000;
+const DEFAULT_SIZE = { width: 800, height: 500 };
+const DAMPING = 0.08;
 const MAX_PIXEL_RATIO = 2;
 const MAX_FRAME_SECONDS = 0.1;
 const MIN_SPAN = 12;
@@ -36,7 +39,7 @@ type World = { systemId: number; planetKey: string; planets: Map<number, PlanetN
 export class SystemEngine {
   private renderer = new THREE.WebGLRenderer({ antialias: true });
   private labelLayer = new CSS2DRenderer();
-  private camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW, 1, MIN_NEAR, 4000);
+  private camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW, 1, MIN_NEAR, FAR_PLANE);
   private controls: OrbitControls;
   private scene = new THREE.Scene();
   private stars = backdrop();
@@ -56,7 +59,7 @@ export class SystemEngine {
     this.scene.add(this.stars, this.content);
     this.controls = new OrbitControls(this.camera, element);
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
+    this.controls.dampingFactor = DAMPING;
     this.running.resize = new ResizeObserver(() => this.resize());
     this.running.resize.observe(element);
     this.resize();
@@ -212,7 +215,7 @@ export class SystemEngine {
   }
 
   private resize() {
-    const width = this.element.clientWidth || 800, height = this.element.clientHeight || 500;
+    const width = this.element.clientWidth || DEFAULT_SIZE.width, height = this.element.clientHeight || DEFAULT_SIZE.height;
     this.renderer.setSize(width, height);
     this.labelLayer.setSize(width, height);
     this.camera.aspect = width / height;
@@ -255,7 +258,7 @@ export class SystemEngine {
     if (this.running.disposed) return;
 
     this.running.frame = requestAnimationFrame(this.loop);
-    const dt = Math.min(MAX_FRAME_SECONDS, (time - this.clock.last) / 1000);
+    const dt = Math.min(MAX_FRAME_SECONDS, (time - this.clock.last) / MS_PER_SECOND);
     this.clock.last = time;
     this.moveBodies(dt, this.nowMs());
     this.stars.position.copy(this.camera.position);

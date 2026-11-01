@@ -8,6 +8,9 @@ import { disposeScene, lightScene } from "@/components/planet/sceneParts";
 let renderer: THREE.WebGLRenderer | null = null;
 const cache = new Map<number, string>();
 const SIZE = 192;
+const CAMERA = { near: 0.1, far: 100 };
+const DEGREES_PER_RADIAN_HALF_TURN = 180;
+const SPIN_DIVISOR = 100;
 
 const FIELD_OF_VIEW = 40;
 const FRAME_MARGIN = 1.05; // the planet fills this share of the frame (the rest is a margin for rings and atmosphere)
@@ -23,13 +26,13 @@ function renderThumb(seed: number) {
   const params = planetParams(seed);
   const scene = new THREE.Scene();
   const half = planetExtent(params) * FRAME_MARGIN; // world units from centre to frame edge
-  const camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW, 1, 0.1, 100);
-  camera.position.set(0, 0, half / Math.tan((FIELD_OF_VIEW / 2 * Math.PI) / 180));
+  const camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW, 1, CAMERA.near, CAMERA.far);
+  camera.position.set(0, 0, half / Math.tan((FIELD_OF_VIEW / 2 * Math.PI) / DEGREES_PER_RADIAN_HALF_TURN));
   camera.lookAt(0, 0, 0);
   lightScene(scene);
 
   const { group, planet } = createPlanetGroup(params, THUMB_DETAIL);
-  planet.rotation.y = (seed % SPIN_STEPS) / 100;
+  planet.rotation.y = (seed % SPIN_STEPS) / SPIN_DIVISOR;
   scene.add(group);
   renderer.render(scene, camera);
   const url = renderer.domElement.toDataURL("image/png");
