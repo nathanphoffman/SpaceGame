@@ -23,9 +23,9 @@ export function mulberry32(seed: number) {
 // ---- value noise ----
 
 /** smooth 3D value noise: random values at whole-number points, blended between them (all inline so it stays a leaf function) */
-export function noise3(x: number, y: number, z: number, s: number) {
-  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
-  const fade = [x - xi, y - yi, z - zi].map((t) => t * t * (3 - 2 * t)); // ease each fraction so the blend has no visible grid lines
+export function noise3(coordX: number, coordY: number, coordZ: number, s: number) {
+  const xi = Math.floor(coordX), yi = Math.floor(coordY), zi = Math.floor(coordZ);
+  const fade = [coordX - xi, coordY - yi, coordZ - zi].map((t) => t * t * (3 - 2 * t)); // ease each fraction so the blend has no visible grid lines
   const corners: number[] = [];
 
   for (let corner = 0; corner < 8; corner++) {

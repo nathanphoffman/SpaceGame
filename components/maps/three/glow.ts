@@ -31,15 +31,15 @@ export const BACKDROP_RADIUS = 1500;
 
 /** faint background stars on a big sphere */
 export function backdrop(count = 1800, radius = BACKDROP_RADIUS) {
-  const pos = new Float32Array(count * 3);
+  const position = new Float32Array(count * 3);
 
   for (let index = 0; index < count; index++) {
     const z = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, s = Math.sqrt(1 - z * z);
-    pos.set([radius * s * Math.cos(a), radius * z, radius * s * Math.sin(a)], index * 3);
+    position.set([radius * s * Math.cos(a), radius * z, radius * s * Math.sin(a)], index * 3);
   }
 
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(position, 3));
 
-  return new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x9fb0d8, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.55, depthWrite: false }));
+  return new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0x9fb0d8, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.55, depthWrite: false }));
 }

@@ -7,8 +7,8 @@ export const GRID = 21;
 export const CENTER = 10;
 export const SECTOR_LY = 32;
 
-export const validSector = (sx: number, sy: number) =>
-  Number.isInteger(sx) && Number.isInteger(sy) && sx >= 0 && sy >= 0 && sx < GRID && sy < GRID;
+export const validSector = (sectorX: number, sectorY: number) =>
+  Number.isInteger(sectorX) && Number.isInteger(sectorY) && sectorX >= 0 && sectorY >= 0 && sectorX < GRID && sectorY < GRID;
 
 export const sectorCentre = (sx: number, sy: number) => ({ x: (sx - CENTER) * SECTOR_LY, y: (sy - CENTER) * SECTOR_LY });
 

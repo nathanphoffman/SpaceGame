@@ -172,12 +172,13 @@ function returnHome(world: World, fleet: Fleet) {
 }
 
 /** the action for the earliest thing that has already happened by `now` (queue items win ties), or null when nothing is due */
-function earliestDue(world: World, now: Date) {
+function earliestDue(world: World, currentTime: Date) {
   let earliest: Date | null = null;
+
   // the action to run for the earliest due event, kept in a variable the compiler can't narrow
   let action: (() => void) | null = null;
   const consider = (when: Date, run: () => void) => {
-    if (when <= now && (!earliest || when < earliest)) { earliest = when; action = run; }
+    if (when <= currentTime && (!earliest || when < earliest)) { earliest = when; action = run; }
   };
 
   for (const item of world.queue) consider(item.finish_at, () => finishQueueItem(world, item));
@@ -232,15 +233,15 @@ export async function withGame<T>(fn: (w: World, now: Date) => T, view: View = {
 
 function toState(w: World, now: Date): GameState {
   return {
-    now: now.getTime(),
+    nowMs: now.getTime(),
     systems: w.systems,
     planets: w.planets.map((p) => ({
       id: p.id, name: p.name, systemId: p.system_id, orbit: p.orbit, kind: p.kind,
       resources: p.resources, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed, shared: p.shared,
     })),
-    queue: w.queue.map((q) => ({
-      id: q.id, planetId: q.planet_id, kind: q.kind, type: q.type,
-      startAt: q.start_at.getTime(), finishAt: q.finish_at.getTime(),
+    queue: w.queue.map((db) => ({
+      id: db.id, planetId: db.planet_id, kind: db.kind, type: db.type,
+      startAt: db.start_at.getTime(), finishAt: db.finish_at.getTime(),
     })),
     fleets: w.fleets.map((f) => ({
       id: f.id, originId: f.origin_id, targetId: f.target_id, mission: f.mission, ships: f.ships, loot: f.loot,

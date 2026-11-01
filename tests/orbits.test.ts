@@ -32,7 +32,7 @@ describe("3D orbits", () => {
 
 describe("fleet flights", () => {
   const game = {
-    now: 0, systems: [], queue: [],
+    nowMs: 0, systems: [], queue: [],
     planets: [planet(1, 1, 1), planet(2, 5, 1), planet(3, 1, 2)],
     fleets: [] as FleetDTO[],
   } as GameState;

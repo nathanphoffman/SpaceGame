@@ -189,10 +189,10 @@ export class SystemEngine {
       return from.systemId === system.id && to.systemId === system.id;
     });
 
-    const ids = new Set(local.map((f) => f.id));
+    const planetIds = new Set(local.map((f) => f.id));
 
     for (const [id, ship] of this.world.ships) {
-      if (ids.has(id)) continue;
+      if (planetIds.has(id)) continue;
 
       this.content.remove(ship.holder, ship.trail);
       disposeTree(ship.holder);

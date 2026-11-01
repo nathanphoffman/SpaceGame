@@ -12,9 +12,9 @@ const NOTHING = { resources: {}, buildings: {}, ships: {} };
 
 export type PlanetRow = Omit<Filler, "kind"> & { kind: "player" | "npc" | "empty"; shared: boolean; ships: Record<string, number> };
 
-export async function insertPlanets(q: Q, systemId: number, rows: PlanetRow[]) {
+export async function insertPlanets(db: Q, systemId: number, rows: PlanetRow[]) {
   for (const planet of rows) {
-    await q.query(
+    await db.query(
       `INSERT INTO planets (id,name,system_id,orbit,kind,resources,buildings,ships,defense,seed,shared)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`,
       [planet.id, planet.name, systemId, planet.orbit, planet.kind, JSON.stringify(planet.resources), JSON.stringify(planet.buildings), JSON.stringify(planet.ships), planet.defense, planet.seed, planet.shared],

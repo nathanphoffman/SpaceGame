@@ -3,19 +3,19 @@ import { sectorStars } from "@/lib/galaxy/sector";
 import { fillSystem } from "@/lib/galaxy/systemGen";
 
 /** Create a sector's stars the first time anyone looks at it. The same sector always generates the same stars. */
-export async function ensureSector(q: Q, sx: number, sy: number) {
-  const done = await q.query("SELECT 1 FROM sectors WHERE x=$1 AND y=$2", [sx, sy]);
+export async function ensureSector(db: Q, sectorX: number, sectorY: number) {
+  const done = await db.query("SELECT 1 FROM sectors WHERE x=$1 AND y=$2", [sectorX, sectorY]);
 
   if (done.rows.length) return;
 
-  for (const s of sectorStars(sx, sy)) {
-    await q.query(
+  for (const s of sectorStars(sectorX, sectorY)) {
+    await db.query(
       "INSERT INTO systems (id,name,x,y,seed,sector_x,sector_y) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING",
-      [s.id, s.name, s.x, s.y, s.seed, sx, sy],
+      [s.id, s.name, s.x, s.y, s.seed, sectorX, sectorY],
     );
   }
 
-  await q.query("INSERT INTO sectors (x,y) VALUES ($1,$2) ON CONFLICT DO NOTHING", [sx, sy]);
+  await db.query("INSERT INTO sectors (x,y) VALUES ($1,$2) ON CONFLICT DO NOTHING", [sectorX, sectorY]);
 }
 
 /** Create a star's planets the first time its solar system is opened. */

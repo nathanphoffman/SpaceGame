@@ -6,9 +6,9 @@ type Props = {
   show: boolean; // hidden (but still mounted, so quantities are remembered) when viewing a planet that isn't yours
   planet: PlanetDTO;
   queue: QueueDTO[]; // ship queue for this planet
-  now: number;
+  nowMs: number;
   shortfall: (cost: Res) => string | undefined;
-  act: (body: object) => Promise<void>;
+  sendAction: (body: object) => Promise<void>;
 };
 
 const MIN_BATCH = 1;
@@ -57,10 +57,10 @@ function ShipTile({ type, props, level, quantity, onQuantity, onInfo }: TileProp
       <span className="dim">×{props.planet.ships[type] ?? 0} · Atk {ship.attack} · Cargo {ship.cargo}</span>
       <div className="sub"><Cost cost={ship.cost} /></div> {/* price of one ship */}
       <div className="sub">{fmtTime(shipSeconds(type, level) * 1000)} each</div>
-      {queued[0] && <div className="sub good">+{queued.length} · next {fmtTime(queued[0].finishAt - props.now)}</div>}
+      {queued[0] && <div className="sub good">+{queued.length} · next {fmtTime(queued[0].finishAt - props.nowMs)}</div>}
       <div className="tile-actions">
         <input type="number" min={MIN_BATCH} max={MAX_BATCH} value={quantity} onChange={(event) => onQuantity(Number(event.target.value))} />
-        <button disabled={!!why} title={why} onClick={() => props.act({ action: "ship", planetId: props.planet.id, type, qty: quantity })}>Build</button>
+        <button disabled={!!why} title={why} onClick={() => props.sendAction({ action: "ship", planetId: props.planet.id, type, qty: quantity })}>Build</button>
       </div>
     </div>
   );

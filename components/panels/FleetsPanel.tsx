@@ -6,8 +6,8 @@ type Props = {
   showHangar: boolean;
   fleets: FleetDTO[]; // active fleets
   planetName: (id: number) => string;
-  now: number;
-  act: (body: object) => Promise<void>;
+  nowMs: number;
+  sendAction: (body: object) => Promise<void>;
 };
 
 const MAX_ICONS_PER_ROW = 300; // keep the page light if you build thousands
@@ -53,7 +53,7 @@ function statusText(fleet: FleetDTO, planetName: (id: number) => string) {
   return `Returning to ${planetName(fleet.originId)}`;
 }
 
-function FleetRow({ fleet, planetName, now, act }: { fleet: FleetDTO; planetName: Props["planetName"]; now: number; act: Props["act"] }) {
+function FleetRow({ fleet, planetName, now, act }: { fleet: FleetDTO; planetName: Props["planetName"]; now: number; act: Props["sendAction"] }) {
   const hasLoot = Object.values(fleet.loot).some((amount) => amount > 0);
   const arrival = fleet.status === "outbound" ? fleet.arriveAt : fleet.returnAt;
 
@@ -72,7 +72,7 @@ function FleetRow({ fleet, planetName, now, act }: { fleet: FleetDTO; planetName
 }
 
 /** ships sitting at the planet, plus every fleet that is flying or guarding somewhere */
-export default function FleetsPanel({ planet, showHangar, fleets, planetName, now, act }: Props) {
+export default function FleetsPanel({ planet, showHangar, fleets, planetName, nowMs: now, sendAction: act }: Props) {
   return (
     <div className="panel">
       <h2>Fleets</h2>

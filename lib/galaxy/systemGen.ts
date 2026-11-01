@@ -55,6 +55,7 @@ function orbitScale(star: { radius: number; temp: number }) {
 function arm(composition: { symbol: string }[], random: () => number) {
   const buildings: Record<string, number> = {};
   const resources: Record<string, number> = {};
+
   for (const { symbol } of composition.slice(0, Math.min(1 + Math.floor(random() * 3), composition.length))) {
     const level = 1 + Math.floor(random() * MAX_MINE_LEVEL);
     buildings[mineType(symbol)] = level;

@@ -10,7 +10,7 @@ type Props = {
   game: GameState;
   sector: [number, number];
   shownSystemId: number;
-  now: number;
+  nowMs: number;
   onSelect: (systemId: number) => void;
   onBack: () => void;
 };
@@ -84,7 +84,7 @@ function FlyingFleet({ fleet, game, now, positions }: { fleet: FleetDTO; game: G
 }
 
 /** the stars of one sector; click a star to open its solar system */
-export default function LocalMap({ game, sector, shownSystemId, now, onSelect, onBack }: Props) {
+export default function LocalMap({ game, sector, shownSystemId, nowMs: now, onSelect, onBack }: Props) {
   const [sx, sy] = sector;
   const systems = game.systems.filter((system) => system.sectorX === sx && system.sectorY === sy);
   const view = useMapZoom();

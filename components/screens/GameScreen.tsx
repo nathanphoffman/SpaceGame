@@ -19,18 +19,18 @@ type Act = ReturnType<typeof useGame>["act"];
 type Props = { game: GameState; error: string; act: Act; now: number; nav: Navigation };
 
 /** everything about the planets the player is looking at, worked out once per render */
-function describeScene(game: GameState, nav: Navigation, now: number) {
+function describeScene(game: GameState, navigation: Navigation, nowMs: number) {
   const mine = game.planets.filter((planet) => planet.kind === "player");
-  const planet = mine.find((candidate) => candidate.id === nav.planetId) ?? mine[0];
-  const viewed = game.planets.find((candidate) => candidate.id === nav.viewId) ?? planet;
-  const target = game.planets.find((candidate) => candidate.id === nav.targetId && candidate.kind !== "player") ?? null;
+  const planet = mine.find((candidate) => candidate.id === navigation.planetId) ?? mine[0];
+  const viewed = game.planets.find((candidate) => candidate.id === navigation.viewId) ?? planet;
+  const target = game.planets.find((candidate) => candidate.id === navigation.targetId && candidate.kind !== "player") ?? null;
 
   // look up a loaded system by id; one is always loaded for a planet we show
   const systemOf = (id: number) => game.systems.find((system) => system.id === id)!;
-  const shown = game.systems.find((system) => system.id === nav.systemId) ?? systemOf(viewed.systemId); // (a just-clicked system arrives with the next update)
+  const shown = game.systems.find((system) => system.id === navigation.systemId) ?? systemOf(viewed.systemId); // (a just-clicked system arrives with the next update)
   const composition = planetStats(planet.seed).composition;
   const rate = productionRates(planet.buildings, composition);
-  const stock = stockAfter(planet, rate, Math.max(0, (now - game.now) / 1000));
+  const stock = stockAfter(planet, rate, Math.max(0, (nowMs - game.nowMs) / 1000));
 
   return { mine, planet, viewed, target, systemOf, shown, composition, rate, stock };
 }
@@ -38,7 +38,7 @@ function describeScene(game: GameState, nav: Navigation, now: number) {
 type Scene = ReturnType<typeof describeScene>;
 
 function SolarPanel({ game, nav, now, scene }: { game: GameState; nav: Navigation; now: number; scene: Scene }) {
-  const shared = { game, system: scene.shown as SystemDTO, viewed: scene.viewed, now, onSelect: nav.selectPlanet };
+  const shared = { game, system: scene.shown as SystemDTO, viewed: scene.viewed, nowMs: now, onSelect: nav.selectPlanet };
 
   return (
     <>
@@ -53,7 +53,7 @@ function SolarPanel({ game, nav, now, scene }: { game: GameState; nav: Navigatio
 function GalaxyPanel({ game, nav, now, shownSystemId }: { game: GameState; nav: Navigation; now: number; shownSystemId: number }) {
   if (nav.atGalaxy) return <GalaxyView game={game} current={nav.sector} onSelect={nav.openSector} />;
 
-  return <LocalMap key={nav.sector.join(",")} game={game} sector={nav.sector} shownSystemId={shownSystemId} now={now} onSelect={nav.setSystemId} onBack={() => nav.setAtGalaxy(true)} />;
+  return <LocalMap key={nav.sector.join(",")} game={game} sector={nav.sector} shownSystemId={shownSystemId} nowMs={now} onSelect={nav.setSystemId} onBack={() => nav.setAtGalaxy(true)} />;
 }
 
 function LeftColumn({ game, nav, now, scene, guards }: { game: GameState; nav: Navigation; now: number; scene: Scene; guards: FleetDTO[] }) {
@@ -80,11 +80,11 @@ function RightColumn({ game, error, act, now, nav, scene }: Props & { scene: Sce
   return (
     <div>
       {/* back to your base after sending, so its buildings/shipyard show again */}
-      <FleetSend game={game} planet={planet} target={scene.target} act={act} onSent={() => nav.setViewId(planet.id)} />
+      <FleetSend game={game} planet={planet} target={scene.target} sendAction={act} onSent={() => nav.setViewId(planet.id)} />
       {error && <div className="panel err">{error}</div>}
-      {isMine && <Buildings planet={planet} composition={scene.composition} types={buildableTypes(planet, scene.composition)} queue={queueOf("building")} now={now} shortfall={shortfall} act={act} />}
-      <Shipyard show={isMine} planet={planet} queue={queueOf("ship")} now={now} shortfall={shortfall} act={act} />
-      <FleetsPanel planet={planet} showHangar={isMine} fleets={activeFleets} planetName={planetName} now={now} act={act} />
+      {isMine && <Buildings planet={planet} composition={scene.composition} types={buildableTypes(planet, scene.composition)} queue={queueOf("building")} nowMs={now} shortfall={shortfall} sendAction={act} />}
+      <Shipyard show={isMine} planet={planet} queue={queueOf("ship")} nowMs={now} shortfall={shortfall} sendAction={act} />
+      <FleetsPanel planet={planet} showHangar={isMine} fleets={activeFleets} planetName={planetName} nowMs={now} sendAction={act} />
       <Reports fleets={game.fleets} />
     </div>
   );

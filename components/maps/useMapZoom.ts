@@ -17,11 +17,11 @@ const keepInside = (view: View): View => {
 };
 
 /** zoom by `factor`, keeping the point under (u, w) (% of the map box) where it is */
-function zoomedView(current: View, factor: number, u: number, w: number) {
+function zoomedView(current: View, factor: number, percentX: number, percentY: number) {
   const z = Math.min(MAX_ZOOM, Math.max(1, current.z * factor));
-  const pointX = current.cx + (u - CENTRE) / current.z, pointY = current.cy + (w - CENTRE) / current.z;
+  const pointX = current.cx + (percentX - CENTRE) / current.z, pointY = current.cy + (percentY - CENTRE) / current.z;
 
-  return keepInside({ z, cx: pointX - (u - CENTRE) / z, cy: pointY - (w - CENTRE) / z });
+  return keepInside({ z, cx: pointX - (percentX - CENTRE) / z, cy: pointY - (percentY - CENTRE) / z });
 }
 
 /** scroll-wheel zoom toward the cursor; needs a non-passive listener, otherwise the page scrolls as well */
@@ -53,6 +53,7 @@ function startDrag(event: React.PointerEvent, box: RefObject<HTMLDivElement | nu
   let last = start;
 
   const move = (drag: PointerEvent) => { // while dragging, move the map by how far the pointer travelled since the last event
+
     if (Math.hypot(drag.clientX - start.x, drag.clientY - start.y) > DRAG_PIXELS) moved.current = true;
 
     if (!moved.current) return;

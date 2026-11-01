@@ -70,12 +70,12 @@ function craterEffect(craters: PlanetParams["craters"], direction: Vec3) {
 }
 
 /** colour of rocky ground at height `h` (0..1): ocean below sea level, a low-to-high gradient above it, snow on the peaks of rocky worlds */
-function groundColor(params: PlanetParams, h: number): RGB {
+function groundColor(params: PlanetParams, hashed: number): RGB {
   const { seaLevel, ocean } = params;
 
-  if (h < seaLevel) return mixColors(ocean, [ocean[0] * DEEP_OCEAN_DARKEN[0], ocean[1] * DEEP_OCEAN_DARKEN[1], ocean[2] * DEEP_OCEAN_DARKEN[2]], 1 - h / seaLevel);
+  if (hashed < seaLevel) return mixColors(ocean, [ocean[0] * DEEP_OCEAN_DARKEN[0], ocean[1] * DEEP_OCEAN_DARKEN[1], ocean[2] * DEEP_OCEAN_DARKEN[2]], 1 - hashed / seaLevel);
 
-  const land = seaLevel < 0 ? h : (h - seaLevel) / (1 - seaLevel);
+  const land = seaLevel < 0 ? hashed : (hashed - seaLevel) / (1 - seaLevel);
   const color = mixColors(params.low, params.high, land);
 
   if (params.kind === "rocky" && land > SNOW_LINE) return mixColors(color, SNOW_COLOR, (land - SNOW_LINE) / SNOW_BLEND_SPAN);
@@ -86,12 +86,12 @@ function groundColor(params: PlanetParams, h: number): RGB {
 /** a sphere whose vertices are pushed out by terrain noise and coloured by the planet's look */
 function buildPlanet(params: PlanetParams, detail: number): THREE.Mesh {
   // merge duplicate vertices so normals are smooth across the texture seam
-  let geo: THREE.BufferGeometry = new THREE.SphereGeometry(1, Math.round(SPHERE_WIDTH_SEGMENTS * detail), Math.round(SPHERE_HEIGHT_SEGMENTS * detail));
-  geo.deleteAttribute("uv");
-  geo.deleteAttribute("normal");
-  geo = mergeVertices(geo, WELD_TOLERANCE);
+  let geometry: THREE.BufferGeometry = new THREE.SphereGeometry(1, Math.round(SPHERE_WIDTH_SEGMENTS * detail), Math.round(SPHERE_HEIGHT_SEGMENTS * detail));
+  geometry.deleteAttribute("uv");
+  geometry.deleteAttribute("normal");
+  geometry = mergeVertices(geometry, WELD_TOLERANCE);
 
-  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const pos = geometry.attributes.position as THREE.BufferAttribute;
   const colors = new Float32Array(pos.count * 3);
   const seed = params.noiseOffset;
   const [offsetX, offsetY, offsetZ] = TERRAIN_OFFSET;
@@ -118,10 +118,10 @@ function buildPlanet(params: PlanetParams, detail: number): THREE.Mesh {
     colors.set(color, index * 3);
   }
 
-  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  geo.computeVertexNormals();
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.computeVertexNormals();
 
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
+  const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
   mesh.scale.setScalar(params.radius);
 
   return mesh;

@@ -58,10 +58,10 @@ function starLook(radius: number, temp: number) {
 }
 
 /** the class colour blended toward the next (cooler) class by subtype */
-function classColor(cls: string, sub: number): RGB {
-  const next = CLASS_ORDER[Math.min(CLASS_ORDER.indexOf(cls) + 1, CLASS_ORDER.length - 1)];
+function classColor(starClass: string, subtype: number): RGB {
+  const next = CLASS_ORDER[Math.min(CLASS_ORDER.indexOf(starClass) + 1, CLASS_ORDER.length - 1)];
 
-  return mixColors(CLASS_COLOR[cls], CLASS_COLOR[next], (sub / SUBTYPES) * SUBTYPE_BLEND);
+  return mixColors(CLASS_COLOR[starClass], CLASS_COLOR[next], (subtype / SUBTYPES) * SUBTYPE_BLEND);
 }
 
 /** giants are named by colour, everything else by its class */

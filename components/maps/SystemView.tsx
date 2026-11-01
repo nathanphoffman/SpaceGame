@@ -5,10 +5,10 @@ import { starParams } from "@/lib/planets/starParams";
 import type { GameState, PlanetDTO, SystemDTO } from "@/lib/defs";
 import { SystemEngine } from "@/components/maps/three/SystemEngine";
 
-type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (planet: PlanetDTO) => void };
+type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; nowMs: number; onSelect: (planet: PlanetDTO) => void };
 
 /** one star system in 3D: drag to rotate, scroll to zoom, click a planet to fly to it. Ships on route fly between planets. */
-export default function SystemView({ game, system, viewed, now, onSelect }: Props) {
+export default function SystemView({ game, system, viewed, nowMs: now, onSelect }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const engine = useRef<SystemEngine | null>(null);
 
@@ -18,13 +18,13 @@ export default function SystemView({ game, system, viewed, now, onSelect }: Prop
   const star = starParams(system.seed);
 
   useEffect(() => {
-    const e = new SystemEngine(box.current!, {
+    const event = new SystemEngine(box.current!, {
       onPlanet: (id) => { const p = latest.current.planets.find((x) => x.id === id); if (p) select.current(p); }, // clicks from the 3D scene come back as a planet id; look up the full planet and pass it up
     });
 
-    engine.current = e;
+    engine.current = event;
 
-    return () => { e.dispose(); engine.current = null; };
+    return () => { event.dispose(); engine.current = null; };
   }, []);
 
   useEffect(() => {

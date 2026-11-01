@@ -92,7 +92,7 @@ function PlanetNode({ planet, index, slots, selected, guarded, left, onSelect }:
 }
 
 /** a fleet flying between two planets of this system, drawn between their slots */
-function FlyingFleet({ fleet, game, now, slotById }: { fleet: FleetDTO; game: GameState; now: number; slotById: Map<number, number> }) {
+function FlyingFleet({ fleet, game, nowMs: now, slotById }: { fleet: FleetDTO; game: GameState; nowMs: number; slotById: Map<number, number> }) {
   const { from, to, k } = flightOf(game, fleet, now);
   const fromX = slotById.get(from.id) ?? SLOT_LEFT;
   const toX = slotById.get(to.id) ?? SLOT_LEFT;
@@ -105,7 +105,7 @@ function FlyingFleet({ fleet, game, now, slotById }: { fleet: FleetDTO; game: Ga
 }
 
 /** one star system: planets are drawn evenly spaced (NOT to scale); the ruler along the bottom shows the real distances */
-export default function SolarMap({ game, system, viewed, now, onSelect }: System & { now: number; onSelect: (planet: PlanetDTO) => void }) {
+export default function SolarMap({ game, system, viewed, nowMs: now, onSelect }: System & { nowMs: number; onSelect: (planet: PlanetDTO) => void }) {
   const star = starParams(system.seed);
   const planets = game.planets.filter((planet) => planet.systemId === system.id).sort((first, second) => first.orbit - second.orbit);
   const guarded = new Set(game.fleets.filter((fleet) => fleet.status === "stationed").map((fleet) => fleet.targetId));
@@ -130,7 +130,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: System
           <PlanetNode key={planet.id} planet={planet} index={index} slots={slots} selected={planet.id === viewed.id} guarded={guarded.has(planet.id)} left={slotX(index)} onSelect={onSelect} />
         ))}
 
-        {local.map((fleet) => <FlyingFleet key={fleet.id} fleet={fleet} game={game} now={now} slotById={slotById} />)}
+        {local.map((fleet) => <FlyingFleet key={fleet.id} fleet={fleet} game={game} nowMs={now} slotById={slotById} />)}
       </div>
       <div className="dim" style={{ marginTop: 8 }}><b className="mine">●</b> yours · <b className="foe">●</b> enemy · no dot = neutral (colonize or guard). Planets are evenly spaced for readability; the ruler along the bottom shows their real distance from the star. Click a planet to view/target it.</div>
     </div>

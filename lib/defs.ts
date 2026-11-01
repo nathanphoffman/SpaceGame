@@ -125,8 +125,8 @@ export function productionRates(buildings: Record<string, number>, composition: 
     const el = mineElement(type);
 
     if (!el || !(level > 0)) continue;
-    const pct = composition.find((c) => c.symbol === el)?.pct ?? 0;
-    out[el] = (out[el] ?? 0) + mineRate(level, pct);
+    const percent = composition.find((c) => c.symbol === el)?.pct ?? 0;
+    out[el] = (out[el] ?? 0) + mineRate(level, percent);
   }
 
   return out;
@@ -176,4 +176,4 @@ export type FleetDTO = {
   report: string;
 };
 
-export type GameState = { now: number; systems: SystemDTO[]; planets: PlanetDTO[]; queue: QueueDTO[]; fleets: FleetDTO[] };
+export type GameState = { nowMs: number; systems: SystemDTO[]; planets: PlanetDTO[]; queue: QueueDTO[]; fleets: FleetDTO[] };

@@ -6,7 +6,7 @@ type Props = {
   game: GameState;
   planet: PlanetDTO; // where the ships leave from
   target: PlanetDTO | null;
-  act: (body: object) => Promise<void>;
+  sendAction: (body: object) => Promise<void>;
   onSent: () => void;
 };
 
@@ -30,7 +30,7 @@ function ShipRow({ type, available, value, onChange }: { type: ShipType; availab
 }
 
 /** pick ships at the current planet and send them to the targeted planet */
-export default function FleetSend({ game, planet, target, act, onSent }: Props) {
+export default function FleetSend({ game, planet, target, sendAction: act, onSent }: Props) {
   const [quantities, setQuantities] = useState<Quantities>({});
 
   const send = async () => {

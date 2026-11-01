@@ -10,9 +10,9 @@ type Props = {
   composition: { symbol: string; pct: number }[];
   types: string[]; // building types this planet can build
   queue: QueueDTO[]; // building queue for this planet
-  now: number;
+  nowMs: number;
   shortfall: (cost: Res) => string | undefined;
-  act: (body: object) => Promise<void>;
+  sendAction: (body: object) => Promise<void>;
 };
 
 type TileState = { type: string; info: BuildingInfo; built: number; level: number; queued: QueueDTO[]; element: string | null; pct: number };
@@ -105,9 +105,9 @@ function tileState(type: string, props: Props): TileState {
   const queued = props.queue.filter((item) => item.type === type);
   const built = props.planet.buildings[type] ?? 0;
   const element = mineElement(type);
-  const pct = props.composition.find((part) => part.symbol === element)?.pct ?? 0;
+  const percent = props.composition.find((part) => part.symbol === element)?.pct ?? 0;
 
-  return { type, info: buildingInfo(type)!, built, level: built + queued.length, queued, element, pct };
+  return { type, info: buildingInfo(type)!, built, level: built + queued.length, queued, element, pct: percent };
 }
 
 function BuildingTile({ type, props }: { type: string; props: Props }) {
@@ -122,8 +122,8 @@ function BuildingTile({ type, props }: { type: string; props: Props }) {
       <LevelDots tile={tile} />
       <MineOutput tile={tile} />
       <NextLevel tile={tile} cost={cost} />
-      <BuildProgress active={tile.queued[0]} now={props.now} />
-      <button disabled={!!why} title={why} onClick={() => props.act({ action: "build", planetId: props.planet.id, type })}>{buttonLabel(tile)}</button>
+      <BuildProgress active={tile.queued[0]} now={props.nowMs} />
+      <button disabled={!!why} title={why} onClick={() => props.sendAction({ action: "build", planetId: props.planet.id, type })}>{buttonLabel(tile)}</button>
     </div>
   );
 }

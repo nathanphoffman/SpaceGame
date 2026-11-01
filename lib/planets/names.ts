@@ -22,17 +22,17 @@ const NUMERAL = ["II", "III", "IV", "V", "VI", "VII", "Prime"];
 
 /** A pronounceable planet name from the seed, e.g. "Veloria", "Kraxen IV". */
 export function planetName(seed: number) {
-  const r = mulberry32(seed * 104729 + 3);
+  const random = mulberry32(seed * 104729 + 3);
 
-  for (let i = 0; i < 4; i++) r(); // warm up so nearby seeds don't look alike
-  const pick = <T,>(a: T[]) => a[Math.floor(r() * a.length)];
-  const syllables = 2 + Math.floor(r() * 2);
+  for (let i = 0; i < 4; i++) random(); // warm up so nearby seeds don't look alike
+  const pick = <T,>(a: T[]) => a[Math.floor(random() * a.length)];
+  const syllables = 2 + Math.floor(random() * 2);
   let name = "";
 
   for (let i = 0; i < syllables; i++) name += pick(ONSET) + pick(VOWEL) + (i === syllables - 1 ? pick(CODA) : "");
   name = name[0].toUpperCase() + name.slice(1);
 
-  return r() < 0.3 ? `${name} ${pick(NUMERAL)}` : name;
+  return random() < 0.3 ? `${name} ${pick(NUMERAL)}` : name;
 }
 
 const GREEK = ["Alpha", "Beta", "Gamma", "Delta", "Sigma", "Tau", "Omega", "Kappa"];

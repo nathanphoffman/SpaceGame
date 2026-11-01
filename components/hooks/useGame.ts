@@ -14,7 +14,7 @@ export function useGame(view: GameView) {
 
   const apply = (g: GameState) => {
     setGame(g);
-    setOffset(g.now - Date.now());
+    setOffset(g.nowMs - Date.now());
   };
 
   const refresh = useCallback(async () => {
@@ -37,7 +37,7 @@ export function useGame(view: GameView) {
     return () => { clearInterval(a); clearInterval(b); };
   }, [refresh]);
 
-  const act = async (body: object) => {
+  const sendAction = async (body: object) => {
     const r = await fetch("/api/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, view: { sx, sy, system } }) });
     const j = await r.json();
 
@@ -45,5 +45,5 @@ export function useGame(view: GameView) {
     else { setError(""); apply(j); }
   };
 
-  return { game, error, act, now: clock + offset };
+  return { game, error, act: sendAction, nowMs: clock + offset };
 }
