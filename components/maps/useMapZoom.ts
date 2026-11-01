@@ -52,7 +52,7 @@ function startDrag(event: React.PointerEvent, box: RefObject<HTMLDivElement | nu
   const start = { x: event.clientX, y: event.clientY };
   let last = start;
 
-  const move = (drag: PointerEvent) => {
+  const move = (drag: PointerEvent) => { // while dragging, move the map by how far the pointer travelled since the last event
     if (Math.hypot(drag.clientX - start.x, drag.clientY - start.y) > DRAG_PIXELS) moved.current = true;
 
     if (!moved.current) return;

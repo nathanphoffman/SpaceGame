@@ -44,6 +44,7 @@ export function disposeTree(root: THREE.Object3D) {
     const m = o as THREE.Mesh;
     m.geometry?.dispose();
     const mat = m.material as THREE.Material | THREE.Material[] | undefined;
+
     // a material can be one material, a list of them, or missing; handle all three
     (Array.isArray(mat) ? mat : mat ? [mat] : []).forEach((x) => x.dispose());
   });
@@ -79,6 +80,7 @@ export function createPlanetNode(planet: PlanetDTO): PlanetNode {
   dot.material.sizeAttenuation = false;
   dot.scale.setScalar(OWNER_DOT_SIZE);
   holder.add(mesh, dot);
+
   return { dto: planet, holder, mesh, spin: params.spin, radius: params.radius * PLANET_SCALE, detail: 0, label: addLabel(holder, planet.name, `body ${planet.kind}`) };
 }
 
@@ -89,6 +91,7 @@ export function createShip(fleet: FleetDTO): ShipNode {
   hull.rotation.x = Math.PI / 2; // a cone points along +y; turn it to +z, the way lookAt() faces
   const holder = new THREE.Group();
   holder.add(hull, glowSprite(color, SHIP_LENGTH, 0.8));
+
   // total ships in the fleet: add up the count of every ship type
   const count = Object.values(fleet.ships).reduce((total, n) => total + n, 0);
   addLabel(holder, `${fleet.mission === "colonize" ? "Colony" : "Fleet"} ×${count}`, "ship");

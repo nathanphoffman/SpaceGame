@@ -25,6 +25,7 @@ function HangarRow({ type, count }: { type: ShipType; count: number }) {
         {Array.from({ length: shown }, (_, index) => (
           <img key={`${type}-${index}`} src={ship.icon} style={{ width: HANGAR_ICON_PX * ship.size, height: HANGAR_ICON_PX * ship.size }} alt="" />
         ))}
+
         {count > shown && <span className="dim"> +{count - shown} more</span>}
       </div>
     </div>
@@ -61,7 +62,7 @@ function FleetRow({ fleet, planetName, now, act }: { fleet: FleetDTO; planetName
       <span className="icon"><img src={fleetIcon(fleet)} alt="" /></span>
       <div className="grow">
         {statusText(fleet, planetName)}
-        <div className="sub"><ShipList ships={fleet.ships} />{hasLoot && <> · loot <Cost cost={fleet.loot} /></>}</div>
+        <div className="sub"><ShipList ships={fleet.ships} />{hasLoot && <> · loot <Cost cost={fleet.loot} /></>}</div> {/* loot is shown only when at least one resource was taken */}
       </div>
       {fleet.status === "stationed"
         ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: fleet.id })}>Recall</button>

@@ -24,6 +24,7 @@ const PALETTES: Record<PlanetKind, { low: RGB; high: RGB }> = {
   ice: { low: [0.6, 0.75, 0.86], high: [0.96, 0.98, 1] },
   gas: { low: [0.7, 0.55, 0.35], high: [0.9, 0.8, 0.6] },
 };
+
 const SEED_MULTIPLIER = 7919;
 const SEED_OFFSET = 17;
 const DEFAULT_JITTER = 0.08;
@@ -32,6 +33,7 @@ const RING_COLOR: RGB = [0.75, 0.7, 0.62];
 const MAX_RING_RADIUS_SHARE = 1.9; // rings reach at most this many planet radii
 const MAX_NOISE_OFFSET = 1000;
 
+// the first kind whose roll limit is above the roll; anything above the last limit is a desert
 const kindFromRoll = (roll: number): PlanetKind => KIND_ROLLS.find(([limit]) => roll < limit)?.[1] ?? "desert";
 
 /** every kind's radius is drawn (to keep the random sequence fixed) and the planet's own kind is used */
@@ -69,7 +71,9 @@ function makeRings(radius: number, inner: number, range: Range, jitter: Jitter, 
 export function planetParams(seed: number): PlanetParams {
   const real: BodySpec | undefined = BODY_BY_SEED.get(seed); // real bodies pin kind, size and (if known) look to the data
   const random = mulberry32(seed * SEED_MULTIPLIER + SEED_OFFSET);
+
   const range: Range = (low, high) => low + (high - low) * random();
+
   // nudge each colour channel by up to +-amount at random and keep it within 0..1
   const jitter: Jitter = (color, amount = DEFAULT_JITTER) => color.map((channel) => Math.min(1, Math.max(0, channel + (random() - 0.5) * amount * 2))) as RGB;
 

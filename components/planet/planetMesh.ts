@@ -6,6 +6,7 @@ import { type PlanetParams, type RGB } from "@/lib/planets/types";
 const SPHERE_WIDTH_SEGMENTS = 160;
 const SPHERE_HEIGHT_SEGMENTS = 110;
 const WELD_TOLERANCE = 1e-4;
+
 // gas giants: bands wobble with noise, then two band patterns are blended
 const GAS_WARP_SCALE = 3;
 const GAS_WARP_STRENGTH = 0.35;
@@ -17,6 +18,7 @@ const GAS_BLEND_BASE = 0.35;
 const GAS_BLEND_NOISE = 0.3;
 const GAS_NOISE_OCTAVES = 3;
 const GAS_BLEND_SEED_OFFSET = 7;
+
 // rocky surfaces
 const TERRAIN_OFFSET = [3.1, 1.7, 9.3];
 const DEEP_OCEAN_DARKEN: RGB = [0.5, 0.5, 0.7];

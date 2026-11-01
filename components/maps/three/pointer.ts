@@ -29,6 +29,7 @@ export function bindPointer(el: HTMLElement, pick: (e: MouseEvent) => number | n
   let hover: number | null = null;
 
   const onDown = (down: PointerEvent) => { // a click only counts if the pointer barely moved between press and release, otherwise it was a drag
+
     if (down.button !== 0) return;
     const start = { x: down.clientX, y: down.clientY };
 

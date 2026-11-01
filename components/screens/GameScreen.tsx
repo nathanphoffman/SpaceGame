@@ -24,6 +24,7 @@ function describeScene(game: GameState, nav: Navigation, now: number) {
   const planet = mine.find((candidate) => candidate.id === nav.planetId) ?? mine[0];
   const viewed = game.planets.find((candidate) => candidate.id === nav.viewId) ?? planet;
   const target = game.planets.find((candidate) => candidate.id === nav.targetId && candidate.kind !== "player") ?? null;
+
   // look up a loaded system by id; one is always loaded for a planet we show
   const systemOf = (id: number) => game.systems.find((system) => system.id === id)!;
   const shown = game.systems.find((system) => system.id === nav.systemId) ?? systemOf(viewed.systemId); // (a just-clicked system arrives with the next update)
@@ -44,7 +45,7 @@ function SolarPanel({ game, nav, now, scene }: { game: GameState; nav: Navigatio
       <div style={{ textAlign: "right", marginBottom: 6 }}>
         <button className="ghost" onClick={() => nav.setView3d(!nav.view3d)}>{nav.view3d ? "Show flat map" : "Show 3D view"}</button>
       </div>
-      {nav.view3d ? <SystemView {...shared} /> : <SolarMap {...shared} />}
+      {nav.view3d ? <SystemView {...shared} /> : <SolarMap {...shared} />} {/* show the 3D system or the flat map */}
     </>
   );
 }
@@ -68,8 +69,11 @@ function LeftColumn({ game, nav, now, scene, guards }: { game: GameState; nav: N
 function RightColumn({ game, error, act, now, nav, scene }: Props & { scene: Scene }) {
   const { planet, viewed } = scene;
   const activeFleets = game.fleets.filter((fleet) => fleet.status !== "done");
+
   const planetName = (id: number) => game.planets.find((candidate) => candidate.id === id)?.name ?? "?"; // a planet's name from its id, or ? when that planet isn't loaded
+
   const queueOf = (kind: "building" | "ship") => game.queue.filter((item) => item.planetId === planet.id && item.kind === kind); // this planet's queue entries of one kind
+
   const shortfall = (cost: Parameters<typeof shortfallText>[0]) => shortfallText(cost, scene.stock);
   const isMine = viewed.kind === "player";
 
@@ -96,7 +100,7 @@ export default function GameScreen(props: Props) {
     <>
       <TopBar
         planets={scene.mine} current={scene.planet} stock={scene.stock} rate={scene.rate}
-        onSelect={(id) => nav.goToBase(id, scene.systemOf(game.planets.find((candidate: PlanetDTO) => candidate.id === id)!.systemId))}
+        onSelect={(id) => nav.goToBase(id, scene.systemOf(game.planets.find((candidate: PlanetDTO) => candidate.id === id)!.systemId))} // picking one of your planets moves the maps to its system
         onReset={() => confirm("Reset the whole game?") && act({ action: "reset" })}
       />
       <div className="layout">

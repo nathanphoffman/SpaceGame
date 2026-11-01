@@ -48,6 +48,7 @@ function FlightLines({ fleets, game, now, positions }: { fleets: FleetDTO[]; gam
 
         return <line key={fleet.id} x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke="#4cc2ff55" strokeWidth="0.4" strokeDasharray="1.5 1.5" />;
       })}
+
     </svg>
   );
 }
@@ -94,8 +95,11 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
 
     return positions.has(from.systemId) && positions.has(to.systemId) && from.systemId !== to.systemId;
   });
+
   const title = sx === CENTER && sy === CENTER ? "Local map — Sol's sector" : `Local map — sector ${sx - CENTER}, ${sy - CENTER}`;
   const visible = systems.filter((system) => isOnMap(positions.get(system.id)!)); // only draw stars inside the map box (plus a small margin) when zoomed in
+
+  // how many of your bases are in a system
   const ownedIn = (systemId: number) => game.planets.filter((planet) => planet.kind === "player" && planet.systemId === systemId).length;
 
   return (
@@ -108,10 +112,11 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
         <ZoomControls view={view} />
         <FlightLines fleets={flying} game={game} now={now} positions={positions} />
         {systems.length === 0 && <div className="dim" style={{ padding: 12 }}>Surveying sector…</div>}
-        {visible.map((system) => (
+        {visible.map((system) => ( // one button per star that is on the map
           <StarButton key={system.id} system={system} at={positions.get(system.id)!} owned={ownedIn(system.id)} selected={system.id === shownSystemId}
             onOpen={() => !view.moved.current && onSelect(system.id)} />
         ))}
+
         {flying.map((fleet) => <FlyingFleet key={fleet.id} fleet={fleet} game={game} now={now} positions={positions} />)}
       </div>
       <div className="dim" style={{ marginTop: 8 }}>Scroll or use +/− to zoom, drag to move, click a star to open its solar system. <b className="mine">●</b> = your bases there.</div>

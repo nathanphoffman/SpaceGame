@@ -28,6 +28,7 @@ function CompositionBar({ composition }: { composition: { symbol: string; name: 
             {part.symbol}
           </div>
         ))}
+
       </div>
     </div>
   );
@@ -56,7 +57,7 @@ export default function PlanetPanel({ planet, systemSeed, guards }: Props) {
           <div><span className="dim">Diameter</span> <b>{stats.diameterKm.toLocaleString()} km</b> <span className="dim">({stats.earths.toFixed(2)} × Earth)</span></div>
           <div><span className="dim">Orbit</span> <b>{fmtAU(planet.orbit)}</b> <span className="dim">· ~{celsius} °C</span></div>
         </div>
-        {guards.map((fleet) => <div key={fleet.id} className="good">Guarded by your fleet: <ShipList ships={fleet.ships} /></div>)}
+        {guards.map((fleet) => <div key={fleet.id} className="good">Guarded by your fleet: <ShipList ships={fleet.ships} /></div>)} {/* one line per fleet guarding this planet */}
       </div>
     </div>
   );

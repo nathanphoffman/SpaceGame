@@ -25,7 +25,7 @@ function ShipInfo({ ship, onClose }: { ship: Ship; onClose: () => void }) {
       <div className="grow">
         <b>{ship.name}</b>
         <div>{ship.desc}</div>
-        <div className="sub">Atk {ship.attack} · Cargo {ship.cargo} · Speed {ship.speed}/10 · Health {ship.health}/10</div>
+        <div className="sub">Atk {ship.attack} · Cargo {ship.cargo} · Speed {ship.speed}/10 · Health {ship.health}/10</div> {/* ship stats */}
       </div>
       <button className="ghost" onClick={onClose}>Close</button>
     </div>
@@ -55,7 +55,7 @@ function ShipTile({ type, props, level, quantity, onQuantity, onInfo }: TileProp
         <b>{ship.name}</b>
       </button>
       <span className="dim">×{props.planet.ships[type] ?? 0} · Atk {ship.attack} · Cargo {ship.cargo}</span>
-      <div className="sub"><Cost cost={ship.cost} /></div>
+      <div className="sub"><Cost cost={ship.cost} /></div> {/* price of one ship */}
       <div className="sub">{fmtTime(shipSeconds(type, level) * 1000)} each</div>
       {queued[0] && <div className="sub good">+{queued.length} · next {fmtTime(queued[0].finishAt - props.now)}</div>}
       <div className="tile-actions">
@@ -80,10 +80,11 @@ export default function Shipyard(props: Props) {
       {!level && <div className="dim">Build a shipyard to start building ships.</div>}
       {infoShip && <ShipInfo ship={SHIPS[infoShip]} onClose={() => setInfoShip(null)} />}
       <div className="tiles">
-        {SHIP_TYPES.map((type) => (
+        {SHIP_TYPES.map((type) => ( // one tile per ship type
           <ShipTile key={type} type={type} props={props} level={level} quantity={quantities[type] ?? 1}
             onQuantity={(value) => setQuantities({ ...quantities, [type]: value })} onInfo={() => setInfoShip(infoShip === type ? null : type)} />
         ))}
+
       </div>
     </div>
   );

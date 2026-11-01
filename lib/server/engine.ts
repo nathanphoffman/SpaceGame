@@ -53,6 +53,7 @@ function sendHome(fleet: Fleet) {
 
 /** total of one ship stat (attack or cargo) over every ship in the fleet */
 const fleetTotal = (ships: Record<string, number>, stat: "attack" | "cargo") =>
+  // add up one stat over every ship: the stat of each ship type times how many there are
   Object.entries(ships).reduce((sum, [type, count]) => sum + count * SHIPS[type as ShipType][stat], 0);
 
 /** take the biggest stockpiles first until the cargo holds are full */
@@ -173,6 +174,7 @@ function returnHome(world: World, fleet: Fleet) {
 /** the action for the earliest thing that has already happened by `now` (queue items win ties), or null when nothing is due */
 function earliestDue(world: World, now: Date) {
   let earliest: Date | null = null;
+  // the action to run for the earliest due event, kept in a variable the compiler can't narrow
   let action: (() => void) | null = null;
   const consider = (when: Date, run: () => void) => {
     if (when <= now && (!earliest || when < earliest)) { earliest = when; action = run; }
@@ -186,6 +188,7 @@ function earliestDue(world: World, now: Date) {
     if (fleet.status === "returning") consider(fleet.return_at, () => returnHome(world, fleet));
   }
 
+  // the compiler can't see that the closure assigned it, so say what it is
   return action as (() => void) | null;
 }
 

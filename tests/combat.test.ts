@@ -9,10 +9,12 @@ const planet = (over: Partial<Planet>): Planet => ({
   id: 2, name: "Target", system_id: 1, orbit: 1, kind: "npc", resources: { Fe: 400, Si: 100 }, buildings: { mine_Fe: 1 },
   ships: {}, defense: 50, seed: 1, shared: false, updated_at: start, ...over,
 });
+
 const fleet = (over: Partial<Fleet>): Fleet => ({
   id: "f1", origin_id: 1, target_id: 2, mission: "attack", ships: { fighter: 20 }, loot: {}, depart_at: start, arrive_at: arriveAt,
   return_at: arriveAt, status: "outbound", report: "", ...over,
 });
+
 const world = (planets: Planet[], fleets: Fleet[]): World => ({ systems: [], planets, queue: [], fleets });
 
 describe("fleet arrives", () => {

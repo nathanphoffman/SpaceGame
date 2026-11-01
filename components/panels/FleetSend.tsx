@@ -49,12 +49,14 @@ export default function FleetSend({ game, planet, target, act, onSent }: Props) 
             {missionText(target, quantities)}
             {" · "}flight {fmtTime(flightSeconds(planet, target, game.systems) * 1000)} each way
           </div>
-          {SHIP_TYPES.map((type) => (
+          {SHIP_TYPES.map((type) => ( // one row per ship type for choosing how many to send
             <ShipRow key={type} type={type} available={planet.ships[type] ?? 0} value={quantities[type] ?? 0} onChange={(value) => setQuantities({ ...quantities, [type]: value })} />
           ))}
+
           <button style={{ marginTop: 8 }} onClick={send}>Send fleet</button>
         </>
       )}
+
     </div>
   );
 }

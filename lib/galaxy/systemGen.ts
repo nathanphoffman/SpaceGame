@@ -41,6 +41,7 @@ const SEED_MULTIPLIER = 4801;
 const SEED_OFFSET = 29;
 const SUN_TEMP_K = 5772;
 
+// true when the orbit is within the too-close ratio of any orbit already taken, on either side
 const crowds = (orbit: number, taken: number[]) => taken.some((other) => orbit / other < TOO_CLOSE && other / orbit < TOO_CLOSE);
 
 /** dim stars have their zone of orbits closer in: scale the orbit range with the star's brightness */
@@ -51,11 +52,9 @@ function orbitScale(star: { radius: number; temp: number }) {
 }
 
 /** hostile bases run mines on their planet's most common elements and sit on a stockpile */
-function arm(seed: number, random: () => number) {
+function arm(composition: { symbol: string }[], random: () => number) {
   const buildings: Record<string, number> = {};
   const resources: Record<string, number> = {};
-  const composition = planetStats(seed).composition;
-
   for (const { symbol } of composition.slice(0, Math.min(1 + Math.floor(random() * 3), composition.length))) {
     const level = 1 + Math.floor(random() * MAX_MINE_LEVEL);
     buildings[mineType(symbol)] = level;
@@ -94,7 +93,7 @@ export function fillSystem(sys: { id: number; name: string; seed: number; comple
 
     const seed = 1 + Math.floor(random() * SEED_RANGE);
     const hostile = random() < HOSTILE_CHANCE;
-    const { buildings, resources } = hostile ? arm(seed, random) : { buildings: {}, resources: {} };
+    const { buildings, resources } = hostile ? arm(planetStats(seed).composition, random) : { buildings: {}, resources: {} };
     const number = known.length + out.length + 1;
 
     out.push({

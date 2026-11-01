@@ -66,6 +66,7 @@ function pickElements(kind: PlanetKind, count: number, random: () => number) {
 /** turn the picked elements into percentages that add up to exactly 100, biggest first */
 function composeShares(picked: [string, number][], random: () => number) {
   const raw = picked.map(([symbol, weight]) => weight * (0.3 + random() * 1.4) * (RARE.has(symbol) ? RARE_SHARE_FACTOR : 1));
+  // add up the raw amounts so each can be turned into a percentage
   const total = raw.reduce((sum, value) => sum + value, 0);
   const shares = raw.map((value) => Math.round((MIN_SHARE + (value / total) * (100 - MIN_SHARE * picked.length)) * 10) / 10);
   shares[0] = Math.round((shares[0] + (100 - shares.reduce((sum, value) => sum + value, 0))) * 10) / 10; // sum to exactly 100

@@ -8,8 +8,10 @@ export function mulberry32(seed: number) {
     // step the generator state forward by a fixed odd constant, staying in 32 bits
     a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
+
     // scramble the bits (xor and shift) so nearby seeds give unrelated numbers
     t = Math.imul(t ^ (t >>> 15), t | 1);
+
     // mix once more; Math.imul is a 32-bit integer multiply
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
 
@@ -35,6 +37,7 @@ export function noise3(x: number, y: number, z: number, s: number) {
   }
 
   const [u, v, w] = fade;
+
   // blend neighbouring corners along x, then y, then z (each step is low + (high - low) * t)
   const x00 = corners[0] + (corners[1] - corners[0]) * u, x10 = corners[2] + (corners[3] - corners[2]) * u;
   const x01 = corners[4] + (corners[5] - corners[4]) * u, x11 = corners[6] + (corners[7] - corners[6]) * u;

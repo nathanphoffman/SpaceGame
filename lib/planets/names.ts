@@ -3,8 +3,10 @@ import type { PlanetParams } from "./types";
 
 export function describePlanet(p: PlanetParams) {
   const type = p.label ?? { rocky: "Rocky world", moon: "Moon", gas: "Gas giant", ice: "Ice world", desert: "Desert world" }[p.kind];
+
   // size words from the planet's radius
   const size = p.radius < 0.75 ? "Small" : p.radius < 1.1 ? "Medium" : "Large";
+
   // surface words from how bumpy the planet is
   const surface = p.kind === "gas" ? "Gaseous" : p.bump < 0.025 ? "Smooth" : p.bump < 0.06 ? "Rolling" : p.bump < 0.1 ? "Rugged" : "Mountainous";
 

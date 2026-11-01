@@ -2,6 +2,7 @@ import {
   MAX_BUILDING_LEVEL, buildCost, buildSeconds, buildingInfo, mineElement, mineRate, toRoman,
   type BuildingInfo, type PlanetDTO, type QueueDTO, type Res,
 } from "@/lib/defs";
+
 import { Cost, elementColor, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -50,6 +51,7 @@ function LevelDots({ tile }: { tile: TileState }) {
       {Array.from({ length: tile.level }, (_, index) => (
         <span key={`level-${index}`} className={`dot-level ${index < tile.built ? "on" : "queued"}`} />
       ))}
+
     </div>
   );
 }
@@ -63,7 +65,7 @@ function MineOutput({ tile }: { tile: TileState }) {
   return (
     <div className="sub" title={`${element} makes up ${pct}% of this planet; richer deposits yield more per level`}>
       <b style={{ color: elementColor(element) }}>{element}</b> {pct}% · +{mineRate(built, pct).toFixed(1)}/s
-      {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>}
+      {level < MAX_BUILDING_LEVEL && <> → +{mineRate(level + 1, pct).toFixed(1)}/s</>} {/* the output gain of the next level, shown until the level cap */}
     </div>
   );
 }
@@ -73,7 +75,7 @@ function NextLevel({ tile, cost }: { tile: TileState; cost: Res }) {
 
   return (
     <>
-      <div className="sub">Cost: <Cost cost={cost} /></div>
+      <div className="sub">Cost: <Cost cost={cost} /></div> {/* the price of the next level */}
       <div className="sub">{fmtTime(buildSeconds(tile.type, tile.level) * 1000)}</div>
     </>
   );
@@ -88,7 +90,7 @@ function BuildProgress({ active, now }: { active: QueueDTO | undefined; now: num
   return (
     <div className="grow-fill">
       <div className="sub good">{fmtTime(active.finishAt - now)}</div>
-      <div className="bar"><div style={{ width: `${share}%` }} /></div>
+      <div className="bar"><div style={{ width: `${share}%` }} /></div> {/* the bar fills as the build time passes */}
     </div>
   );
 }

@@ -32,6 +32,7 @@ function rulerScale(planets: PlanetDTO[]) {
 /** the star is a big circle mostly off the left edge: small stars show a tight arch, big stars look nearly flat */
 function Sun({ seed }: { seed: number }) {
   const star = starParams(seed);
+
   const rgba = (alpha: number) => `rgba(${star.color.map((channel) => Math.round(channel * 255)).join(",")},${alpha})`;
   const radius = 40 + Math.min(1, Math.max(0, (star.size - 0.5) / 1.3)) * 560;
 
@@ -56,13 +57,16 @@ function Ruler({ planets, viewed, slotX }: { planets: PlanetDTO[]; viewed: Plane
           <line key={planet.id} x1={slotX(index)} y1={SOLAR_Y + 14} x2={axisX(planet.orbit)} y2={AXIS_Y}
             stroke={planet.id === viewed.id ? "#4cc2ff" : "#4b587866"} strokeWidth="1" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
         ))}
+
       </svg>
       {ticks.map((au) => (
         <div key={au} className="tick" style={{ left: `${axisX(au)}%`, top: `${AXIS_Y}%` }}><span>{au === 0 ? "star" : `${au} AU`}</span></div>
       ))}
+
       {planets.map((planet) => (
         <span key={planet.id} className={`ruler-dot ${planet.id === viewed.id ? "sel" : ""}`} style={{ left: `${axisX(planet.orbit)}%`, top: `${AXIS_Y}%` }} />
       ))}
+
     </>
   );
 }
@@ -105,9 +109,12 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: System
   const star = starParams(system.seed);
   const planets = game.planets.filter((planet) => planet.systemId === system.id).sort((first, second) => first.orbit - second.orbit);
   const guarded = new Set(game.fleets.filter((fleet) => fleet.status === "stationed").map((fleet) => fleet.targetId));
+
+  // the system a fleet's origin planet is in
   const originSystem = (id: number) => game.planets.find((planet) => planet.id === id)!.systemId;
   const local = flyingFleets(game).filter((fleet) => !isCrossSystem(game, fleet) && originSystem(fleet.originId) === system.id);
   const slots = planets.length;
+
   const slotX = (index: number) => SLOT_LEFT + ((index + 0.5) * SLOT_SPAN) / slots;
   const slotById = new Map(planets.map((planet, index) => [planet.id, slotX(index)]));
 
@@ -122,6 +129,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: System
         {planets.map((planet, index) => (
           <PlanetNode key={planet.id} planet={planet} index={index} slots={slots} selected={planet.id === viewed.id} guarded={guarded.has(planet.id)} left={slotX(index)} onSelect={onSelect} />
         ))}
+
         {local.map((fleet) => <FlyingFleet key={fleet.id} fleet={fleet} game={game} now={now} slotById={slotById} />)}
       </div>
       <div className="dim" style={{ marginTop: 8 }}><b className="mine">●</b> yours · <b className="foe">●</b> enemy · no dot = neutral (colonize or guard). Planets are evenly spaced for readability; the ruler along the bottom shows their real distance from the star. Click a planet to view/target it.</div>
