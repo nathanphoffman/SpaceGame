@@ -150,3 +150,14 @@ input[type=number] { width:56px; background:#0b1222; color:var(--text); border:1
 .gal-cell:hover { border-color:var(--accent); }
 .gal-cell.sel { outline:2px solid var(--accent); outline-offset:1px; }
 .gal-cell.sol { border-color:#ffd37a; color:#ffd37a; }
+
+/* 3D system view */
+.system3d { position:relative; width:100%; height:440px; border-radius:10px; border:1px solid var(--line); overflow:hidden; background:radial-gradient(circle at 50% 50%, #0d1428 0, #070b14 75%); touch-action:none; }
+.system3d .labels { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.lbl { font-size:11px; color:#aab6d6; text-shadow:0 0 4px #000, 0 0 2px #000; white-space:nowrap; user-select:none; }
+.lbl.star { font-size:13px; color:#fff; margin-top:-20px; }
+.lbl.body { font-size:12px; color:#dbe4ff; margin-top:-20px; }
+.lbl.body.player { color:var(--good); }
+.lbl.body.npc { color:var(--bad); }
+.lbl.body.sel { font-weight:700; text-decoration:underline; }
+.lbl.ship { font-size:10px; color:var(--accent); margin-top:-14px; }

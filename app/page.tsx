@@ -9,9 +9,11 @@ import LocalMap from "@/components/LocalMap";
 import PlanetPanel from "@/components/PlanetPanel";
 import Shipyard from "@/components/Shipyard";
 import SolarMap from "@/components/SolarMap";
+import SystemView from "@/components/SystemView";
 import TopBar from "@/components/TopBar";
 import { planetStats } from "@/lib/planetGen";
 import { ELEMENTS, buildingInfo, mineType, productionRates, type Element, type Res } from "@/lib/defs";
+import type { PlanetDTO } from "@/lib/defs";
 import { useGame } from "@/lib/useGame";
 import { CENTER } from "@/lib/sector";
 
@@ -23,6 +25,7 @@ export default function Page() {
   const [planetId, setPlanetId] = useState<number | null>(null);
   const [targetId, setTargetId] = useState<number | null>(null);
   const [viewId, setViewId] = useState<number | null>(null);
+  const [view3d, setView3d] = useState(true); // solar system shown in 3D (true) or as the flat map
 
   if (!game) return <div style={{ padding: 24 }}>{error || "Loading…"}</div>;
 
@@ -56,6 +59,8 @@ export default function Page() {
   const planetName = (id: number) => game.planets.find((p) => p.id === id)?.name ?? "?";
   const queueOf = (kind: "building" | "ship") => game.queue.filter((q) => q.planetId === planet.id && q.kind === kind);
 
+  const onSelectPlanet = (p: PlanetDTO) => { setViewId(p.id); if (p.kind === "player") setPlanetId(p.id); else setTargetId(p.id); };
+
   return (
     <>
       <TopBar
@@ -72,10 +77,14 @@ export default function Page() {
             planet={viewed} systemSeed={sysOf(viewed.systemId).seed}
             guards={activeFleets.filter((f) => f.status === "stationed" && f.targetId === viewed.id)}
           />
-          <SolarMap
-            game={game} system={shownSystem} viewed={viewed} now={now}
-            onSelect={(p) => { setViewId(p.id); if (p.kind === "player") setPlanetId(p.id); else setTargetId(p.id); }}
-          />
+          <div style={{ textAlign: "right", marginBottom: 6 }}>
+            <button className="ghost" onClick={() => setView3d(!view3d)}>{view3d ? "Show flat map" : "Show 3D view"}</button>
+          </div>
+          {view3d ? (
+            <SystemView game={game} system={shownSystem} viewed={viewed} now={now} onSelect={onSelectPlanet} />
+          ) : (
+            <SolarMap game={game} system={shownSystem} viewed={viewed} now={now} onSelect={onSelectPlanet} />
+          )}
           {atGalaxy ? (
             <GalaxyView game={game} current={sector} onSelect={(sx, sy) => { setSector([sx, sy]); setAtGalaxy(false); }} />
           ) : (
