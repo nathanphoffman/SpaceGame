@@ -9,6 +9,7 @@ export const fmtTime = (ms: number) => {
 /** orbit distance: more decimals for the tight orbits of red-dwarf planets */
 const AU_DECIMALS = [[0.1, 3], [10, 2]]; // [orbit below this, decimals shown]; further out one decimal is enough
 const FAR_AU_DECIMALS = 1;
+
 export const fmtAU = (au: number) => `${au.toFixed(AU_DECIMALS.find(([limit]) => au < limit)?.[1] ?? FAR_AU_DECIMALS)} AU`;
 
 export const elementColor = (sym: string) => ELEMENTS[sym as Element]?.color ?? "#777";

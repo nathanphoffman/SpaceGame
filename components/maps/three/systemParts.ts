@@ -22,6 +22,15 @@ const COLONY_COLOR = 0x5be08a;
 const ATTACK_COLOR = 0x4cc2ff;
 const OWNER_COLOR = { player: 0x5be08a, npc: 0xff6b6b, empty: 0x8794b5 } as const;
 const white = new THREE.Color(1, 1, 1);
+const STAR_SEGMENTS = { around: 48, across: 32 };
+const STAR_GLOW_OPACITY = 0.9;
+const STAR_HALO_OPACITY = 0.22;
+const OWNER_DOT_OPACITY = 0.9;
+const OWNER_DOT_GLOW = 0.9;
+const SHIP_SEGMENTS = 10;
+const SHIP_GLOW_OPACITY = 0.8;
+const TRAIL_OPACITY = 0.45;
+const TRAIL_DASH = { dash: 0.4, gap: 0.3 };
 
 export const LOW_DETAIL = 0.55;
 export const HIGH_DETAIL = 1.2;
@@ -55,8 +64,8 @@ export function createStar(system: SystemDTO) {
   const look = starParams(system.seed);
   const color = new THREE.Color(...look.color);
   const radius = STAR_BASE_RADIUS + look.size * STAR_RADIUS_PER_SIZE;
-  const star = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), new THREE.MeshBasicMaterial({ color: color.clone().lerp(white, STAR_WHITEN) }));
-  star.add(glowSprite(color, radius * STAR_GLOW_SCALE, 0.9), glowSprite(color, radius * STAR_HALO_SCALE, 0.22));
+  const star = new THREE.Mesh(new THREE.SphereGeometry(radius, STAR_SEGMENTS.around, STAR_SEGMENTS.across), new THREE.MeshBasicMaterial({ color: color.clone().lerp(white, STAR_WHITEN) }));
+  star.add(glowSprite(color, radius * STAR_GLOW_SCALE, STAR_GLOW_OPACITY), glowSprite(color, radius * STAR_HALO_SCALE, STAR_HALO_OPACITY));
   addLabel(star, system.name, "star");
   const light = new THREE.PointLight(color.clone().lerp(white, LIGHT_WHITEN), LIGHT_INTENSITY, 0, 0);
 
@@ -76,7 +85,7 @@ export function setDetail(node: PlanetNode, detail: number) {
 export function createPlanetNode(planet: PlanetDTO): PlanetNode {
   const params = planetParams(planet.seed);
   const holder = new THREE.Group(), mesh = new THREE.Group();
-  const dot = glowSprite(OWNER_COLOR[planet.kind], 0.9, 0.9); // a screen-size dot so far-away planets can still be found
+  const dot = glowSprite(OWNER_COLOR[planet.kind], OWNER_DOT_GLOW, OWNER_DOT_OPACITY); // a screen-size dot so far-away planets can still be found
   dot.material.sizeAttenuation = false;
   dot.scale.setScalar(OWNER_DOT_SIZE);
   holder.add(mesh, dot);
@@ -87,16 +96,16 @@ export function createPlanetNode(planet: PlanetDTO): PlanetNode {
 /** a small ship (a cone pointing the way it flies) and a dashed line to where it is going */
 export function createShip(fleet: FleetDTO): ShipNode {
   const color = fleet.mission === "colonize" ? COLONY_COLOR : ATTACK_COLOR;
-  const hull = new THREE.Mesh(new THREE.ConeGeometry(SHIP_WIDTH, SHIP_LENGTH, 10), new THREE.MeshBasicMaterial({ color }));
+  const hull = new THREE.Mesh(new THREE.ConeGeometry(SHIP_WIDTH, SHIP_LENGTH, SHIP_SEGMENTS), new THREE.MeshBasicMaterial({ color }));
   hull.rotation.x = Math.PI / 2; // a cone points along +y; turn it to +z, the way lookAt() faces
   const holder = new THREE.Group();
-  holder.add(hull, glowSprite(color, SHIP_LENGTH, 0.8));
+  holder.add(hull, glowSprite(color, SHIP_LENGTH, SHIP_GLOW_OPACITY));
 
   // total ships in the fleet: add up the count of every ship type
   const count = Object.values(fleet.ships).reduce((total, n) => total + n, 0);
   addLabel(holder, `${fleet.mission === "colonize" ? "Colony" : "Fleet"} ×${count}`, "ship");
   const trailGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-  const trail = new THREE.Line(trailGeometry, new THREE.LineDashedMaterial({ color, transparent: true, opacity: 0.45, dashSize: 0.4, gapSize: 0.3 }));
+  const trail = new THREE.Line(trailGeometry, new THREE.LineDashedMaterial({ color, transparent: true, opacity: TRAIL_OPACITY, dashSize: TRAIL_DASH.dash, gapSize: TRAIL_DASH.gap }));
 
   return { holder, trail, fleet };
 }

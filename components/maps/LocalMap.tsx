@@ -20,14 +20,20 @@ const CROWDED_ZOOM = 2.5;
 const EDGE_MARGIN = 5; // stars this far outside the map box (in %) are still drawn
 const MIN_STAR_PX = 4.25;
 const MAX_STAR_PX = 25;
+const MAP_SIZE = 100; // the map box is 0..100 %
+const RGB_MAX = 255;
+const HALF_TURN_DEGREES = 180;
+const QUARTER_TURN_DEGREES = 90; // the fleet icon points up, so it is turned a quarter to face along the flight
+const SMALL_STAR_RADIUS = 0.1; // below this (solar radii) a star radius is shown with three decimals
+const STAR_SIZE_LOOK = { base: 6.6, perDecade: 5.75 };
 
 type Point = { x: number; y: number };
 type Positions = Map<number, Point>;
 
 /** star diameter on a log scale of the real stellar radius: small stars are near a point of light, supergiants about 6x that (kept modest so stars are easy to click and tell apart) */
-const starDiameter = (radius: number) => Math.min(MAX_STAR_PX, Math.max(MIN_STAR_PX, 6.6 + 5.75 * Math.log10(radius / 0.1)));
+const starDiameter = (radius: number) => Math.min(MAX_STAR_PX, Math.max(MIN_STAR_PX, STAR_SIZE_LOOK.base + STAR_SIZE_LOOK.perDecade * Math.log10(radius / SMALL_STAR_RADIUS)));
 
-const isOnMap = (point: Point) => point.x > -EDGE_MARGIN && point.x < 100 + EDGE_MARGIN && point.y > -EDGE_MARGIN && point.y < 100 + EDGE_MARGIN;
+const isOnMap = (point: Point) => point.x > -EDGE_MARGIN && point.x < MAP_SIZE + EDGE_MARGIN && point.y > -EDGE_MARGIN && point.y < MAP_SIZE + EDGE_MARGIN;
 
 function ZoomControls({ view }: { view: ReturnType<typeof useMapZoom> }) {
   return (
@@ -58,8 +64,8 @@ type StarProps = { system: SystemDTO; at: Point; owned: number; selected: boolea
 /** one clickable star: coloured and sized by its real class, with a marker when you have bases there */
 function StarButton({ system, at, owned, selected, onOpen }: StarProps) {
   const star = starParams(system.seed);
-  const color = `rgb(${star.color.map((channel) => Math.round(channel * 255)).join(",")})`;
-  const radius = star.radius < 0.1 ? star.radius.toFixed(3) : star.radius.toFixed(1);
+  const color = `rgb(${star.color.map((channel) => Math.round(channel * RGB_MAX)).join(",")})`;
+  const radius = star.radius < SMALL_STAR_RADIUS ? star.radius.toFixed(3) : star.radius.toFixed(1);
 
   return (
     <button className={`gnode ${selected ? "sel" : ""} ${owned > 0 ? "home" : ""}`} style={{ left: `${at.x}%`, top: `${at.y}%` }}
@@ -74,7 +80,7 @@ function StarButton({ system, at, owned, selected, onOpen }: StarProps) {
 function FlyingFleet({ fleet, game, now, positions }: { fleet: FleetDTO; game: GameState; now: number; positions: Positions }) {
   const { from, to, k } = flightOf(game, fleet, now);
   const start = positions.get(from.systemId)!, end = positions.get(to.systemId)!;
-  const angle = (Math.atan2(end.y - start.y, end.x - start.x) * 180) / Math.PI + 90;
+  const angle = (Math.atan2(end.y - start.y, end.x - start.x) * HALF_TURN_DEGREES) / Math.PI + QUARTER_TURN_DEGREES;
 
   return (
     <span className="fleet" style={{ left: `${start.x + (end.x - start.x) * k}%`, top: `${start.y + (end.y - start.y) * k}%`, transform: `translate(-50%,-50%) rotate(${angle}deg)` }}>

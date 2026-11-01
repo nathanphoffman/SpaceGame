@@ -16,25 +16,36 @@ const MAX_RADIUS = 1.45; // largest planet radius the generator makes
 const CROWDED_PLANETS = 8;
 const AU_STEPS = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20];
 const MAX_TICKS = 6;
+const FALLBACK_AU_STEP = 50;
+const MIN_ORBIT_AU = 0.01;
+const RGB_MAX = 255;
+const MILLI = 1000;
+const AXIS = { left: 6, span: 92 }; // the AU ruler runs from 6% to 98% of the map width
+const SUN_RADIUS_PX = { min: 40, range: 560 }; // small stars show a tight arch, big stars look nearly flat
+const SUN_SIZE_RANGE = { min: 0.5, span: 1.3 };
+const SLOT_FILL = 0.85; // a planet fills at most this share of its slot
+const MIN_CAP_PX = 14;
+const PERCENT = 100;
+const MIDDLE_SLOT = 0.5;
 
 type System = { game: GameState; system: SystemDTO; viewed: PlanetDTO };
 
 /** the ruler: nice round AU steps up to the outermost planet, and where each AU lands across the map */
 function rulerScale(planets: PlanetDTO[]) {
-  const maxOrbit = Math.max(0.01, ...planets.map((planet) => planet.orbit));
-  const step = AU_STEPS.find((candidate) => maxOrbit / candidate <= MAX_TICKS) ?? 50;
+  const maxOrbit = Math.max(MIN_ORBIT_AU, ...planets.map((planet) => planet.orbit));
+  const step = AU_STEPS.find((candidate) => maxOrbit / candidate <= MAX_TICKS) ?? FALLBACK_AU_STEP;
   const max = Math.ceil(maxOrbit / step) * step;
-  const ticks = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => Math.round(index * step * 1000) / 1000);
+  const ticks = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => Math.round(index * step * MILLI) / MILLI);
 
-  return { max, ticks, axisX: (au: number) => 6 + (au / max) * 92 }; // % across the map; 0 AU is the star's surface
+  return { max, ticks, axisX: (au: number) => AXIS.left + (au / max) * AXIS.span }; // % across the map; 0 AU is the star's surface
 }
 
 /** the star is a big circle mostly off the left edge: small stars show a tight arch, big stars look nearly flat */
 function Sun({ seed }: { seed: number }) {
   const star = starParams(seed);
 
-  const rgba = (alpha: number) => `rgba(${star.color.map((channel) => Math.round(channel * 255)).join(",")},${alpha})`;
-  const radius = 40 + Math.min(1, Math.max(0, (star.size - 0.5) / 1.3)) * 560;
+  const rgba = (alpha: number) => `rgba(${star.color.map((channel) => Math.round(channel * RGB_MAX)).join(",")},${alpha})`;
+  const radius = SUN_RADIUS_PX.min + Math.min(1, Math.max(0, (star.size - SUN_SIZE_RANGE.min) / SUN_SIZE_RANGE.span)) * SUN_RADIUS_PX.range;
 
   return (
     <div className="sun" style={{
@@ -75,7 +86,7 @@ type NodeProps = { planet: PlanetDTO; index: number; slots: number; selected: bo
 
 /** a clickable planet: its diameter in px is proportional to its size and capped by how much room each slot has */
 function PlanetNode({ planet, index, slots, selected, guarded, left, onSelect }: NodeProps) {
-  const cap = Math.max(14, (((MAP_WIDTH_PX * SLOT_SPAN) / 100) / slots) * 0.85);
+  const cap = Math.max(MIN_CAP_PX, (((MAP_WIDTH_PX * SLOT_SPAN) / PERCENT) / slots) * SLOT_FILL);
   const body = MIN_PLANET_PX + (planetParams(planet.seed).radius / MAX_RADIUS) * (cap - MIN_PLANET_PX);
   const size = thumbDisplaySize(planet.seed, body);
 
@@ -115,7 +126,7 @@ export default function SolarMap({ game, system, viewed, nowMs: now, onSelect }:
   const local = flyingFleets(game).filter((fleet) => !isCrossSystem(game, fleet) && originSystem(fleet.originId) === system.id);
   const slots = planets.length;
 
-  const slotX = (index: number) => SLOT_LEFT + ((index + 0.5) * SLOT_SPAN) / slots;
+  const slotX = (index: number) => SLOT_LEFT + ((index + MIDDLE_SLOT) * SLOT_SPAN) / slots;
   const slotById = new Map(planets.map((planet, index) => [planet.id, slotX(index)]));
 
   return (

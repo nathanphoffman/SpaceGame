@@ -37,13 +37,18 @@ const CRATER_RIM_HEIGHT = 0.25 * 4 * 0.5; // the raised rim is a quarter of the 
 
 type Vec3 = [number, number, number];
 
+const RGB_CHANNELS = 3;
+const HALF = 0.5;
+const SURFACE_ROUGHNESS = 0.95;
+const GAS_BLEND_SCALE = { x: 6, y: 1.5 }; // the second band pattern is stretched along the poles
+
 const mixColors = (first: RGB, second: RGB, t: number): RGB => [first[0] + (second[0] - first[0]) * t, first[1] + (second[1] - first[1]) * t, first[2] + (second[2] - first[2]) * t];
 
 /** colour of a gas giant at a point: two wobbling band patterns blended together (`warp` and `blend` are noise values there) */
 function gasColor(params: PlanetParams, north: number, warp: number, blend: number): RGB {
   const latitude = (north + warp * GAS_WARP_STRENGTH - GAS_LATITUDE_SHIFT) * params.bandFreq;
-  const band = Math.sin(latitude * Math.PI) * 0.5 + 0.5;
-  const band2 = Math.sin(latitude * Math.PI * GAS_BAND2_FREQ + GAS_BAND2_PHASE) * 0.5 + 0.5;
+  const band = Math.sin(latitude * Math.PI) * HALF + HALF;
+  const band2 = Math.sin(latitude * Math.PI * GAS_BAND2_FREQ + GAS_BAND2_PHASE) * HALF + HALF;
 
   return mixColors(mixColors(params.bands[0], params.bands[1], band), mixColors(params.bands[2], params.bands[3], band2), GAS_BLEND_BASE + GAS_BLEND_NOISE * blend);
 }
@@ -92,7 +97,7 @@ function buildPlanet(params: PlanetParams, detail: number): THREE.Mesh {
   geometry = mergeVertices(geometry, WELD_TOLERANCE);
 
   const pos = geometry.attributes.position as THREE.BufferAttribute;
-  const colors = new Float32Array(pos.count * 3);
+  const colors = new Float32Array(pos.count * RGB_CHANNELS);
   const seed = params.noiseOffset;
   const [offsetX, offsetY, offsetZ] = TERRAIN_OFFSET;
 
@@ -104,81 +109,93 @@ function buildPlanet(params: PlanetParams, detail: number): THREE.Mesh {
 
     if (params.kind === "gas") {
       const warp = fbm(nx * GAS_WARP_SCALE + GAS_WARP_OFFSET, ny * GAS_WARP_SCALE, nz * GAS_WARP_SCALE, seed, GAS_NOISE_OCTAVES);
-      const blend = fbm(nx * 6, ny * 1.5, nz * 6, seed + GAS_BLEND_SEED_OFFSET, GAS_NOISE_OCTAVES);
+      const blend = fbm(nx * GAS_BLEND_SCALE.x, ny * GAS_BLEND_SCALE.y, nz * GAS_BLEND_SCALE.x, seed + GAS_BLEND_SEED_OFFSET, GAS_NOISE_OCTAVES);
       color = gasColor(params, ny, warp, blend);
     } else {
       const h = fbm(nx * params.noiseScale + offsetX, ny * params.noiseScale + offsetY, nz * params.noiseScale + offsetZ, seed);
       const craters = craterEffect(params.craters, [nx, ny, nz]);
       const grain = GRAIN_BASE + GRAIN_AMOUNT * noise3(nx * GRAIN_SCALE, ny * GRAIN_SCALE, nz * GRAIN_SCALE, seed + GRAIN_SEED_OFFSET);
-      lift = (Math.max(h, params.seaLevel) - 0.5) * 2 * params.bump + craters.lift;
+      lift = (Math.max(h, params.seaLevel) - HALF) * 2 * params.bump + craters.lift;
       color = mixColors([0, 0, 0], groundColor(params, h), craters.shade * grain);
     }
 
     pos.setXYZ(index, nx * (1 + lift), ny * (1 + lift), nz * (1 + lift));
-    colors.set(color, index * 3);
+    colors.set(color, index * RGB_CHANNELS);
   }
 
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, RGB_CHANNELS));
   geometry.computeVertexNormals();
 
-  const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
+  const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: SURFACE_ROUGHNESS, metalness: 0 }));
   mesh.scale.setScalar(params.radius);
 
   return mesh;
 }
 
-function buildRings(p: PlanetParams): THREE.Mesh {
-  const r = p.rings!;
-  const geo = new THREE.RingGeometry(r.inner, r.outer, 128, 40);
-  const pos = geo.attributes.position;
-  const colors = new Float32Array(pos.count * 4);
+const RING_SEGMENTS = { around: 128, across: 40 };
+const RGBA = 4; // red, green, blue and alpha per ring vertex
+const RING_BAND_NOISE_SCALE = 14; // how fast the ring brightness varies from inner to outer edge
+const RING_GAP_NOISE_SCALE = 40;
+const RING_GAP_SEED_OFFSET = 9;
+const RING_GAP_THRESHOLD = 0.78; // noise above this opens a gap (a Cassini-division look)
+const RING_GAP_OPACITY = 0.1;
+const RING_EDGE_FADE = 6; // the ring fades out over the first and last sixth of its width
+const RING_SHADE = { base: 0.6, variation: 0.4 };
+const RING_OPACITY = { base: 0.35, variation: 0.55 };
+const NOISE_SLICE_Y = 0.5; // the ring noise is sampled along a thin slice of the 3D noise
+const NOISE_SLICE_GAP_Y = 1.5;
+const ATMOSPHERE_SCALE = 1.07; // the atmosphere shell is this much bigger than the planet
+const ATMOSPHERE_OPACITY = 0.18;
+const ATMOSPHERE_SEGMENTS = { around: 48, across: 32 };
 
-  for (let i = 0; i < pos.count; i++) {
-    const rad = Math.hypot(pos.getX(i), pos.getY(i));
-    const t = (rad - r.inner) / (r.outer - r.inner);
-    const n = noise3(t * 14, 0.5, 0.5, r.seed);
-    const gap = noise3(t * 40, 1.5, 0.5, r.seed + 9) > 0.78 ? 0.1 : 1;
-    const edge = Math.min(1, t * 6, (1 - t) * 6);
-    const shade = 0.6 + 0.4 * n;
-    colors[i * 4] = r.color[0] * shade;
-    colors[i * 4 + 1] = r.color[1] * shade;
-    colors[i * 4 + 2] = r.color[2] * shade;
-    colors[i * 4 + 3] = (0.35 + 0.55 * n) * gap * edge;
+/** a flat ring around the planet, with soft edges and a few gaps, coloured per vertex */
+function buildRings(params: PlanetParams): THREE.Mesh {
+  const rings = params.rings!;
+  const geometry = new THREE.RingGeometry(rings.inner, rings.outer, RING_SEGMENTS.around, RING_SEGMENTS.across);
+  const position = geometry.attributes.position;
+  const colors = new Float32Array(position.count * RGBA);
+
+  for (let index = 0; index < position.count; index++) {
+    const distance = Math.hypot(position.getX(index), position.getY(index));
+    const across = (distance - rings.inner) / (rings.outer - rings.inner); // 0 at the inner edge, 1 at the outer edge
+    const brightness = noise3(across * RING_BAND_NOISE_SCALE, NOISE_SLICE_Y, NOISE_SLICE_Y, rings.seed);
+    const gap = noise3(across * RING_GAP_NOISE_SCALE, NOISE_SLICE_GAP_Y, NOISE_SLICE_Y, rings.seed + RING_GAP_SEED_OFFSET) > RING_GAP_THRESHOLD ? RING_GAP_OPACITY : 1;
+    const edge = Math.min(1, across * RING_EDGE_FADE, (1 - across) * RING_EDGE_FADE);
+    const shade = RING_SHADE.base + RING_SHADE.variation * brightness;
+    const alpha = (RING_OPACITY.base + RING_OPACITY.variation * brightness) * gap * edge;
+    colors.set([rings.color[0] * shade, rings.color[1] * shade, rings.color[2] * shade, alpha], index * RGBA);
   }
 
-  geo.setAttribute("color", new THREE.BufferAttribute(colors, 4));
-  const mesh = new THREE.Mesh(
-    geo,
-    new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, side: THREE.DoubleSide, depthWrite: false }),
-  );
-
-  mesh.rotation.x = -Math.PI / 2 + r.tilt;
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, RGBA));
+  const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  mesh.rotation.x = -Math.PI / 2 + rings.tilt;
 
   return mesh;
 }
 
+/** a faint shell around the planet, seen from inside so it glows at the edge */
+function buildAtmosphere(params: PlanetParams, color: RGB): THREE.Mesh {
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(params.radius * ATMOSPHERE_SCALE, ATMOSPHERE_SEGMENTS.around, ATMOSPHERE_SEGMENTS.across),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(...color), transparent: true, opacity: ATMOSPHERE_OPACITY, side: THREE.BackSide }),
+  );
+}
+
 /** Planet + rings + atmosphere, tilted. `detail` 1 = full quality, lower = fewer vertices (thumbnails). */
-export function createPlanetGroup(p: PlanetParams, detail = 1) {
+export function createPlanetGroup(params: PlanetParams, detail = 1) {
   const group = new THREE.Group();
-  group.rotation.z = p.tilt;
-  const planet = buildPlanet(p, detail);
+  group.rotation.z = params.tilt;
+  const planet = buildPlanet(params, detail);
   group.add(planet);
 
-  if (p.rings) group.add(buildRings(p));
+  if (params.rings) group.add(buildRings(params));
 
-  if (p.atmosphere) {
-    group.add(
-      new THREE.Mesh(
-        new THREE.SphereGeometry(p.radius * 1.07, 48, 32),
-        new THREE.MeshBasicMaterial({ color: new THREE.Color(...p.atmosphere), transparent: true, opacity: 0.18, side: THREE.BackSide }),
-      ),
-    );
-  }
+  if (params.atmosphere) group.add(buildAtmosphere(params, params.atmosphere));
 
   return { group, planet };
 }
 
 /** Half the visible world height needed to frame the whole planet (including rings). */
-export function planetExtent(p: PlanetParams) {
-  return p.rings ? p.rings.outer : p.radius * 1.07;
+export function planetExtent(params: PlanetParams) {
+  return params.rings ? params.rings.outer : params.radius * ATMOSPHERE_SCALE;
 }

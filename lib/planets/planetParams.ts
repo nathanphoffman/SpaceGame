@@ -50,8 +50,10 @@ const CRATER_SIZE_SPREAD = 0.28;
 const CRATER_MIN_DEPTH = 0.02;
 const CRATER_DEPTH_SPREAD = 0.05;
 const NO_OCEAN = -1;
+
 // the radius range of each kind of planet, in the order the random numbers are drawn (all five are always drawn)
 const RADIUS_RANGES: Record<PlanetKind, [number, number]> = { moon: [0.45, 0.8], rocky: [0.7, 1.15], desert: [0.7, 1.1], ice: [0.65, 1.1], gas: [1.1, 1.45] };
+
 // gas-giant band colours: a base tone and three variations, each with how far the colour may drift
 const BAND_COLORS: { color: RGB; jitter: number }[] = [
   { color: [0.72, 0.58, 0.4], jitter: 0.15 }, { color: [0.9, 0.82, 0.65], jitter: 0.12 }, { color: [0.55, 0.4, 0.3], jitter: 0.12 }, { color: [0.8, 0.7, 0.55], jitter: 0.12 },
@@ -95,7 +97,9 @@ function makeRings(radius: number, inner: number, range: Range, jitter: Jitter, 
 export function planetParams(seed: number): PlanetParams {
   const real: BodySpec | undefined = BODY_BY_SEED.get(seed); // real bodies pin kind, size and (if known) look to the data
   const random = mulberry32(seed * SEED_MULTIPLIER + SEED_OFFSET);
+
   const range: Range = (low, high) => low + (high - low) * random();
+
   // nudge each colour channel by up to +-amount at random and keep it within 0..1
   const jitter: Jitter = (color, amount = DEFAULT_JITTER) => color.map((channel) => Math.min(1, Math.max(0, channel + (random() - 0.5) * amount * 2))) as RGB;
 
