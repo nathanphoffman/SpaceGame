@@ -23,7 +23,8 @@ export function useGame(view: GameView) {
 
       if (r.ok) apply(await r.json());
       else setError((await r.json()).error ?? "Could not load game (is the database running?)");
-    } catch {
+    } catch (failure) {
+      console.error("Could not reach the game server", failure);
       setError("Could not reach server");
     }
   }, [sx, sy, system]);

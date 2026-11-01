@@ -52,7 +52,7 @@ export default function Buildings({ planet, composition, types, queue, now, shor
               </div>
               <div className="dots" title={`Level ${built}${q.length ? `, upgrading to ${level}` : ""}`}>
                 {Array.from({ length: level }, (_, index) => (
-                  <span key={index} className={`dot-level ${index < built ? "on" : "queued"}`} />
+                  <span key={`level-${index}`} className={`dot-level ${index < built ? "on" : "queued"}`} />
                 ))}
 
               </div>

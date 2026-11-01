@@ -22,18 +22,3 @@ export function stepFly(fly: Fly, deltaSeconds: number, camera: THREE.Camera, co
 
   return fly.t >= 1 ? null : fly;
 }
-
-const MIN_NEAR = 1e-8;
-const NEAR_SHARE = 0.02; // the near plane sits this fraction of the way to what we are looking at
-const FAR_PER_NEAR = 3e8; // depth range the logarithmic depth buffer can handle
-const MAX_FAR = 4000;
-const MIN_FAR = 200;
-
-/** True-scale systems span many orders of magnitude, so the clip planes track how close we are to what we are looking at. */
-export function fitClipPlanes(camera: THREE.PerspectiveCamera, controls: OrbitControls) {
-  const dist = camera.position.distanceTo(controls.target);
-  const near = Math.max(dist * NEAR_SHARE, MIN_NEAR);
-  camera.near = near;
-  camera.far = Math.min(MAX_FAR, Math.max(MIN_FAR, near * FAR_PER_NEAR));
-  camera.updateProjectionMatrix();
-}

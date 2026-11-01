@@ -16,7 +16,7 @@ export const sectorOf = (x: number, y: number): [number, number] =>
   [CENTER + Math.round(x / SECTOR_LY), CENTER + Math.round(y / SECTOR_LY)];
 
 /** system ids: 1..99 are the hand-made catalog; every generated sector gets its own block of 100 */
-export const generatedSystemId = (sx: number, sy: number, n: number) => 1000 + (sy * GRID + sx) * 100 + n;
+const generatedSystemId = (sx: number, sy: number, n: number) => 1000 + (sy * GRID + sx) * 100 + n;
 
 const sectorRng = (sx: number, sy: number) => {
   const random = mulberry32((sx * 131 + sy * 977 + 5) * 7919 + 101);

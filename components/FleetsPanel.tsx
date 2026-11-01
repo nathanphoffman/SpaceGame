@@ -30,7 +30,7 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
                 <div className="hangar-label">{SHIPS[t].name} <b>×{n}</b></div>
                 <div className="hangar-ships">
                   {Array.from({ length: shown }, (_, index) => (
-                    <img key={index} src={SHIPS[t].icon} style={{ width: 22 * SHIPS[t].size, height: 22 * SHIPS[t].size }} alt="" />
+                    <img key={`${t}-${index}`} src={SHIPS[t].icon} style={{ width: 22 * SHIPS[t].size, height: 22 * SHIPS[t].size }} alt="" />
                   ))}
 
                   {n > shown && <span className="dim"> +{n - shown} more</span>}

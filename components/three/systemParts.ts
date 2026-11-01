@@ -28,7 +28,7 @@ export const HIGH_DETAIL = 1.2;
 export type PlanetNode = { dto: PlanetDTO; holder: THREE.Group; mesh: THREE.Group; spin: number; radius: number; detail: number; label: HTMLElement };
 export type ShipNode = { holder: THREE.Group; trail: THREE.Line; fleet: FleetDTO };
 
-export function addLabel(parent: THREE.Object3D, text: string, cls: string) {
+function addLabel(parent: THREE.Object3D, text: string, cls: string) {
   const element = document.createElement("div");
   element.className = `lbl ${cls}`;
   element.textContent = text;
