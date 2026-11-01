@@ -88,16 +88,19 @@ function pickOrbit(index: number, want: number, scale: number, taken: number[], 
   return crowds(orbit, taken) ? null : Math.round(orbit * MILLI) / MILLI;
 }
 
-/** one made-up planet: its seed, whether it is a hostile base, and what a hostile base owns */
-function makePlanet(system: { id: number; name: string }, number: number, orbit: number, random: () => number): Filler {
-  const seed = 1 + Math.floor(random() * SEED_RANGE);
-  const hostile = random() < HOSTILE_CHANCE;
-  const { buildings, resources } = hostile ? arm(planetStats(seed).composition, random) : { buildings: {}, resources: {} };
+/** a made-up planet's seed, and whether it is a hostile base */
+function drawBasics(random: () => number) {
+  return { seed: 1 + Math.floor(random() * SEED_RANGE), hostile: random() < HOSTILE_CHANCE };
+}
+
+/** one made-up planet; hostile ones are enemy bases with the mines and stockpile they were armed with, the rest are free to settle */
+function makePlanet(system: { id: number; name: string }, number: number, orbit: number, basics: { seed: number; hostile: boolean }, owns: { buildings: Record<string, number>; resources: Record<string, number> }, random: () => number): Filler {
+  const { seed, hostile } = basics;
 
   return {
     id: system.id * SYSTEM_ID_STRIDE + number,
     name: number < NAMED_LETTERS ? `${system.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}` : planetName(seed),
-    orbit, kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, resources, buildings, // hostile planets are enemy bases, the rest are free to settle
+    orbit, kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, resources: owns.resources, buildings: owns.buildings,
     defense: hostile ? Math.round(BASE_DEFENSE + random() * random() * DEFENSE_RANGE) : 0,
     seed,
   };
@@ -125,7 +128,9 @@ export function fillSystem(system: { id: number; name: string; seed: number; com
     if (orbit === null) continue; // no room left here
 
     taken.push(orbit);
-    result.push(makePlanet(system, known.length + result.length + 1, orbit, random));
+    const basics = drawBasics(random);
+    const owns = basics.hostile ? arm(planetStats(basics.seed).composition, random) : { buildings: {}, resources: {} };
+    result.push(makePlanet(system, known.length + result.length + 1, orbit, basics, owns, random));
   }
 
   return result;
