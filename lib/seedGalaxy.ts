@@ -13,11 +13,11 @@ const NOTHING = { resources: {}, buildings: {}, ships: {} };
 export type PlanetRow = Omit<Filler, "kind"> & { kind: "player" | "npc" | "empty"; shared: boolean; ships: Record<string, number> };
 
 export async function insertPlanets(q: Q, systemId: number, rows: PlanetRow[]) {
-  for (const d of rows) {
+  for (const planet of rows) {
     await q.query(
       `INSERT INTO planets (id,name,system_id,orbit,kind,resources,buildings,ships,defense,seed,shared)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`,
-      [d.id, d.name, systemId, d.orbit, d.kind, JSON.stringify(d.resources), JSON.stringify(d.buildings), JSON.stringify(d.ships), d.defense, d.seed, d.shared],
+      [planet.id, planet.name, systemId, planet.orbit, planet.kind, JSON.stringify(planet.resources), JSON.stringify(planet.buildings), JSON.stringify(planet.ships), planet.defense, planet.seed, planet.shared],
     );
   }
 }
@@ -26,19 +26,19 @@ export async function insertPlanets(q: Q, systemId: number, rows: PlanetRow[]) {
 export async function seedGalaxy(pool: Pool) {
   await pool.query("INSERT INTO sectors (x,y) VALUES (10,10) ON CONFLICT DO NOTHING");
 
-  for (const s of SYSTEMS) {
+  for (const system of SYSTEMS) {
     await pool.query(
       "INSERT INTO systems (id,name,x,y,seed,sector_x,sector_y,explored) VALUES ($1,$2,$3,$4,$5,10,10,true) ON CONFLICT (id) DO NOTHING",
-      [s.id, s.name, s.x, s.y, s.seed],
+      [system.id, system.name, system.x, system.y, system.seed],
     );
 
-    const real = s.bodies.map((b): PlanetRow => ({
-      id: b.id, name: b.name, orbit: b.orbit, seed: b.seed, shared: !!b.shared, defense: 0,
+    const real = system.bodies.map((body): PlanetRow => ({
+      id: body.id, name: body.name, orbit: body.orbit, seed: body.seed, shared: !!body.shared, defense: 0,
       // the starting planet belongs to the player and gets the starting resources
-      kind: b.start ? "player" : "empty", ...(b.start ? START : NOTHING),
+      kind: body.start ? "player" : "empty", ...(body.start ? START : NOTHING),
     }));
 
-    const generated = fillSystem(s, s.bodies).map((filler): PlanetRow => ({ ...filler, shared: false, ships: {} }));
-    await insertPlanets(pool, s.id, [...real, ...generated]);
+    const generated = fillSystem(system, system.bodies).map((filler): PlanetRow => ({ ...filler, shared: false, ships: {} }));
+    await insertPlanets(pool, system.id, [...real, ...generated]);
   }
 }

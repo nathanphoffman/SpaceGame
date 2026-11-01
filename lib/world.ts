@@ -20,21 +20,21 @@ export type World = { systems: SystemDTO[]; planets: Planet[]; queue: QueueItem[
 /** what the client is looking at: a sector, a system, and any planets an action refers to */
 export type View = { sx?: number; sy?: number; system?: number; planets?: number[] };
 
-export async function load(c: PoolClient, view: View): Promise<World> {
-  const queue = (await c.query("SELECT * FROM queue ORDER BY finish_at")).rows as QueueItem[];
-  const fleets = (await c.query("SELECT * FROM fleets ORDER BY depart_at")).rows as Fleet[];
+export async function load(client: PoolClient, view: View): Promise<World> {
+  const queue = (await client.query("SELECT * FROM queue ORDER BY finish_at")).rows as QueueItem[];
+  const fleets = (await client.query("SELECT * FROM fleets ORDER BY depart_at")).rows as Fleet[];
   const need = new Set(view.planets ?? []);
 
-  for (const f of fleets) { need.add(f.origin_id); need.add(f.target_id); }
+  for (const fleet of fleets) { need.add(fleet.origin_id); need.add(fleet.target_id); }
 
   // your bases, anything a fleet or action touches, and the system on screen (default: the one your first base is in)
-  const planets = (await c.query(
+  const planets = (await client.query(
     `SELECT * FROM planets WHERE kind='player' OR id = ANY($1)
        OR system_id = COALESCE($2::int, (SELECT system_id FROM planets WHERE kind='player' ORDER BY id LIMIT 1)) ORDER BY id`,
     [[...need], view.system ?? null],
   )).rows as Planet[];
 
-  const rows = (await c.query(
+  const rows = (await client.query(
     "SELECT * FROM systems WHERE id = ANY($1) OR id = $2 OR (sector_x = $3 AND sector_y = $4) ORDER BY id",
     [[...new Set(planets.map((planet) => planet.system_id))], view.system ?? null, view.sx ?? null, view.sy ?? null],
   )).rows;
@@ -44,8 +44,8 @@ export async function load(c: PoolClient, view: View): Promise<World> {
   return { systems, planets, queue, fleets };
 }
 
-export async function save(c: PoolClient, w: World) {
-  for (const planet of w.planets) {
+export async function save(c: PoolClient, world: World) {
+  for (const planet of world.planets) {
     await c.query(
       `UPDATE planets SET name=$2, kind=$3, resources=$4, buildings=$5, ships=$6, defense=$7, updated_at=$8 WHERE id=$1`,
       [planet.id, planet.name, planet.kind, JSON.stringify(planet.resources), JSON.stringify(planet.buildings), JSON.stringify(planet.ships), planet.defense, planet.updated_at],
@@ -54,18 +54,18 @@ export async function save(c: PoolClient, w: World) {
 
   await c.query("DELETE FROM queue");
 
-  for (const q of w.queue) {
+  for (const queueItem of world.queue) {
     await c.query(
       "INSERT INTO queue (id,planet_id,kind,type,start_at,finish_at) VALUES ($1,$2,$3,$4,$5,$6)",
-      [q.id, q.planet_id, q.kind, q.type, q.start_at, q.finish_at],
+      [queueItem.id, queueItem.planet_id, queueItem.kind, queueItem.type, queueItem.start_at, queueItem.finish_at],
     );
   }
 
   await c.query("DELETE FROM fleets");
 
   // keep only the last few finished fleets so the reports list doesn't grow forever
-  const done = w.fleets.filter((f) => f.status === "done").slice(-10);
-  const keep = [...w.fleets.filter((f) => f.status !== "done"), ...done];
+  const done = world.fleets.filter((f) => f.status === "done").slice(-10);
+  const keep = [...world.fleets.filter((f) => f.status !== "done"), ...done];
 
   for (const f of keep) {
     await c.query(

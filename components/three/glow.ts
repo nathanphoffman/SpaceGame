@@ -33,9 +33,9 @@ export const BACKDROP_RADIUS = 1500;
 export function backdrop(count = 1800, radius = BACKDROP_RADIUS) {
   const pos = new Float32Array(count * 3);
 
-  for (let i = 0; i < count; i++) {
+  for (let index = 0; index < count; index++) {
     const z = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, s = Math.sqrt(1 - z * z);
-    pos.set([radius * s * Math.cos(a), radius * z, radius * s * Math.sin(a)], i * 3);
+    pos.set([radius * s * Math.cos(a), radius * z, radius * s * Math.sin(a)], index * 3);
   }
 
   const geo = new THREE.BufferGeometry();

@@ -67,7 +67,7 @@ export default function Page() {
   const planetName = (id: number) => game.planets.find((p) => p.id === id)?.name ?? "?";
 
   // this planet's queue entries of one kind (buildings or ships)
-  const queueOf = (kind: "building" | "ship") => game.queue.filter((q) => q.planetId === planet.id && q.kind === kind);
+  const queueOf = (kind: "building" | "ship") => game.queue.filter((queueItem) => queueItem.planetId === planet.id && queueItem.kind === kind);
 
   const onSelectPlanet = (p: PlanetDTO) => { setViewId(p.id); if (p.kind === "player") setPlanetId(p.id); else setTargetId(p.id); };
 

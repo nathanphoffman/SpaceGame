@@ -29,12 +29,12 @@ export type PlanetNode = { dto: PlanetDTO; holder: THREE.Group; mesh: THREE.Grou
 export type ShipNode = { holder: THREE.Group; trail: THREE.Line; fleet: FleetDTO };
 
 export function addLabel(parent: THREE.Object3D, text: string, cls: string) {
-  const div = document.createElement("div");
-  div.className = `lbl ${cls}`;
-  div.textContent = text;
-  parent.add(new CSS2DObject(div));
+  const element = document.createElement("div");
+  element.className = `lbl ${cls}`;
+  element.textContent = text;
+  parent.add(new CSS2DObject(element));
 
-  return div;
+  return element;
 }
 
 /** frees the geometry and materials under an object */
@@ -71,14 +71,14 @@ export function setDetail(node: PlanetNode, detail: number) {
   node.detail = detail;
 }
 
-export function createPlanetNode(dto: PlanetDTO): PlanetNode {
-  const params = planetParams(dto.seed);
+export function createPlanetNode(planet: PlanetDTO): PlanetNode {
+  const params = planetParams(planet.seed);
   const holder = new THREE.Group(), mesh = new THREE.Group();
-  const dot = glowSprite(OWNER_COLOR[dto.kind], 0.9, 0.9); // a screen-size dot so far-away planets can still be found
+  const dot = glowSprite(OWNER_COLOR[planet.kind], 0.9, 0.9); // a screen-size dot so far-away planets can still be found
   dot.material.sizeAttenuation = false;
   dot.scale.setScalar(OWNER_DOT_SIZE);
   holder.add(mesh, dot);
-  const node: PlanetNode = { dto, holder, mesh, spin: params.spin, radius: params.radius * PLANET_SCALE, detail: 0, label: addLabel(holder, dto.name, `body ${dto.kind}`) };
+  const node: PlanetNode = { dto: planet, holder, mesh, spin: params.spin, radius: params.radius * PLANET_SCALE, detail: 0, label: addLabel(holder, planet.name, `body ${planet.kind}`) };
   setDetail(node, LOW_DETAIL);
 
   return node;

@@ -32,7 +32,7 @@ export default function FleetSend({ game, planet, target, act, onSent }: Props) 
               <span className="icon"><img src={SHIPS[t].icon} alt="" /></span>
               <span className="grow">{SHIPS[t].name} <span className="sub">({planet.ships[t] ?? 0} available)</span></span>
               <input type="number" min={0} max={planet.ships[t] ?? 0} value={qty[t] ?? 0}
-                onChange={(e) => setQty({ ...qty, [t]: Number(e.target.value) })} />
+                onChange={(event) => setQty({ ...qty, [t]: Number(event.target.value) })} />
             </div>
           ))}
 

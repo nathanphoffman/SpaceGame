@@ -4,7 +4,7 @@ import { SHIPS, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/def
 import { flightOf, flyingFleets, isCrossSystem } from "@/lib/flight";
 import { fleetIcon, fmtAU } from "./ui";
 
-type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (p: PlanetDTO) => void };
+type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (planet: PlanetDTO) => void };
 
 const SOLAR_Y = 42; // % down the map where the planets sit
 const AXIS_Y = 84;
@@ -14,7 +14,7 @@ const STAR_VISIBLE = 26; // px of the star poking into the map
 export default function SolarMap({ game, system, viewed, now, onSelect }: Props) {
   const star = starParams(system.seed);
   const planets = game.planets.filter((p) => p.systemId === system.id).sort((a, b) => a.orbit - b.orbit);
-  const guarded = new Set(game.fleets.filter((f) => f.status === "stationed").map((f) => f.targetId));
+  const guarded = new Set(game.fleets.filter((fleet) => fleet.status === "stationed").map((f) => f.targetId));
 
   // the system a planet is in
   const planetSystem = (id: number) => game.planets.find((p) => p.id === id)!.systemId;
@@ -22,7 +22,7 @@ export default function SolarMap({ game, system, viewed, now, onSelect }: Props)
 
   const slots = planets.length;
 
-  const slotX = (i: number) => 12 + ((i + 0.5) * 86) / slots;
+  const slotX = (index: number) => 12 + ((index + 0.5) * 86) / slots;
   const slotById = new Map(planets.map((p, i) => [p.id, slotX(i)]));
   const maxOrbit = Math.max(0.01, ...planets.map((p) => p.orbit));
   const auStep = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20].find((st) => maxOrbit / st <= 6) ?? 50;

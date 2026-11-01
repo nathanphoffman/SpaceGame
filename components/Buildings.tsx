@@ -22,7 +22,7 @@ export default function Buildings({ planet, composition, types, queue, now, shor
       <div className="tiles">
         {types.map((t) => { // one row per building this planet can have
           const info = buildingInfo(t)!;
-          const q = queue.filter((x) => x.type === t);
+          const q = queue.filter((queueItem) => queueItem.type === t);
           const built = planet.buildings[t] ?? 0;
           const level = built + q.length;
           const cost = buildCost(t, level);
@@ -51,8 +51,8 @@ export default function Buildings({ planet, composition, types, queue, now, shor
                 {unbuilt && <span className="notbuilt">(Not Built Yet)</span>}
               </div>
               <div className="dots" title={`Level ${built}${q.length ? `, upgrading to ${level}` : ""}`}>
-                {Array.from({ length: level }, (_, i) => (
-                  <span key={i} className={`dot-level ${i < built ? "on" : "queued"}`} />
+                {Array.from({ length: level }, (_, index) => (
+                  <span key={index} className={`dot-level ${index < built ? "on" : "queued"}`} />
                 ))}
 
               </div>

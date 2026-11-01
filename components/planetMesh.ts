@@ -4,7 +4,7 @@ import { fbm, noise3, type PlanetParams, type RGB } from "@/lib/planetGen";
 
 const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
-function buildPlanet(p: PlanetParams, detail: number): THREE.Mesh {
+function buildPlanet(params: PlanetParams, detail: number): THREE.Mesh {
   // merge duplicate vertices so normals are smooth across the texture seam
   let geo: THREE.BufferGeometry = new THREE.SphereGeometry(1, Math.round(160 * detail), Math.round(110 * detail));
   geo.deleteAttribute("uv");
@@ -13,28 +13,28 @@ function buildPlanet(p: PlanetParams, detail: number): THREE.Mesh {
 
   const pos = geo.attributes.position as THREE.BufferAttribute;
   const colors = new Float32Array(pos.count * 3);
-  const s = p.noiseOffset;
+  const s = params.noiseOffset;
 
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+  for (let index = 0; index < pos.count; index++) {
+    const x = pos.getX(index), y = pos.getY(index), z = pos.getZ(index);
     const len = Math.hypot(x, y, z);
     const nx = x / len, ny = y / len, nz = z / len;
     let color: RGB;
     let disp = 0;
 
-    if (p.kind === "gas") {
+    if (params.kind === "gas") {
       const warp = fbm(nx * 3 + 5, ny * 3, nz * 3, s, 3) * 0.35;
-      const lat = (ny + warp - 0.17) * p.bandFreq;
+      const lat = (ny + warp - 0.17) * params.bandFreq;
       const band = Math.sin(lat * Math.PI) * 0.5 + 0.5;
       const band2 = Math.sin(lat * Math.PI * 2.3 + 1.3) * 0.5 + 0.5;
-      color = mix(mix(p.bands[0], p.bands[1], band), mix(p.bands[2], p.bands[3], band2), 0.35 + 0.3 * fbm(nx * 6, ny * 1.5, nz * 6, s + 7, 3));
+      color = mix(mix(params.bands[0], params.bands[1], band), mix(params.bands[2], params.bands[3], band2), 0.35 + 0.3 * fbm(nx * 6, ny * 1.5, nz * 6, s + 7, 3));
     } else {
-      const h = fbm(nx * p.noiseScale + 3.1, ny * p.noiseScale + 1.7, nz * p.noiseScale + 9.3, s);
-      const hEff = Math.max(h, p.seaLevel);
-      disp = (hEff - 0.5) * 2 * p.bump;
+      const h = fbm(nx * params.noiseScale + 3.1, ny * params.noiseScale + 1.7, nz * params.noiseScale + 9.3, s);
+      const hEff = Math.max(h, params.seaLevel);
+      disp = (hEff - 0.5) * 2 * params.bump;
       let shade = 1;
 
-      for (const c of p.craters) {
+      for (const c of params.craters) {
         const dot = nx * c.dir[0] + ny * c.dir[1] + nz * c.dir[2];
         const d = Math.acos(Math.min(1, Math.max(-1, dot)));
         const t = d / c.size;
@@ -48,13 +48,13 @@ function buildPlanet(p: PlanetParams, detail: number): THREE.Mesh {
         }
       }
 
-      if (h < p.seaLevel) {
-        color = mix(p.ocean, [p.ocean[0] * 0.5, p.ocean[1] * 0.5, p.ocean[2] * 0.7], 1 - h / p.seaLevel);
+      if (h < params.seaLevel) {
+        color = mix(params.ocean, [params.ocean[0] * 0.5, params.ocean[1] * 0.5, params.ocean[2] * 0.7], 1 - h / params.seaLevel);
       } else {
-        const t = p.seaLevel < 0 ? h : (h - p.seaLevel) / (1 - p.seaLevel);
-        color = mix(p.low, p.high, t);
+        const t = params.seaLevel < 0 ? h : (h - params.seaLevel) / (1 - params.seaLevel);
+        color = mix(params.low, params.high, t);
 
-        if (p.kind === "rocky" && t > 0.82) color = mix(color, [0.95, 0.96, 0.98], (t - 0.82) / 0.18);
+        if (params.kind === "rocky" && t > 0.82) color = mix(color, [0.95, 0.96, 0.98], (t - 0.82) / 0.18);
       }
 
       const grain = 0.9 + 0.2 * noise3(nx * 25, ny * 25, nz * 25, s + 3);
@@ -63,17 +63,17 @@ function buildPlanet(p: PlanetParams, detail: number): THREE.Mesh {
     }
 
     const rr = 1 + disp;
-    pos.setXYZ(i, nx * rr, ny * rr, nz * rr);
-    colors[i * 3] = color[0];
-    colors[i * 3 + 1] = color[1];
-    colors[i * 3 + 2] = color[2];
+    pos.setXYZ(index, nx * rr, ny * rr, nz * rr);
+    colors[index * 3] = color[0];
+    colors[index * 3 + 1] = color[1];
+    colors[index * 3 + 2] = color[2];
   }
 
   geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
 
   const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
-  mesh.scale.setScalar(p.radius);
+  mesh.scale.setScalar(params.radius);
 
   return mesh;
 }

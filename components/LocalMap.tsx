@@ -18,12 +18,12 @@ type Props = {
 /** the stars of one sector; click a star to open its solar system */
 export default function LocalMap({ game, sector, shownSystemId, now, onSelect, onBack }: Props) {
   const [sx, sy] = sector;
-  const systems = game.systems.filter((s) => s.sectorX === sx && s.sectorY === sy);
+  const systems = game.systems.filter((system) => system.sectorX === sx && system.sectorY === sy);
   const view = useMapZoom();
   const base = mapPositions(systems, sectorCentre(sx, sy), SECTOR_LY / 2);
   const pos = new Map([...base].map(([id, point]) => [id, view.project(point)])); // where each star is drawn at this zoom
-  const flying = flyingFleets(game).filter((f) => {
-    const { from, to } = flightOf(game, f, now);
+  const flying = flyingFleets(game).filter((fleet) => {
+    const { from, to } = flightOf(game, fleet, now);
 
     return pos.has(from.systemId) && pos.has(to.systemId) && from.systemId !== to.systemId;
   });
@@ -37,7 +37,7 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
         <button className="ghost" style={{ float: "right", marginTop: -4 }} onClick={onBack}>← Galaxy</button>
       </h2>
       <div ref={view.ref} onPointerDown={view.onPointerDown} className={`map galaxy ${systems.length > 12 && view.zoom < 2.5 ? "crowded" : ""}`}>
-        <div className="zoom-controls" onPointerDown={(e) => e.stopPropagation()}>
+        <div className="zoom-controls" onPointerDown={(event) => event.stopPropagation()}>
           <button onClick={view.zoomIn} title="Zoom in">+</button>
           <button onClick={view.zoomOut} title="Zoom out">−</button>
           <button className="ghost" onClick={view.reset} title="Show the whole sector">×{view.zoom.toFixed(1)}</button>
@@ -53,20 +53,20 @@ export default function LocalMap({ game, sector, shownSystemId, now, onSelect, o
         </svg>
         {systems.length === 0 && <div className="dim" style={{ padding: 12 }}>Surveying sector…</div>}
         {systems.filter((s2) => { const point = pos.get(s2.id)!; return point.x > -5 && point.x < 105 && point.y > -5 && point.y < 105; }).map((sy2) => { // only draw stars inside the map box (plus a small margin) when zoomed in
-          const st = starParams(sy2.seed);
-          const rgb = `rgb(${st.color.map((c) => Math.round(c * 255)).join(",")})`;
+          const star = starParams(sy2.seed);
+          const rgb = `rgb(${star.color.map((c) => Math.round(c * 255)).join(",")})`;
           const owned = game.planets.filter((planet) => planet.kind === "player" && planet.systemId === sy2.id).length;
           const at = pos.get(sy2.id)!;
 
           // diameter on a log scale of the real stellar radius: small stars are near a point of light,
           // supergiants about 6x that (kept modest so stars are easy to click and tell apart)
-          const d = Math.min(25, Math.max(4.25, 6.6 + 5.75 * Math.log10(st.radius / 0.1)));
+          const d = Math.min(25, Math.max(4.25, 6.6 + 5.75 * Math.log10(star.radius / 0.1)));
 
           return (
             <button key={sy2.id} className={`gnode ${sy2.id === shownSystemId ? "sel" : ""} ${owned > 0 ? "home" : ""}`} style={{ left: `${at.x}%`, top: `${at.y}%` }}
-              onClick={() => !view.moved.current && onSelect(sy2.id)} title={`${sy2.name} · ${st.spectral} ${st.label} · ${st.temp} K · ${st.radius < 0.1 ? st.radius.toFixed(3) : st.radius.toFixed(1)} R☉`}>
-              <span className="star" style={{ ["--c" as string]: rgb, ["--d" as string]: `${d}px`, ["--b" as string]: st.bright }} />
-              <span className="label">{sy2.name}{owned > 0 && <b className="mine"> ● {owned}</b>}<small>{st.spectral}</small></span>
+              onClick={() => !view.moved.current && onSelect(sy2.id)} title={`${sy2.name} · ${star.spectral} ${star.label} · ${star.temp} K · ${star.radius < 0.1 ? star.radius.toFixed(3) : star.radius.toFixed(1)} R☉`}>
+              <span className="star" style={{ ["--c" as string]: rgb, ["--d" as string]: `${d}px`, ["--b" as string]: star.bright }} />
+              <span className="label">{sy2.name}{owned > 0 && <b className="mine"> ● {owned}</b>}<small>{star.spectral}</small></span>
             </button>
           );
         })}

@@ -39,12 +39,12 @@ export default function Shipyard({ show, planet, queue, now, shortfall, act }: P
         {SHIP_TYPES.map((t) => { // one row per ship type that can be built
           const s = SHIPS[t];
           const qty = qtys[t] ?? 1;
-          const inQueue = queue.filter((x) => x.type === t);
+          const inQueue = queue.filter((queueItem) => queueItem.type === t);
           const why = !level
             ? "Build a Shipyard first"
             : !(qty >= 1 && qty <= 20)
               ? "Quantity must be between 1 and 20" // explains why the build button is disabled
-              : shortfall(Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
+              : shortfall(Object.fromEntries(Object.entries(s.cost).map(([symbol, n]) => [symbol, n * qty])));
 
           return (
             <div className="tile" key={t}>
@@ -57,7 +57,7 @@ export default function Shipyard({ show, planet, queue, now, shortfall, act }: P
               <div className="sub">{fmtTime(shipSeconds(t, level) * 1000)} each</div>
               {inQueue[0] && <div className="sub good">+{inQueue.length} · next {fmtTime(inQueue[0].finishAt - now)}</div>}
               <div className="tile-actions">
-                <input type="number" min={1} max={20} value={qty} onChange={(e) => setQtys({ ...qtys, [t]: Number(e.target.value) })} />
+                <input type="number" min={1} max={20} value={qty} onChange={(event) => setQtys({ ...qtys, [t]: Number(event.target.value) })} />
                 <button disabled={!!why} title={why} onClick={() => act({ action: "ship", planetId: planet.id, type: t, qty })}>Build</button>
               </div>
             </div>

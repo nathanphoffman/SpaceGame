@@ -29,8 +29,8 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
               <div className="hangar-row" key={t} title={`${n} × ${SHIPS[t].name}`}>
                 <div className="hangar-label">{SHIPS[t].name} <b>×{n}</b></div>
                 <div className="hangar-ships">
-                  {Array.from({ length: shown }, (_, i) => (
-                    <img key={i} src={SHIPS[t].icon} style={{ width: 22 * SHIPS[t].size, height: 22 * SHIPS[t].size }} alt="" />
+                  {Array.from({ length: shown }, (_, index) => (
+                    <img key={index} src={SHIPS[t].icon} style={{ width: 22 * SHIPS[t].size, height: 22 * SHIPS[t].size }} alt="" />
                   ))}
 
                   {n > shown && <span className="dim"> +{n - shown} more</span>}
@@ -43,18 +43,18 @@ export default function FleetsPanel({ planet, showHangar, fleets, planetName, no
       )}
 
       {fleets.length === 0 && <div className="dim">None.</div>}
-      {fleets.map((f) => ( // one row per fleet in the air or on guard
-        <div className="row" key={f.id}>
-          <span className="icon"><img src={fleetIcon(f)} alt="" /></span>
+      {fleets.map((fleet) => ( // one row per fleet in the air or on guard
+        <div className="row" key={fleet.id}>
+          <span className="icon"><img src={fleetIcon(fleet)} alt="" /></span>
           <div className="grow">
-            {f.status === "outbound" ? `${f.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(f.targetId)}`
-              : f.status === "stationed" ? `Guarding ${planetName(f.targetId)}` // status text for a fleet: flying out, guarding, or flying home
-              : `Returning to ${planetName(f.originId)}`}
-            <div className="sub"><ShipList ships={f.ships} />{Object.values(f.loot).some((n) => n > 0) && <> · loot <Cost cost={f.loot} /></>}</div> {/* show loot only when at least one resource was taken */}
+            {fleet.status === "outbound" ? `${fleet.mission === "colonize" ? "Colonizing" : "Attacking"} ${planetName(fleet.targetId)}`
+              : fleet.status === "stationed" ? `Guarding ${planetName(fleet.targetId)}` // status text for a fleet: flying out, guarding, or flying home
+              : `Returning to ${planetName(fleet.originId)}`}
+            <div className="sub"><ShipList ships={fleet.ships} />{Object.values(fleet.loot).some((n) => n > 0) && <> · loot <Cost cost={fleet.loot} /></>}</div> {/* show loot only when at least one resource was taken */}
           </div>
-          {f.status === "stationed"
-            ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: f.id })}>Recall</button>
-            : <b>{fmtTime((f.status === "outbound" ? f.arriveAt : f.returnAt) - now)}</b>}
+          {fleet.status === "stationed"
+            ? <button className="ghost" onClick={() => act({ action: "recall", fleetId: fleet.id })}>Recall</button>
+            : <b>{fmtTime((fleet.status === "outbound" ? fleet.arriveAt : fleet.returnAt) - now)}</b>}
         </div>
       ))}
 

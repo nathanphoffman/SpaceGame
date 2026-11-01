@@ -7,8 +7,8 @@ type Props = { game: GameState; current: [number, number]; onSelect: (sx: number
 /** the whole galaxy as a grid of sectors; Sol's sector is the exact centre */
 export default function GalaxyView({ game, current, onSelect }: Props) {
   // sectors where you own a planet
-  const sectorOfSystem = new Map(game.systems.map((s) => [s.id, `${s.sectorX},${s.sectorY}`]));
-  const mine = new Set(game.planets.filter((p) => p.kind === "player").map((p) => sectorOfSystem.get(p.systemId)));
+  const sectorOfSystem = new Map(game.systems.map((system) => [system.id, `${system.sectorX},${system.sectorY}`]));
+  const mine = new Set(game.planets.filter((planet) => planet.kind === "player").map((p) => sectorOfSystem.get(p.systemId)));
 
   const rows = [];
 

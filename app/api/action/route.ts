@@ -14,15 +14,15 @@ export async function POST(req: Request) {
     const ids = [body.planetId, body.originId, body.targetId].filter((n) => Number.isInteger(n));
     const v = body.view ?? {};
     const view = { sx: v.sx, sy: v.sy, system: v.system, planets: ids };
-    const { state } = await withGame((w, now) => {
+    const { state } = await withGame((world, time) => {
       switch (body.action) {
-        case "build": return build(w, now, body.planetId, body.type);
+        case "build": return build(world, time, body.planetId, body.type);
 
-        case "ship": return buildShips(w, now, body.planetId, body.type, body.qty);
+        case "ship": return buildShips(world, time, body.planetId, body.type, body.qty);
 
-        case "send": return sendFleet(w, now, body.originId, body.targetId, body.ships ?? {});
+        case "send": return sendFleet(world, time, body.originId, body.targetId, body.ships ?? {});
 
-        case "recall": return recallFleet(w, now, body.fleetId);
+        case "recall": return recallFleet(world, time, body.fleetId);
 
         case "reset": return;
 

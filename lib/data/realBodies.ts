@@ -20,25 +20,25 @@ export function parseComposition(text: string) {
 }
 
 /** Pin a seeded random world to what we know about a real one. Bodies with a `look` are fully specified. */
-export function applyLook(p: PlanetParams, b: BodySpec): PlanetParams {
-  const radius = bodyRadius(b.kind, b.diameterKm);
-  const L = b.look;
+export function applyLook(params: PlanetParams, body: BodySpec): PlanetParams {
+  const radius = bodyRadius(body.kind, body.diameterKm);
+  const L = body.look;
 
-  if (!L) return { ...p, radius };
+  if (!L) return { ...params, radius };
 
   return {
-    ...p,
+    ...params,
     radius,
     label: L.label,
-    low: L.low ?? p.low,
-    high: L.high ?? p.high,
-    ocean: L.ocean ?? p.ocean,
-    bands: L.bands ?? p.bands,
+    low: L.low ?? params.low,
+    high: L.high ?? params.high,
+    ocean: L.ocean ?? params.ocean,
+    bands: L.bands ?? params.bands,
     atmosphere: L.atmosphere ?? null,
     seaLevel: L.seaLevel ?? -1,
-    bump: L.bump ?? p.bump,
+    bump: L.bump ?? params.bump,
     rings: L.rings
-      ? { inner: radius * L.rings.inner, outer: radius * L.rings.outer, tilt: L.rings.tilt, color: L.rings.color, seed: p.noiseOffset }
+      ? { inner: radius * L.rings.inner, outer: radius * L.rings.outer, tilt: L.rings.tilt, color: L.rings.color, seed: params.noiseOffset }
       : null,
   };
 }

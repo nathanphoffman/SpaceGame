@@ -5,7 +5,7 @@ import { starParams } from "@/lib/planetGen";
 import type { GameState, PlanetDTO, SystemDTO } from "@/lib/defs";
 import { SystemEngine } from "./three/SystemEngine";
 
-type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (p: PlanetDTO) => void };
+type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; now: number; onSelect: (planet: PlanetDTO) => void };
 
 /** one star system in 3D: drag to rotate, scroll to zoom, click a planet to fly to it. Ships on route fly between planets. */
 export default function SystemView({ game, system, viewed, now, onSelect }: Props) {

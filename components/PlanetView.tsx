@@ -11,12 +11,12 @@ export default function PlanetView({ seed }: { seed: number }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = ref.current!;
-    const p = planetParams(seed);
+    const element = ref.current!;
+    const params = planetParams(seed);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    el.appendChild(renderer.domElement);
+    element.appendChild(renderer.domElement);
     renderer.domElement.style.display = "block";
 
     const scene = new THREE.Scene();
@@ -28,12 +28,12 @@ export default function PlanetView({ seed }: { seed: number }) {
     sun.position.set(5, 3, 5);
     scene.add(sun, new THREE.AmbientLight(0xffffff, 0.35));
 
-    const { group, planet } = createPlanetGroup(p);
+    const { group, planet } = createPlanetGroup(params);
     scene.add(group);
 
     const resize = () => {
-      const w = el.clientWidth || 300;
-      const h = el.clientHeight || 300;
+      const w = element.clientWidth || 300;
+      const h = element.clientHeight || 300;
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
@@ -41,7 +41,7 @@ export default function PlanetView({ seed }: { seed: number }) {
 
     resize();
     const ro = new ResizeObserver(resize);
-    ro.observe(el);
+    ro.observe(element);
 
     let raf = 0;
     let last = performance.now();
@@ -51,7 +51,7 @@ export default function PlanetView({ seed }: { seed: number }) {
       raf = requestAnimationFrame(loop);
 
       if (t - last < frameMs - 1) return; // skip frames above the cap
-      planet.rotation.y += ((t - last) / 1000) * p.spin;
+      planet.rotation.y += ((t - last) / 1000) * params.spin;
       last = t;
       renderer.render(scene, camera);
     };
@@ -69,7 +69,7 @@ export default function PlanetView({ seed }: { seed: number }) {
       });
 
       renderer.dispose();
-      el.removeChild(renderer.domElement);
+      element.removeChild(renderer.domElement);
     };
   }, [seed]);
 

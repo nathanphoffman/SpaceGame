@@ -10,15 +10,15 @@ export function mapPositions(systems: { id: number; x: number; y: number }[], ce
   const MIN_GAP = 3.4;
 
   for (let iter = 0; iter < 60; iter++) {
-    for (let i = 0; i < pts.length; i++) {
-      for (let j = i + 1; j < pts.length; j++) {
-        const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
+    for (let index = 0; index < pts.length; index++) {
+      for (let j = index + 1; j < pts.length; j++) {
+        const dx = pts[j].x - pts[index].x, dy = pts[j].y - pts[index].y;
         const d = Math.hypot(dx, dy);
 
         if (d >= MIN_GAP) continue;
         const push = (MIN_GAP - d) / 2;
         const [ux, uy] = d > 0.001 ? [dx / d, dy / d] : [1, 0];
-        pts[i].x -= ux * push; pts[i].y -= uy * push;
+        pts[index].x -= ux * push; pts[index].y -= uy * push;
         pts[j].x += ux * push; pts[j].y += uy * push;
       }
     }

@@ -7,9 +7,9 @@ const DRAG_PIXELS = 5;
 const scratch = new THREE.Vector3();
 
 /** The pickable closest to the pointer, if the pointer is inside its click radius. */
-export function pickAt(e: MouseEvent, el: HTMLElement, pickables: Pickable[], camera: THREE.Camera): number | null {
-  const r = el.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
+export function pickAt(event: MouseEvent, element: HTMLElement, pickables: Pickable[], camera: THREE.Camera): number | null {
+  const r = element.getBoundingClientRect();
+  const mx = event.clientX - r.left, my = event.clientY - r.top;
   let best: number | null = null, bestD = Infinity;
 
   for (const p of pickables) {

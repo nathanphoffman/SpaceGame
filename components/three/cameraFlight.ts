@@ -14,8 +14,8 @@ export function startFly(camera: THREE.Camera, controls: OrbitControls, pos: THR
 }
 
 /** Moves the camera `dt` seconds along the flight. Returns null once it has arrived. */
-export function stepFly(fly: Fly, dt: number, camera: THREE.Camera, controls: OrbitControls): Fly | null {
-  fly.t += dt / fly.dur;
+export function stepFly(fly: Fly, deltaSeconds: number, camera: THREE.Camera, controls: OrbitControls): Fly | null {
+  fly.t += deltaSeconds / fly.dur;
   const k = ease(Math.min(1, fly.t));
   camera.position.lerpVectors(fly.fromPos, fly.toPos, k);
   controls.target.lerpVectors(fly.fromTarget, fly.toTarget, k);

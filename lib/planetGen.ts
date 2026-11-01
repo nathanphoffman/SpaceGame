@@ -81,8 +81,8 @@ export function noise3(x: number, y: number, z: number, s: number) {
 export function fbm(x: number, y: number, z: number, s: number, octaves = 5) {
   let sum = 0, amp = 0.5, norm = 0, f = 1;
 
-  for (let i = 0; i < octaves; i++) {
-    sum += amp * noise3(x * f, y * f, z * f, s + i * 101);
+  for (let index = 0; index < octaves; index++) {
+    sum += amp * noise3(x * f, y * f, z * f, s + index * 101);
     norm += amp;
     amp *= 0.5;
     f *= 2;
@@ -95,14 +95,14 @@ export function fbm(x: number, y: number, z: number, s: number, octaves = 5) {
 
 export function planetParams(seed: number): PlanetParams {
   const real = BODY_BY_SEED.get(seed); // real bodies pin kind, size and (if known) look to the data
-  const r = mulberry32(seed * 7919 + 17);
+  const random = mulberry32(seed * 7919 + 17);
 
-  const range = (a: number, b: number) => a + (b - a) * r();
+  const range = (a: number, b: number) => a + (b - a) * random();
 
   // nudge each colour channel by up to +-amt at random and keep it within 0..1
-  const jitter = (c: RGB, amt = 0.08): RGB => c.map((v) => Math.min(1, Math.max(0, v + (r() - 0.5) * amt * 2))) as RGB;
+  const jitter = (c: RGB, amt = 0.08): RGB => c.map((v) => Math.min(1, Math.max(0, v + (random() - 0.5) * amt * 2))) as RGB;
 
-  const roll = r();
+  const roll = random();
   // pick the kind from the roll: 25% rocky, 25% moon, 20% gas, 15% ice, 15% desert
   const kind: PlanetKind = real?.kind ?? (roll < 0.25 ? "rocky" : roll < 0.5 ? "moon" : roll < 0.7 ? "gas" : roll < 0.85 ? "ice" : "desert");
 
@@ -111,13 +111,13 @@ export function planetParams(seed: number): PlanetParams {
   }[kind];
 
   const bumpMax = { moon: 0.08, rocky: 0.13, desert: 0.12, ice: 0.06, gas: 0 }[kind];
-  const bump = bumpMax * Math.pow(r(), 0.8);
+  const bump = bumpMax * Math.pow(random(), 0.8);
   const craterMax = { moon: 80, rocky: 20, desert: 30, ice: 25, gas: 0 }[kind];
-  const craterCount = real?.look?.craters ?? Math.floor(craterMax * Math.pow(r(), 1.2));
+  const craterCount = real?.look?.craters ?? Math.floor(craterMax * Math.pow(random(), 1.2));
 
   const craters = Array.from({ length: craterCount }, () => {
-    const z = r() * 2 - 1, a = r() * Math.PI * 2, s = Math.sqrt(1 - z * z);
-    const big = Math.pow(r(), 2.5);
+    const z = random() * 2 - 1, a = random() * Math.PI * 2, s = Math.sqrt(1 - z * z);
+    const big = Math.pow(random(), 2.5);
 
     return { dir: [s * Math.cos(a), z, s * Math.sin(a)] as RGB, size: 0.05 + big * 0.28, depth: 0.02 + big * 0.05 };
   });
@@ -139,7 +139,7 @@ export function planetParams(seed: number): PlanetParams {
   const atmoColor: RGB = { rocky: [0.4, 0.65, 1], ice: [0.7, 0.85, 1], desert: [1, 0.7, 0.45], moon: [1, 1, 1], gas: [0.9, 0.8, 0.6] }[kind] as RGB;
 
   const ringChance = { gas: 0.65, ice: 0.25, rocky: 0.1, desert: 0.1, moon: 0.05 }[kind];
-  const hasRings = r() < ringChance;
+  const hasRings = random() < ringChance;
   const inner = radius * range(1.25, 1.5);
 
   const params: PlanetParams = {
@@ -149,16 +149,16 @@ export function planetParams(seed: number): PlanetParams {
     craters,
     seaLevel: kind === "rocky" ? range(0.4, 0.55) : -1,
     noiseScale: range(1.2, 2.6),
-    noiseOffset: Math.floor(r() * 1000),
+    noiseOffset: Math.floor(random() * 1000),
     low: jitter(pal.low),
     high: jitter(pal.high),
     ocean: jitter([0.1, 0.25, 0.5], 0.05),
     bands,
     bandFreq: range(5, 12),
     // only some planets get an atmosphere
-    atmosphere: r() < atmoChance ? atmoColor : null,
+    atmosphere: random() < atmoChance ? atmoColor : null,
     rings: hasRings
-      ? { inner, outer: Math.min(inner + radius * range(0.4, 0.8), radius * 1.9), tilt: range(-0.5, 0.5), color: jitter([0.75, 0.7, 0.62], 0.1), seed: Math.floor(r() * 1000) }
+      ? { inner, outer: Math.min(inner + radius * range(0.4, 0.8), radius * 1.9), tilt: range(-0.5, 0.5), color: jitter([0.75, 0.7, 0.62], 0.1), seed: Math.floor(random() * 1000) }
       : null,
     tilt: range(-0.45, 0.45),
     spin: range(0.08, 0.3),

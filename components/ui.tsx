@@ -14,16 +14,16 @@ export const elementColor = (sym: string) => ELEMENTS[sym as Element]?.color ?? 
 export const SHIP_TYPES = Object.keys(SHIPS) as ShipType[];
 
 /** icon shown for a fleet on the maps and in the fleet list */
-export const fleetIcon = (f: FleetDTO) => (f.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon);
+export const fleetIcon = (fleet: FleetDTO) => (fleet.mission === "colonize" ? SHIPS.colony_ship.icon : SHIPS.fighter.icon);
 
 export const Ico = ({ src, big }: { src: string; big?: boolean }) => <img src={src} alt="" className={big ? "ico big" : "ico"} />;
 
 /** a bundle of resources as coloured element symbols, e.g. "Fe 60  Si 15" */
 export const Cost = ({ cost }: { cost: Res }) => (
   <>
-    {Object.entries(cost).filter(([, n]) => n > 0).map(([el, n]) => (
-      <span key={el} className="cost" title={ELEMENTS[el as Element]?.name}>
-        <b style={{ color: elementColor(el) }}>{el}</b> {Math.round(n)}
+    {Object.entries(cost).filter(([, n]) => n > 0).map(([symbol, n]) => (
+      <span key={symbol} className="cost" title={ELEMENTS[symbol as Element]?.name}>
+        <b style={{ color: elementColor(symbol) }}>{symbol}</b> {Math.round(n)}
       </span>
     ))}
 

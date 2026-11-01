@@ -33,8 +33,8 @@ export function planetPosition(planet: PlanetDTO, nowMs: number, out: THREE.Vect
 /** the circle a planet travels along */
 export function orbitRing(orbitAU: number, segments: number) {
   const distance = sceneDistance(orbitAU);
-  const points = Array.from({ length: segments + 1 }, (_, i) => {
-    const angle = (i / segments) * Math.PI * 2;
+  const points = Array.from({ length: segments + 1 }, (_, index) => {
+    const angle = (index / segments) * Math.PI * 2;
 
     return new THREE.Vector3(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
   });

@@ -15,11 +15,11 @@ export type Filler = {
 
 /** 2d6: 2 and 12 are rare (1 in 36 each), 7 is the most common. */
 export function planetCount(starSeed: number) {
-  const r = mulberry32(starSeed * 977 + 13);
+  const random = mulberry32(starSeed * 977 + 13);
 
-  for (let i = 0; i < 3; i++) r();
+  for (let index = 0; index < 3; index++) random();
 
-  return 2 + Math.floor(r() * 6) + Math.floor(r() * 6); // two d6 (each 0..5, +1 each)
+  return 2 + Math.floor(random() * 6) + Math.floor(random() * 6); // two d6 (each 0..5, +1 each)
 }
 
 /**

@@ -47,20 +47,20 @@ export class SystemEngine {
   private running = { frame: 0, disposed: false, unbind: () => {}, resize: null as ResizeObserver | null };
   private scratch = new THREE.Vector3();
 
-  constructor(private el: HTMLElement, private callbacks: EngineCallbacks) {
+  constructor(private element: HTMLElement, private callbacks: EngineCallbacks) {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
     this.renderer.domElement.style.display = "block";
-    el.appendChild(this.renderer.domElement);
+    element.appendChild(this.renderer.domElement);
     this.labelLayer.domElement.className = "labels";
-    el.appendChild(this.labelLayer.domElement);
+    element.appendChild(this.labelLayer.domElement);
     this.scene.add(this.stars, this.content);
-    this.controls = new OrbitControls(this.camera, el);
+    this.controls = new OrbitControls(this.camera, element);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
     this.running.resize = new ResizeObserver(() => this.resize());
-    this.running.resize.observe(el);
+    this.running.resize.observe(element);
     this.resize();
-    this.running.unbind = bindPointer(el, (e) => pickAt(e, el, this.world.pickables, this.camera), (id) => { if (id != null) this.callbacks.onPlanet(id); });
+    this.running.unbind = bindPointer(element, (event) => pickAt(event, element, this.world.pickables, this.camera), (id) => { if (id != null) this.callbacks.onPlanet(id); });
     this.running.frame = requestAnimationFrame(this.loop);
   }
 
@@ -211,20 +211,20 @@ export class SystemEngine {
   }
 
   private resize() {
-    const width = this.el.clientWidth || 800, height = this.el.clientHeight || 500;
+    const width = this.element.clientWidth || 800, height = this.element.clientHeight || 500;
     this.renderer.setSize(width, height);
     this.labelLayer.setSize(width, height);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }
 
-  private moveBodies(dt: number, now: number) {
+  private moveBodies(deltaSeconds: number, now: number) {
     for (const node of this.world.planets.values()) {
       planetPosition(node.dto, now, node.holder.position);
-      node.mesh.rotation.y += dt * node.spin * PLANET_SPIN_SPEEDUP;
+      node.mesh.rotation.y += deltaSeconds * node.spin * PLANET_SPIN_SPEEDUP;
     }
 
-    if (this.world.star) this.world.star.rotation.y += dt * STAR_SPIN;
+    if (this.world.star) this.world.star.rotation.y += deltaSeconds * STAR_SPIN;
 
     const game = this.clock.game;
 

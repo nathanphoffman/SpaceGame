@@ -4,7 +4,7 @@ import { Ico } from "./ui";
 type Props = {
   planets: PlanetDTO[]; // your planets
   current: PlanetDTO;
-  stock: (el: string) => number;
+  stock: (symbol: string) => number;
   rate: Res;
   onSelect: (id: number) => void;
   onReset: () => void;

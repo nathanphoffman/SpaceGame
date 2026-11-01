@@ -16,18 +16,18 @@ const NPC_RESOURCE_CAP = 3000;
 
 // ---------- simulation ----------
 
-function accrue(p: Planet, t: Date) {
-  if (t <= p.updated_at) return;
+function accrue(planet: Planet, time: Date) {
+  if (time <= planet.updated_at) return;
 
-  if (p.kind !== "empty") {
-    const dt = (t.getTime() - p.updated_at.getTime()) / 1000;
-    const rate = productionRates(p.buildings, planetStats(p.seed).composition);
-    const cap = p.kind === "npc" ? NPC_RESOURCE_CAP : Infinity;
+  if (planet.kind !== "empty") {
+    const deltaSeconds = (time.getTime() - planet.updated_at.getTime()) / 1000;
+    const rate = productionRates(planet.buildings, planetStats(planet.seed).composition);
+    const cap = planet.kind === "npc" ? NPC_RESOURCE_CAP : Infinity;
 
-    for (const [el, perSec] of Object.entries(rate)) p.resources[el] = Math.min(cap, (p.resources[el] ?? 0) + perSec * dt);
+    for (const [el, perSec] of Object.entries(rate)) planet.resources[el] = Math.min(cap, (planet.resources[el] ?? 0) + perSec * deltaSeconds);
   }
 
-  p.updated_at = t;
+  planet.updated_at = time;
 }
 
 const addRes = (to: Res, from: Res) => {
@@ -40,30 +40,30 @@ const resText = (r: Res) => // turn a resource bundle into text like "60 Fe, 15 
 const shipList = (s: Record<string, number>) => // turn a ship bundle into text like "3 Cruiser"
   Object.entries(s).filter(([, n]) => n > 0).map(([t, n]) => `${n} ${SHIPS[t as ShipType].name}`).join(", ") || "nothing";
 
-function arrive(w: World, f: Fleet) {
-  const target = w.planets.find((p) => p.id === f.target_id)!;
-  accrue(target, f.arrive_at);
-  const flight = f.arrive_at.getTime() - f.depart_at.getTime();
+function arrive(world: World, fleet: Fleet) {
+  const target = world.planets.find((p) => p.id === fleet.target_id)!;
+  accrue(target, fleet.arrive_at);
+  const flight = fleet.arrive_at.getTime() - fleet.depart_at.getTime();
 
   const goHome = () => {
-    f.status = "returning";
-    f.return_at = new Date(f.arrive_at.getTime() + flight);
+    fleet.status = "returning";
+    fleet.return_at = new Date(fleet.arrive_at.getTime() + flight);
   };
 
-  if (f.mission === "colonize") {
+  if (fleet.mission === "colonize") {
     if (target.kind !== "empty") {
-      f.report = `Colonization of ${target.name} failed: planet is already taken.`;
+      fleet.report = `Colonization of ${target.name} failed: planet is already taken.`;
 
       return goHome();
     }
 
-    f.ships.colony_ship -= 1;
+    fleet.ships.colony_ship -= 1;
     target.kind = "player";
     target.resources = { Fe: 100, Si: 50 };
-    target.updated_at = f.arrive_at;
+    target.updated_at = fleet.arrive_at;
 
     // the rest of this fleet, and any fleet already guarding the planet, join the new base
-    const joining = [f, ...w.fleets.filter((g) => g !== f && g.status === "stationed" && g.target_id === target.id)];
+    const joining = [fleet, ...world.fleets.filter((g) => g !== fleet && g.status === "stationed" && g.target_id === target.id)];
 
     for (const g of joining) {
       for (const [t, n] of Object.entries(g.ships)) target.ships[t] = (target.ships[t] ?? 0) + n;
@@ -71,24 +71,24 @@ function arrive(w: World, f: Fleet) {
       g.status = "done";
     }
 
-    f.report = `Colonized ${target.name}! ${joining.length > 1 ? "The guarding fleet joined the new base." : ""}`.trim();
+    fleet.report = `Colonized ${target.name}! ${joining.length > 1 ? "The guarding fleet joined the new base." : ""}`.trim();
 
     return;
   }
 
   // neutral planet: nothing to fight, so the fleet just guards it
   if (target.kind === "empty") {
-    f.status = "stationed";
-    f.report = `Your fleet arrived at ${target.name} and is guarding it.`;
+    fleet.status = "stationed";
+    fleet.report = `Your fleet arrived at ${target.name} and is guarding it.`;
 
     return;
   }
 
   // enemy planet: fight
-  const power = Object.entries(f.ships).reduce((sum, [t, n]) => sum + n * SHIPS[t as ShipType].attack, 0);
+  const power = Object.entries(fleet.ships).reduce((sum, [t, n]) => sum + n * SHIPS[t as ShipType].attack, 0);
 
   if (target.kind !== "npc") {
-    f.report = `Attack on ${target.name} aborted: nothing to attack.`;
+    fleet.report = `Attack on ${target.name} aborted: nothing to attack.`;
 
     return goHome();
   }
@@ -97,13 +97,13 @@ function arrive(w: World, f: Fleet) {
     const lossRatio = (target.defense / power) * 0.6;
     const lost: Record<string, number> = {};
 
-    for (const t of Object.keys(f.ships)) {
-      lost[t] = Math.round(f.ships[t] * lossRatio);
-      f.ships[t] -= lost[t];
+    for (const t of Object.keys(fleet.ships)) {
+      lost[t] = Math.round(fleet.ships[t] * lossRatio);
+      fleet.ships[t] -= lost[t];
     }
 
     // total cargo space: each ship's cargo times how many of it there are
-    const cargo = Object.entries(f.ships).reduce((s, [t, n]) => s + n * SHIPS[t as ShipType].cargo, 0);
+    const cargo = Object.entries(fleet.ships).reduce((s, [t, n]) => s + n * SHIPS[t as ShipType].cargo, 0);
 
     // take the biggest stockpiles first until the cargo holds are full
     let room = cargo;
@@ -115,23 +115,23 @@ function arrive(w: World, f: Fleet) {
       if (take > 0) { loot[el] = take; room -= take; }
     }
 
-    f.loot = loot;
+    fleet.loot = loot;
 
     // the enemy base is destroyed; the planet becomes neutral and the fleet guards it
     target.kind = "empty";
     target.buildings = {};
     target.defense = 0;
     target.resources = {};
-    f.status = "stationed";
-    f.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${resText(f.loot)}. Lost: ${shipList(lost)}.`;
+    fleet.status = "stationed";
+    fleet.report = `Victory at ${target.name}! The enemy is destroyed and your fleet now guards the planet. Looted ${resText(fleet.loot)}. Lost: ${shipList(lost)}.`;
 
     return;
   }
 
   target.defense = Math.max(0, target.defense - Math.floor(power * 0.5));
-  f.report = `Defeat at ${target.name}. Fleet lost (${shipList(f.ships)}). Their defense is now ${target.defense}.`;
-  f.ships = {};
-  f.status = "done";
+  fleet.report = `Defeat at ${target.name}. Fleet lost (${shipList(fleet.ships)}). Their defense is now ${target.defense}.`;
+  fleet.ships = {};
+  fleet.status = "done";
 }
 
 function settle(w: World, now: Date) {
@@ -143,14 +143,14 @@ function settle(w: World, now: Date) {
       if (when <= now && (!t || when < t)) { t = when; run = fn; }
     };
 
-    for (const q of w.queue) {
-      consider(q.finish_at, () => { // a building or ship finishes
-        const p = w.planets.find((x) => x.id === q.planet_id)!;
-        accrue(p, q.finish_at);
+    for (const queueItem of w.queue) {
+      consider(queueItem.finish_at, () => { // a building or ship finishes
+        const p = w.planets.find((x) => x.id === queueItem.planet_id)!;
+        accrue(p, queueItem.finish_at);
 
-        if (q.kind === "building") p.buildings[q.type] = (p.buildings[q.type] ?? 0) + 1;
-        else p.ships[q.type] = (p.ships[q.type] ?? 0) + 1;
-        w.queue = w.queue.filter((x) => x !== q);
+        if (queueItem.kind === "building") p.buildings[queueItem.type] = (p.buildings[queueItem.type] ?? 0) + 1;
+        else p.ships[queueItem.type] = (p.ships[queueItem.type] ?? 0) + 1;
+        w.queue = w.queue.filter((x) => x !== queueItem);
       });
     }
 
@@ -180,30 +180,30 @@ function settle(w: World, now: Date) {
 
 export async function withGame<T>(fn: (w: World, now: Date) => T, view: View = {}): Promise<{ result: T; state: GameState }> {
   await ready();
-  const c = await pool.connect();
+  const client = await pool.connect();
 
   try {
-    await c.query("BEGIN");
-    await c.query("SELECT pg_advisory_xact_lock(42)"); // one writer at a time
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(42)"); // one writer at a time
 
     // stars and planets are generated the first time they are looked at
-    if (view.sx !== undefined && view.sy !== undefined && validSector(view.sx, view.sy)) await ensureSector(c, view.sx, view.sy);
+    if (view.sx !== undefined && view.sy !== undefined && validSector(view.sx, view.sy)) await ensureSector(client, view.sx, view.sy);
 
-    if (view.system !== undefined) await ensureSystem(c, view.system);
-    const w = await load(c, view);
+    if (view.system !== undefined) await ensureSystem(client, view.system);
+    const w = await load(client, view);
     const now = new Date();
     settle(w, now);
     const result = fn(w, now);
-    await save(c, w);
-    await c.query("COMMIT");
+    await save(client, w);
+    await client.query("COMMIT");
 
     return { result, state: toState(w, now) };
   } catch (e) {
-    await c.query("ROLLBACK");
+    await client.query("ROLLBACK");
 
     throw e;
   } finally {
-    c.release();
+    client.release();
   }
 }
 
@@ -280,7 +280,7 @@ export function buildShips(w: World, now: Date, planetId: number, type: ShipType
   pay(p, Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
   let start = lastFinish(w, p.id, "ship", now);
 
-  for (let i = 0; i < qty; i++) {
+  for (let index = 0; index < qty; index++) {
     const finish = new Date(start.getTime() + shipSeconds(type, p.buildings.shipyard) * 1000);
     w.queue.push({ id: randomUUID(), planet_id: p.id, kind: "ship", type, start_at: start, finish_at: finish });
     start = finish;

@@ -25,8 +25,8 @@ function galacticXY(raH: number, raM: number, decD: number, decM: number, ly: nu
   return [ly * Math.cos(b) * Math.cos(l), ly * Math.cos(b) * Math.sin(l)];
 }
 
-export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly, spec, tempK, radius], i) => { // build one system per catalogue star, attaching the planets known for that star
-  const id = i + 1;
+export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly, spec, tempK, radius], index) => { // build one system per catalogue star, attaching the planets known for that star
+  const id = index + 1;
   const [x, y] = galacticXY(raH, raM, decD, decM, ly);
   const bodies: BodySpec[] = [];
 
@@ -44,7 +44,7 @@ export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly,
   return { id, seed: SEED_BASE + id, name, spec, tempK, radius, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, ly, bodies, complete: name === "Sol" };
 });
 
-export const BODY_BY_SEED = new Map(SYSTEMS.flatMap((s) => s.bodies).map((b) => [b.seed, b]));
+export const BODY_BY_SEED = new Map(SYSTEMS.flatMap((system) => system.bodies).map((body) => [body.seed, body]));
 export const STAR_BY_SEED = new Map(SYSTEMS.map((s) => [s.seed, s]));
 
 /** one line for the planet panel: where this world's data comes from */

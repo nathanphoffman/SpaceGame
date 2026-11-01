@@ -39,8 +39,8 @@ export default function PlanetPanel({ planet, systemSeed, guards }: Props) {
           <div><span className="dim">Diameter</span> <b>{stats.diameterKm.toLocaleString()} km</b> <span className="dim">({stats.earths.toFixed(2)} × Earth)</span></div>
           <div><span className="dim">Orbit</span> <b>{fmtAU(planet.orbit)}</b> <span className="dim">· ~{Math.round(equilibriumTempK(starParams(systemSeed), planet.orbit) - 273.15)} °C</span></div>
         </div>
-        {guards.map((f) => ( // one line per fleet guarding this planet
-          <div key={f.id} className="good">Guarded by your fleet: <ShipList ships={f.ships} /></div>
+        {guards.map((fleet) => ( // one line per fleet guarding this planet
+          <div key={fleet.id} className="good">Guarded by your fleet: <ShipList ships={fleet.ships} /></div>
         ))}
 
       </div>

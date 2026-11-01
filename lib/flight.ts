@@ -1,7 +1,7 @@
 import type { FleetDTO, GameState } from "./defs";
 
 // find a planet by id; every fleet refers to planets that are loaded
-const planetOf = (game: GameState, id: number) => game.planets.find((p) => p.id === id)!;
+const planetOf = (game: GameState, id: number) => game.planets.find((planet) => planet.id === id)!;
 
 /** fleets currently in the air (not guarding a planet) */
 export const flyingFleets = (game: GameState) => game.fleets.filter((fleet) => fleet.status === "outbound" || fleet.status === "returning");

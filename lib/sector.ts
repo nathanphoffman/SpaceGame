@@ -19,11 +19,11 @@ export const sectorOf = (x: number, y: number): [number, number] =>
 export const generatedSystemId = (sx: number, sy: number, n: number) => 1000 + (sy * GRID + sx) * 100 + n;
 
 const sectorRng = (sx: number, sy: number) => {
-  const r = mulberry32((sx * 131 + sy * 977 + 5) * 7919 + 101);
+  const random = mulberry32((sx * 131 + sy * 977 + 5) * 7919 + 101);
 
-  for (let i = 0; i < 5; i++) r();
+  for (let index = 0; index < 5; index++) random();
 
-  return r;
+  return random;
 };
 
 const countFrom = (r: () => number) => 18 + Math.floor(r() * 18);

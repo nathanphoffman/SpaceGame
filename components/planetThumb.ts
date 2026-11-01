@@ -17,9 +17,9 @@ export function planetThumb(seed: number): string {
   renderer.setSize(SIZE, SIZE, false);
   renderer.setClearColor(0x000000, 0);
 
-  const p = planetParams(seed);
+  const params = planetParams(seed);
   const scene = new THREE.Scene();
-  const half = planetExtent(p) * 1.05; // world units from centre to frame edge
+  const half = planetExtent(params) * 1.05; // world units from centre to frame edge
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
   const z = half / Math.tan((20 * Math.PI) / 180);
   camera.position.set(0, 0, z);
@@ -29,7 +29,7 @@ export function planetThumb(seed: number): string {
   sun.position.set(5, 3, 5);
   scene.add(sun, new THREE.AmbientLight(0xffffff, 0.35));
 
-  const { group, planet } = createPlanetGroup(p, 0.5);
+  const { group, planet } = createPlanetGroup(params, 0.5);
   planet.rotation.y = (seed % 628) / 100; // varied side facing the viewer
   scene.add(group);
   renderer.render(scene, camera);

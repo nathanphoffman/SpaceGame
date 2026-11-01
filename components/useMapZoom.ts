@@ -26,20 +26,20 @@ export function useMapZoom() {
   }, []);
 
   useEffect(() => {
-    const el = ref.current;
+    const symbol = ref.current;
 
-    if (!el) return;
+    if (!symbol) return;
 
     // needs a non-passive listener, otherwise the page scrolls as well
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const r = el.getBoundingClientRect();
-      zoomAt(Math.exp(-e.deltaY * 0.0015), ((e.clientX - r.left) / r.width) * 100, ((e.clientY - r.top) / r.height) * 100);
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const r = symbol.getBoundingClientRect();
+      zoomAt(Math.exp(-event.deltaY * 0.0015), ((event.clientX - r.left) / r.width) * 100, ((event.clientY - r.top) / r.height) * 100);
     };
 
-    el.addEventListener("wheel", onWheel, { passive: false });
+    symbol.addEventListener("wheel", onWheel, { passive: false });
 
-    return () => el.removeEventListener("wheel", onWheel);
+    return () => symbol.removeEventListener("wheel", onWheel);
   }, [zoomAt]);
 
   const onPointerDown = (e: React.PointerEvent) => { // start dragging the map: remember where the drag began
