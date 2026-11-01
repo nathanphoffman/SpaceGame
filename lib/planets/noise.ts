@@ -73,14 +73,14 @@ export function noise3(coordX: number, coordY: number, coordZ: number, seed: num
 
 /** fractal noise, roughly 0..1 with contrast boosted around 0.5 */
 export function fbm(coordX: number, coordY: number, coordZ: number, seed: number, octaves = DEFAULT_OCTAVES) {
-  let sum = 0, amplitude = HALF, norm = 0, frequency = 1;
+  let total = 0, amplitude = HALF, norm = 0, frequency = 1;
 
   for (let octave = 0; octave < octaves; octave++) {
-    sum += amplitude * noise3(coordX * frequency, coordY * frequency, coordZ * frequency, seed + octave * OCTAVE_SEED_STEP);
+    total += amplitude * noise3(coordX * frequency, coordY * frequency, coordZ * frequency, seed + octave * OCTAVE_SEED_STEP);
     norm += amplitude;
     amplitude *= HALF;
     frequency *= 2;
   }
 
-  return Math.min(1, Math.max(0, ((sum / norm) - HALF) * CONTRAST + HALF));
+  return Math.min(1, Math.max(0, ((total / norm) - HALF) * CONTRAST + HALF));
 }

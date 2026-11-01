@@ -35,10 +35,10 @@ function renderThumb(seed: number) {
   planet.rotation.y = (seed % SPIN_STEPS) / SPIN_DIVISOR;
   scene.add(group);
   renderer.render(scene, camera);
-  const url = renderer.domElement.toDataURL("image/png");
+  const dataUrl = renderer.domElement.toDataURL("image/png");
   disposeScene(scene);
 
-  return url;
+  return dataUrl;
 }
 
 export function planetThumb(seed: number): string {

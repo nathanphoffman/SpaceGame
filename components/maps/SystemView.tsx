@@ -9,7 +9,7 @@ type Props = { game: GameState; system: SystemDTO; viewed: PlanetDTO; nowMs: num
 
 /** one star system in 3D: drag to rotate, scroll to zoom, click a planet to fly to it. Ships on route fly between planets. */
 export default function SystemView({ game, system, viewed, nowMs: now, onSelect }: Props) {
-  const box = useRef<HTMLDivElement>(null);
+  const container = useRef<HTMLDivElement>(null);
   const engine = useRef<SystemEngine | null>(null);
 
   const select = useRef(onSelect);
@@ -18,8 +18,8 @@ export default function SystemView({ game, system, viewed, nowMs: now, onSelect 
   const star = starParams(system.seed);
 
   useEffect(() => {
-    const event = new SystemEngine(box.current!, {
-      onPlanet: (id) => { const p = latest.current.planets.find((x) => x.id === id); if (p) select.current(p); }, // clicks from the 3D scene come back as a planet id; look up the full planet and pass it up
+    const event = new SystemEngine(container.current!, {
+      onPlanet: (planetId) => { const p = latest.current.planets.find((xPosition) => xPosition.id === planetId); if (p) select.current(p); }, // clicks from the 3D scene come back as a planet id; look up the full planet and pass it up
     });
 
     engine.current = event;
@@ -37,7 +37,7 @@ export default function SystemView({ game, system, viewed, nowMs: now, onSelect 
         Solar system — {system.name} <span className="dim">({star.spectral} · {star.label})</span>
         <button className="ghost" style={{ float: "right", padding: "1px 8px" }} onClick={() => engine.current?.overview()}>Zoom out</button>
       </h2>
-      <div className="system3d" ref={box} />
+      <div className="system3d" ref={container} />
       <div className="dim" style={{ marginTop: 8 }}>
         <b className="mine">●</b> yours · <b className="foe">●</b> enemy · grey = neutral. Drag to rotate, scroll to zoom, click a planet to fly to it.
         Distances are compressed and planets enlarged so everything fits; orbit order is real.

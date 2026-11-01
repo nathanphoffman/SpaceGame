@@ -27,9 +27,9 @@ function zoomedView(current: View, factor: number, percentX: number, percentY: n
 }
 
 /** scroll-wheel zoom toward the cursor; needs a non-passive listener, otherwise the page scrolls as well */
-function useWheelZoom(box: RefObject<HTMLDivElement | null>, zoomAt: (factor: number, u: number, w: number) => void) {
+function useWheelZoom(container: RefObject<HTMLDivElement | null>, zoomAt: (factor: number, u: number, w: number) => void) {
   useEffect(() => {
-    const element = box.current;
+    const element = container.current;
 
     if (!element) return;
 
@@ -42,7 +42,7 @@ function useWheelZoom(box: RefObject<HTMLDivElement | null>, zoomAt: (factor: nu
     element.addEventListener("wheel", onWheel, { passive: false });
 
     return () => element.removeEventListener("wheel", onWheel);
-  }, [box, zoomAt]);
+  }, [container, zoomAt]);
 }
 
 /** press on the map and drag to move it; `moved` tells click handlers that the press turned out to be a drag */
@@ -60,9 +60,9 @@ function startDrag(event: React.PointerEvent, box: RefObject<HTMLDivElement | nu
 
     if (!moved.current) return;
 
-    const dx = ((drag.clientX - last.x) / rect.width) * PERCENT, dy = ((drag.clientY - last.y) / rect.height) * PERCENT;
+    const deltaX = ((drag.clientX - last.x) / rect.width) * PERCENT, deltaY = ((drag.clientY - last.y) / rect.height) * PERCENT;
     last = { x: drag.clientX, y: drag.clientY };
-    setView((current) => keepInside({ ...current, cx: current.cx - dx / current.z, cy: current.cy - dy / current.z }));
+    setView((current) => keepInside({ ...current, cx: current.cx - deltaX / current.z, cy: current.cy - deltaY / current.z }));
   };
 
   const up = () => { window.removeEventListener(POINTER_EVENT.move, move); window.removeEventListener(POINTER_EVENT.up, up); };
@@ -73,17 +73,17 @@ function startDrag(event: React.PointerEvent, box: RefObject<HTMLDivElement | nu
 /** Scroll-wheel zoom (toward the cursor), drag to pan, and zoom buttons for a map whose points are in 0..100 %. */
 export function useMapZoom() {
   const [view, setView] = useState<View>(START_VIEW);
-  const ref = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
   const moved = useRef(false); // true if the last press was a drag, so it shouldn't count as a click on a star
   const zoomAt = useCallback((factor: number, u = CENTRE, w = CENTRE) => setView((current) => zoomedView(current, factor, u, w)), []);
 
-  useWheelZoom(ref, zoomAt);
+  useWheelZoom(elementRef, zoomAt);
 
   return {
     zoom: view.z,
-    ref,
+    ref: elementRef,
     moved,
-    onPointerDown: (event: React.PointerEvent) => startDrag(event, ref, moved, setView),
+    onPointerDown: (event: React.PointerEvent) => startDrag(event, elementRef, moved, setView),
     zoomIn: () => zoomAt(BUTTON_ZOOM_STEP),
     zoomOut: () => zoomAt(1 / BUTTON_ZOOM_STEP),
     reset: () => setView(START_VIEW),

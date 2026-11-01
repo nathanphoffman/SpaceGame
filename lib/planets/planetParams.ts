@@ -2,22 +2,22 @@ import { BODY_BY_SEED } from "@/lib/data/catalog";
 import { applyLook } from "@/lib/data/realBodies";
 import type { BodySpec } from "@/lib/data/types";
 import { mulberry32 } from "./noise";
-import type { PlanetKind, PlanetParams, RGB } from "./types";
+import type { PlanetKind, PlanetParams, RgbColor } from "./types";
 
 // Deterministic planet generation: the same seed always gives the same world.
 // Pure functions only (no three.js) so it can be used on the server or in scripts.
 // The random numbers must be drawn in the same order as always, or every existing world would change its look.
 
 type Range = (low: number, high: number) => number;
-type Jitter = (color: RGB, amount?: number) => RGB;
+type Jitter = (color: RgbColor, amount?: number) => RgbColor;
 
 const KIND_ROLLS: [number, PlanetKind][] = [[0.25, "rocky"], [0.5, "moon"], [0.7, "gas"], [0.85, "ice"]]; // 25% rocky, 25% moon, 20% gas, 15% ice, the rest desert
 const BUMP_MAX: Record<PlanetKind, number> = { moon: 0.08, rocky: 0.13, desert: 0.12, ice: 0.06, gas: 0 };
 const CRATER_MAX: Record<PlanetKind, number> = { moon: 80, rocky: 20, desert: 30, ice: 25, gas: 0 };
 const ATMOSPHERE_CHANCE: Record<PlanetKind, number> = { rocky: 0.8, ice: 0.4, desert: 0.5, moon: 0, gas: 1 };
 const RING_CHANCE: Record<PlanetKind, number> = { gas: 0.65, ice: 0.25, rocky: 0.1, desert: 0.1, moon: 0.05 };
-const ATMOSPHERE_COLOR: Record<PlanetKind, RGB> = { rocky: [0.4, 0.65, 1], ice: [0.7, 0.85, 1], desert: [1, 0.7, 0.45], moon: [1, 1, 1], gas: [0.9, 0.8, 0.6] };
-const PALETTES: Record<PlanetKind, { low: RGB; high: RGB }> = {
+const ATMOSPHERE_COLOR: Record<PlanetKind, RgbColor> = { rocky: [0.4, 0.65, 1], ice: [0.7, 0.85, 1], desert: [1, 0.7, 0.45], moon: [1, 1, 1], gas: [0.9, 0.8, 0.6] };
+const PALETTES: Record<PlanetKind, { low: RgbColor; high: RgbColor }> = {
   rocky: { low: [0.2, 0.48, 0.2], high: [0.55, 0.45, 0.35] },
   moon: { low: [0.34, 0.34, 0.35], high: [0.7, 0.69, 0.67] },
   desert: { low: [0.55, 0.3, 0.15], high: [0.88, 0.68, 0.42] },
@@ -29,9 +29,9 @@ const SEED_MULTIPLIER = 7919;
 const SEED_OFFSET = 17;
 const DEFAULT_JITTER = 0.08;
 const HALF = 0.5;
-const OCEAN_COLOR: RGB = [0.1, 0.25, 0.5];
+const OCEAN_COLOR: RgbColor = [0.1, 0.25, 0.5];
 const OCEAN_JITTER = 0.05;
-const RING_COLOR: RGB = [0.75, 0.7, 0.62];
+const RING_COLOR: RgbColor = [0.75, 0.7, 0.62];
 const RING_JITTER = 0.1;
 const MAX_RING_RADIUS_SHARE = 1.9; // rings reach at most this many planet radii
 const RING_INNER_RANGE: [number, number] = [1.25, 1.5]; // where the rings start, in planet radii
@@ -56,7 +56,7 @@ const NO_OCEAN = -1;
 const RADIUS_RANGES: Record<PlanetKind, [number, number]> = { moon: [0.45, 0.8], rocky: [0.7, 1.15], desert: [0.7, 1.1], ice: [0.65, 1.1], gas: [1.1, 1.45] };
 
 // gas-giant band colours: a base tone and three variations, each with how far the colour may drift
-const BAND_COLORS: { color: RGB; jitter: number }[] = [
+const BAND_COLORS: { color: RgbColor; jitter: number }[] = [
   { color: [0.72, 0.58, 0.4], jitter: 0.15 }, { color: [0.9, 0.82, 0.65], jitter: 0.12 }, { color: [0.55, 0.4, 0.3], jitter: 0.12 }, { color: [0.8, 0.7, 0.55], jitter: 0.12 },
 ];
 
@@ -74,14 +74,14 @@ function radiusFor(kind: PlanetKind, range: Range) {
 function makeCraters(count: number, random: () => number) {
   return Array.from({ length: count }, () => {
     const height = random() * 2 - 1, angle = random() * Math.PI * 2, ring = Math.sqrt(1 - height * height);
-    const big = Math.pow(random(), CRATER_SIZE_EXPONENT);
+    const bigness = Math.pow(random(), CRATER_SIZE_EXPONENT);
 
-    return { dir: [ring * Math.cos(angle), height, ring * Math.sin(angle)] as RGB, size: CRATER_MIN_SIZE + big * CRATER_SIZE_SPREAD, depth: CRATER_MIN_DEPTH + big * CRATER_DEPTH_SPREAD };
+    return { dir: [ring * Math.cos(angle), height, ring * Math.sin(angle)] as RgbColor, size: CRATER_MIN_SIZE + bigness * CRATER_SIZE_SPREAD, depth: CRATER_MIN_DEPTH + bigness * CRATER_DEPTH_SPREAD };
   });
 }
 
 /** four gas-giant band colours: a base tone and three variations */
-function makeBands(jitter: Jitter): RGB[] {
+function makeBands(jitter: Jitter): RgbColor[] {
   return BAND_COLORS.map((band) => jitter(band.color, band.jitter));
 }
 
@@ -102,7 +102,7 @@ export function planetParams(seed: number): PlanetParams {
   const range: Range = (low, high) => low + (high - low) * random();
 
   // nudge each colour channel by up to +-amount at random and keep it within 0..1
-  const jitter: Jitter = (color, amount = DEFAULT_JITTER) => color.map((channel) => Math.min(1, Math.max(0, channel + (random() - HALF) * amount * 2))) as RGB;
+  const jitter: Jitter = (color, amount = DEFAULT_JITTER) => color.map((channel) => Math.min(1, Math.max(0, channel + (random() - HALF) * amount * 2))) as RgbColor;
 
   const roll = random(); // always drawn, even for real bodies, so their other values stay the same
   const kind = real?.kind ?? kindFromRoll(roll);

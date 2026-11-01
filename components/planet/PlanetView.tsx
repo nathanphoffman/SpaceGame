@@ -74,10 +74,10 @@ function startLoop(render: () => void, spin: (seconds: number) => void) {
 }
 
 export default function PlanetView({ seed }: { seed: number }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const element = ref.current!;
+    const element = elementRef.current!;
     const params = planetParams(seed);
     const renderer = createRenderer(element);
     const { scene, camera, planet } = createScene(params);
@@ -93,5 +93,5 @@ export default function PlanetView({ seed }: { seed: number }) {
     };
   }, [seed]);
 
-  return <div ref={ref} className="planet3d" />;
+  return <div ref={elementRef} className="planet3d" />;
 }

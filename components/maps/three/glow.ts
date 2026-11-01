@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-let tex: THREE.CanvasTexture | null = null;
+let texture: THREE.CanvasTexture | null = null;
 
 const TEXTURE_SIZE = 128;
 const GLOW_STOPS: [number, number][] = [[0, 1], [0.15, 0.85], [0.4, 0.25], [1, 0]]; // [distance from centre 0..1, opacity]
@@ -12,27 +12,27 @@ const BACKDROP_OPACITY = 0.55;
 
 /** soft round glow, shared by every star sprite */
 function glowTexture() {
-  if (tex) return tex;
-  const c = document.createElement("canvas");
-  c.width = c.height = TEXTURE_SIZE;
-  const g = c.getContext("2d")!;
+  if (texture) return texture;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = TEXTURE_SIZE;
+  const context = canvas.getContext("2d")!;
   const middle = TEXTURE_SIZE / 2;
-  const grad = g.createRadialGradient(middle, middle, 0, middle, middle, middle);
+  const grad = context.createRadialGradient(middle, middle, 0, middle, middle, middle);
 
   for (const [stop, opacity] of GLOW_STOPS) grad.addColorStop(stop, `rgba(255,255,255,${opacity})`);
 
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 128, 128);
-  tex = new THREE.CanvasTexture(c);
+  context.fillStyle = grad;
+  context.fillRect(0, 0, 128, 128);
+  texture = new THREE.CanvasTexture(canvas);
 
-  return tex;
+  return texture;
 }
 
 export function glowSprite(color: THREE.ColorRepresentation, size: number, opacity = 1) {
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false }));
-  s.scale.setScalar(size);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false }));
+  sprite.scale.setScalar(size);
 
-  return s;
+  return sprite;
 }
 
 export const BACKDROP_RADIUS = 1500;

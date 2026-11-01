@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { fbm, noise3 } from "@/lib/planets/noise";
-import { type PlanetParams, type RGB } from "@/lib/planets/types";
+import { type PlanetParams, type RgbColor } from "@/lib/planets/types";
 
 const SPHERE_WIDTH_SEGMENTS = 160;
 const SPHERE_HEIGHT_SEGMENTS = 110;
@@ -21,10 +21,10 @@ const GAS_BLEND_SEED_OFFSET = 7;
 
 // rocky surfaces
 const TERRAIN_OFFSET = [3.1, 1.7, 9.3];
-const DEEP_OCEAN_DARKEN: RGB = [0.5, 0.5, 0.7];
+const DEEP_OCEAN_DARKEN: RgbColor = [0.5, 0.5, 0.7];
 const SNOW_LINE = 0.82;
 const SNOW_BLEND_SPAN = 0.18;
-const SNOW_COLOR: RGB = [0.95, 0.96, 0.98];
+const SNOW_COLOR: RgbColor = [0.95, 0.96, 0.98];
 const GRAIN_SCALE = 25;
 const GRAIN_BASE = 0.9;
 const GRAIN_AMOUNT = 0.2;
@@ -43,10 +43,10 @@ const SURFACE_ROUGHNESS = 0.95;
 const BAND_COLORS = { first: 0, second: 1, third: 2, fourth: 3 };
 const GAS_BLEND_SCALE = { x: 6, y: 1.5 }; // the second band pattern is stretched along the poles
 
-const mixColors = (first: RGB, second: RGB, t: number): RGB => [first[0] + (second[0] - first[0]) * t, first[1] + (second[1] - first[1]) * t, first[2] + (second[2] - first[2]) * t];
+const mixColors = (first: RgbColor, second: RgbColor, fraction: number): RgbColor => [first[0] + (second[0] - first[0]) * fraction, first[1] + (second[1] - first[1]) * fraction, first[2] + (second[2] - first[2]) * fraction];
 
 /** colour of a gas giant at a point: two wobbling band patterns blended together (`warp` and `blend` are noise values there) */
-function gasColor(params: PlanetParams, north: number, warp: number, blend: number): RGB {
+function gasColor(params: PlanetParams, north: number, warp: number, blend: number): RgbColor {
   const latitude = (north + warp * GAS_WARP_STRENGTH - GAS_LATITUDE_SHIFT) * params.bandFreq;
   const band = Math.sin(latitude * Math.PI) * HALF + HALF;
   const band2 = Math.sin(latitude * Math.PI * GAS_BAND2_FREQ + GAS_BAND2_PHASE) * HALF + HALF;
@@ -60,15 +60,15 @@ function craterEffect(craters: PlanetParams["craters"], direction: Vec3) {
   let shade = 1;
 
   for (const crater of craters) {
-    const dot = direction[0] * crater.dir[0] + direction[1] * crater.dir[1] + direction[2] * crater.dir[2];
-    const across = Math.acos(Math.min(1, Math.max(-1, dot))) / crater.size; // distance from the crater's centre, 1 = its edge
+    const alignment = direction[0] * crater.dir[0] + direction[1] * crater.dir[1] + direction[2] * crater.dir[2];
+    const across = Math.acos(Math.min(1, Math.max(-1, alignment))) / crater.size; // distance from the crater's centre, 1 = its edge
 
     if (across < 1) {
       lift -= crater.depth * (1 - across * across) * CRATER_FLOOR_DEPTH;
       shade -= CRATER_FLOOR_SHADE * (1 - across);
     } else if (across < 1 + CRATER_RIM_WIDTH) {
-      const rim = (across - 1) / CRATER_RIM_WIDTH;
-      lift += crater.depth * (1 - rim) * rim * CRATER_RIM_HEIGHT;
+      const rimLift = (across - 1) / CRATER_RIM_WIDTH;
+      lift += crater.depth * (1 - rimLift) * rimLift * CRATER_RIM_HEIGHT;
     }
   }
 
@@ -76,7 +76,7 @@ function craterEffect(craters: PlanetParams["craters"], direction: Vec3) {
 }
 
 /** colour of rocky ground at height `h` (0..1): ocean below sea level, a low-to-high gradient above it, snow on the peaks of rocky worlds */
-function groundColor(params: PlanetParams, hashed: number): RGB {
+function groundColor(params: PlanetParams, hashed: number): RgbColor {
   const { seaLevel, ocean } = params;
 
   if (hashed < seaLevel) return mixColors(ocean, [ocean[0] * DEEP_OCEAN_DARKEN[0], ocean[1] * DEEP_OCEAN_DARKEN[1], ocean[2] * DEEP_OCEAN_DARKEN[2]], 1 - hashed / seaLevel);
@@ -104,23 +104,23 @@ function buildPlanet(params: PlanetParams, detail: number): THREE.Mesh {
 
   for (let index = 0; index < pos.count; index++) {
     const length = Math.hypot(pos.getX(index), pos.getY(index), pos.getZ(index));
-    const nx = pos.getX(index) / length, ny = pos.getY(index) / length, nz = pos.getZ(index) / length;
-    let color: RGB;
+    const unitX = pos.getX(index) / length, ny = pos.getY(index) / length, nz = pos.getZ(index) / length;
+    let color: RgbColor;
     let lift = 0;
 
     if (params.kind === "gas") {
-      const warp = fbm(nx * GAS_WARP_SCALE + GAS_WARP_OFFSET, ny * GAS_WARP_SCALE, nz * GAS_WARP_SCALE, seed, GAS_NOISE_OCTAVES);
-      const blend = fbm(nx * GAS_BLEND_SCALE.x, ny * GAS_BLEND_SCALE.y, nz * GAS_BLEND_SCALE.x, seed + GAS_BLEND_SEED_OFFSET, GAS_NOISE_OCTAVES);
+      const warp = fbm(unitX * GAS_WARP_SCALE + GAS_WARP_OFFSET, ny * GAS_WARP_SCALE, nz * GAS_WARP_SCALE, seed, GAS_NOISE_OCTAVES);
+      const blend = fbm(unitX * GAS_BLEND_SCALE.x, ny * GAS_BLEND_SCALE.y, nz * GAS_BLEND_SCALE.x, seed + GAS_BLEND_SEED_OFFSET, GAS_NOISE_OCTAVES);
       color = gasColor(params, ny, warp, blend);
     } else {
-      const h = fbm(nx * params.noiseScale + offsetX, ny * params.noiseScale + offsetY, nz * params.noiseScale + offsetZ, seed);
-      const craters = craterEffect(params.craters, [nx, ny, nz]);
-      const grain = GRAIN_BASE + GRAIN_AMOUNT * noise3(nx * GRAIN_SCALE, ny * GRAIN_SCALE, nz * GRAIN_SCALE, seed + GRAIN_SEED_OFFSET);
-      lift = (Math.max(h, params.seaLevel) - HALF) * 2 * params.bump + craters.lift;
-      color = mixColors([0, 0, 0], groundColor(params, h), craters.shade * grain);
+      const height = fbm(unitX * params.noiseScale + offsetX, ny * params.noiseScale + offsetY, nz * params.noiseScale + offsetZ, seed);
+      const craters = craterEffect(params.craters, [unitX, ny, nz]);
+      const grain = GRAIN_BASE + GRAIN_AMOUNT * noise3(unitX * GRAIN_SCALE, ny * GRAIN_SCALE, nz * GRAIN_SCALE, seed + GRAIN_SEED_OFFSET);
+      lift = (Math.max(height, params.seaLevel) - HALF) * 2 * params.bump + craters.lift;
+      color = mixColors([0, 0, 0], groundColor(params, height), craters.shade * grain);
     }
 
-    pos.setXYZ(index, nx * (1 + lift), ny * (1 + lift), nz * (1 + lift));
+    pos.setXYZ(index, unitX * (1 + lift), ny * (1 + lift), nz * (1 + lift));
     colors.set(color, index * RGB_CHANNELS);
   }
 
@@ -160,10 +160,10 @@ function buildRings(params: PlanetParams): THREE.Mesh {
     const distance = Math.hypot(position.getX(index), position.getY(index));
     const across = (distance - rings.inner) / (rings.outer - rings.inner); // 0 at the inner edge, 1 at the outer edge
     const brightness = noise3(across * RING_BAND_NOISE_SCALE, NOISE_SLICE_Y, NOISE_SLICE_Y, rings.seed);
-    const gap = noise3(across * RING_GAP_NOISE_SCALE, NOISE_SLICE_GAP_Y, NOISE_SLICE_Y, rings.seed + RING_GAP_SEED_OFFSET) > RING_GAP_THRESHOLD ? RING_GAP_OPACITY : 1;
+    const ringGap = noise3(across * RING_GAP_NOISE_SCALE, NOISE_SLICE_GAP_Y, NOISE_SLICE_Y, rings.seed + RING_GAP_SEED_OFFSET) > RING_GAP_THRESHOLD ? RING_GAP_OPACITY : 1;
     const edge = Math.min(1, across * RING_EDGE_FADE, (1 - across) * RING_EDGE_FADE);
     const shade = RING_SHADE.base + RING_SHADE.variation * brightness;
-    const alpha = (RING_OPACITY.base + RING_OPACITY.variation * brightness) * gap * edge;
+    const alpha = (RING_OPACITY.base + RING_OPACITY.variation * brightness) * ringGap * edge;
     colors.set([rings.color[0] * shade, rings.color[1] * shade, rings.color[2] * shade, alpha], index * RGBA);
   }
 
@@ -175,7 +175,7 @@ function buildRings(params: PlanetParams): THREE.Mesh {
 }
 
 /** a faint shell around the planet, seen from inside so it glows at the edge */
-function buildAtmosphere(params: PlanetParams, color: RGB): THREE.Mesh {
+function buildAtmosphere(params: PlanetParams, color: RgbColor): THREE.Mesh {
   return new THREE.Mesh(
     new THREE.SphereGeometry(params.radius * ATMOSPHERE_SCALE, ATMOSPHERE_SEGMENTS.around, ATMOSPHERE_SEGMENTS.across),
     new THREE.MeshBasicMaterial({ color: new THREE.Color(...color), transparent: true, opacity: ATMOSPHERE_OPACITY, side: THREE.BackSide }),

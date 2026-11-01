@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { pool, ready } from "@/lib/server/db";
-import { ELEMENTS, MAX_BUILDING_LEVEL, MS_PER_SECOND, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds, type ShipType, type Res, type GameState, FLEET_STATUS, MISSION, PLANET_KIND, QUEUE_KIND } from "@/lib/defs";
+import { ELEMENTS, MAX_BUILDING_LEVEL, MS_PER_SECOND, SHIPS, buildCost, buildSeconds, buildingInfo, mineElement, shipSeconds, productionRates, flightSeconds, type ShipType, type Resources, type GameState, FLEET_STATUS, MISSION, PLANET_KIND, QUEUE_KIND } from "@/lib/defs";
 
 import { planetStats } from "@/lib/planets/planetStats";
 import { ensureSector, ensureSystem } from "@/lib/server/lazyGen";
@@ -21,25 +21,25 @@ function accrue(planet: Planet, time: Date) {
   if (planet.kind !== PLANET_KIND.empty) {
     const deltaSeconds = (time.getTime() - planet.updated_at.getTime()) / MS_PER_SECOND;
     const rate = productionRates(planet.buildings, planetStats(planet.seed).composition);
-    const cap = planet.kind === PLANET_KIND.npc ? NPC_RESOURCE_CAP : Infinity;
+    const limit = planet.kind === PLANET_KIND.npc ? NPC_RESOURCE_CAP : Infinity;
 
-    for (const [el, perSec] of Object.entries(rate)) planet.resources[el] = Math.min(cap, (planet.resources[el] ?? 0) + perSec * deltaSeconds);
+    for (const [el, perSec] of Object.entries(rate)) planet.resources[el] = Math.min(limit, (planet.resources[el] ?? 0) + perSec * deltaSeconds);
   }
 
   planet.updated_at = time;
 }
 
-const addRes = (to: Res, from: Res) => {
-  for (const [el, n] of Object.entries(from)) to[el] = (to[el] ?? 0) + n;
+const addRes = (destination: Resources, from: Resources) => {
+  for (const [el, n] of Object.entries(from)) destination[el] = (destination[el] ?? 0) + n;
 };
 
-const resText = (r: Res) => // turn a resource bundle into text like "60 Fe, 15 Si"
+const resText = (r: Resources) => // turn a resource bundle into text like "60 Fe, 15 Si"
   Object.entries(r).filter(([, n]) => n > 0).map(([el, n]) => `${n} ${el}`).join(", ") || "nothing";
 
 const shipList = (s: Record<string, number>) => // turn a ship bundle into text like "3 Cruiser"
   Object.entries(s).filter(([, n]) => n > 0).map(([t, n]) => `${n} ${SHIPS[t as ShipType].name}`).join(", ") || "nothing";
 
-const COLONY_START_RESOURCES: Res = { Fe: 100, Si: 50 };
+const COLONY_START_RESOURCES: Resources = { Fe: 100, Si: 50 };
 const LOSS_SHARE_OF_WIN = 0.6; // a winning fleet loses ships in proportion to how strong the defense was, scaled by this
 const DEFENSE_DAMAGE_SHARE = 0.5; // a losing fleet still knocks this share of its attack power off the defense
 
@@ -53,11 +53,11 @@ function sendHome(fleet: Fleet) {
 /** total of one ship stat (attack or cargo) over every ship in the fleet */
 const fleetTotal = (ships: Record<string, number>, stat: "attack" | "cargo") =>
   // add up one stat over every ship: the stat of each ship type times how many there are
-  Object.entries(ships).reduce((sum, [type, count]) => sum + count * SHIPS[type as ShipType][stat], 0);
+  Object.entries(ships).reduce((total, [type, count]) => total + count * SHIPS[type as ShipType][stat], 0);
 
 /** take the biggest stockpiles first until the cargo holds are full */
-function takeLoot(stockpile: Res, room: number) {
-  const loot: Res = {};
+function takeLoot(stockpile: Resources, room: number) {
+  const loot: Resources = {};
   let space = room;
 
   for (const [element, amount] of Object.entries(stockpile).sort((first, second) => second[1] - first[1])) {
@@ -238,9 +238,9 @@ function toState(w: World, now: Date): GameState {
       id: p.id, name: p.name, systemId: p.system_id, orbit: p.orbit, kind: p.kind,
       resources: p.resources, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed, shared: p.shared,
     })),
-    queue: w.queue.map((db) => ({
-      id: db.id, planetId: db.planet_id, kind: db.kind, type: db.type,
-      startAt: db.start_at.getTime(), finishAt: db.finish_at.getTime(),
+    queue: w.queue.map((database) => ({
+      id: database.id, planetId: database.planet_id, kind: database.kind, type: database.type,
+      startAt: database.start_at.getTime(), finishAt: database.finish_at.getTime(),
     })),
     fleets: w.fleets.map((f) => ({
       id: f.id, originId: f.origin_id, targetId: f.target_id, mission: f.mission, ships: f.ships, loot: f.loot,
@@ -260,7 +260,7 @@ function ownPlanet(w: World, id: number) {
   return p;
 }
 
-function pay(p: Planet, cost: Res) {
+function pay(p: Planet, cost: Resources) {
   for (const [el, n] of Object.entries(cost)) {
     if ((p.resources[el] ?? 0) < n) throw new GameError(`Not enough ${ELEMENTS[el as keyof typeof ELEMENTS]?.name ?? el}`);
   }
@@ -270,7 +270,7 @@ function pay(p: Planet, cost: Res) {
 
 const lastFinish = (w: World, planetId: number, kind: string, now: Date) => // queue entries for one planet and kind
   // the latest finish time in the queue, or now if the queue is empty
-  w.queue.filter((q) => q.planet_id === planetId && q.kind === kind).reduce((m, q) => (q.finish_at > m ? q.finish_at : m), now);
+  w.queue.filter((q) => q.planet_id === planetId && q.kind === kind).reduce((multiplier, q) => (q.finish_at > multiplier ? q.finish_at : multiplier), now);
 
 export function startBuilding(w: World, now: Date, planetId: number, type: string) {
   if (!buildingInfo(type)) throw new GameError("Unknown building");

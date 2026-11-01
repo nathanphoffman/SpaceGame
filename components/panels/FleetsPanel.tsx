@@ -5,7 +5,7 @@ type Props = {
   planet: PlanetDTO; // the planet whose hangar is shown
   showHangar: boolean;
   fleets: FleetDTO[]; // active fleets
-  planetName: (id: number) => string;
+  planetName: (planetId: number) => string;
   nowMs: number;
   sendAction: (body: object) => Promise<void>;
 };

@@ -5,7 +5,7 @@ import { fillSystem } from "@/lib/galaxy/systemGen";
 import type { Filler } from "@/lib/galaxy/systemGen";
 
 /** anything with pg's query(): the pool, or a client inside a transaction */
-export type Q = { query(text: string, values?: unknown[]): Promise<{ rows: any[] }> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+export type Queryable = { query(text: string, values?: unknown[]): Promise<{ rows: any[] }> }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // a new game starts on the planet flagged `start` in the catalog (Earth)
 const START = { resources: { Fe: 500, Si: 300 }, buildings: { mine_Fe: 1, mine_Si: 1 }, ships: { fighter: 2 } };
@@ -13,9 +13,9 @@ const NOTHING = { resources: {}, buildings: {}, ships: {} };
 
 export type PlanetRow = Omit<Filler, "kind"> & { kind: Owner; shared: boolean; ships: Record<string, number> };
 
-export async function insertPlanets(db: Q, systemId: number, rows: PlanetRow[]) {
+export async function insertPlanets(database: Queryable, systemId: number, rows: PlanetRow[]) {
   for (const planet of rows) {
-    await db.query(
+    await database.query(
       `INSERT INTO planets (id,name,system_id,orbit,kind,resources,buildings,ships,defense,seed,shared)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`,
       [planet.id, planet.name, systemId, planet.orbit, planet.kind, JSON.stringify(planet.resources), JSON.stringify(planet.buildings), JSON.stringify(planet.ships), planet.defense, planet.seed, planet.shared],

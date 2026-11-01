@@ -34,10 +34,10 @@ type System = { game: GameState; system: SystemDTO; viewed: PlanetDTO };
 function rulerScale(planets: PlanetDTO[]) {
   const maxOrbit = Math.max(MIN_ORBIT_AU, ...planets.map((planet) => planet.orbit));
   const step = AU_STEPS.find((candidate) => maxOrbit / candidate <= MAX_TICKS) ?? FALLBACK_AU_STEP;
-  const max = Math.ceil(maxOrbit / step) * step;
-  const ticks = Array.from({ length: Math.round(max / step) + 1 }, (_, index) => Math.round(index * step * MILLI) / MILLI);
+  const maximum = Math.ceil(maxOrbit / step) * step;
+  const ticks = Array.from({ length: Math.round(maximum / step) + 1 }, (_, index) => Math.round(index * step * MILLI) / MILLI);
 
-  return { max, ticks, axisX: (au: number) => AXIS.left + (au / max) * AXIS.span }; // % across the map; 0 AU is the star's surface
+  return { max: maximum, ticks, axisX: (distanceAU: number) => AXIS.left + (distanceAU / maximum) * AXIS.span }; // % across the map; 0 AU is the star's surface
 }
 
 /** the star is a big circle mostly off the left edge: small stars show a tight arch, big stars look nearly flat */
@@ -86,8 +86,8 @@ type NodeProps = { planet: PlanetDTO; index: number; slots: number; selected: bo
 
 /** a clickable planet: its diameter in px is proportional to its size and capped by how much room each slot has */
 function PlanetNode({ planet, index, slots, selected, guarded, left, onSelect }: NodeProps) {
-  const cap = Math.max(MIN_CAP_PX, (((MAP_WIDTH_PX * SLOT_SPAN) / PERCENT) / slots) * SLOT_FILL);
-  const body = MIN_PLANET_PX + (planetParams(planet.seed).radius / MAX_RADIUS) * (cap - MIN_PLANET_PX);
+  const limit = Math.max(MIN_CAP_PX, (((MAP_WIDTH_PX * SLOT_SPAN) / PERCENT) / slots) * SLOT_FILL);
+  const body = MIN_PLANET_PX + (planetParams(planet.seed).radius / MAX_RADIUS) * (limit - MIN_PLANET_PX);
   const size = thumbDisplaySize(planet.seed, body);
 
   return (
@@ -106,10 +106,10 @@ function PlanetNode({ planet, index, slots, selected, guarded, left, onSelect }:
 function FlyingFleet({ fleet, game, nowMs: now, slotById }: { fleet: FleetDTO; game: GameState; nowMs: number; slotById: Map<number, number> }) {
   const { from, to, k } = flightOf(game, fleet, now);
   const fromX = slotById.get(from.id) ?? SLOT_LEFT;
-  const toX = slotById.get(to.id) ?? SLOT_LEFT;
+  const destinationX = slotById.get(to.id) ?? SLOT_LEFT;
 
   return (
-    <span className="fleet" style={{ left: `${fromX + (toX - fromX) * k}%`, top: `${SOLAR_Y}%`, transform: `translate(-50%,-50%) rotate(${toX >= fromX ? 90 : -90}deg)` }}>
+    <span className="fleet" style={{ left: `${fromX + (destinationX - fromX) * k}%`, top: `${SOLAR_Y}%`, transform: `translate(-50%,-50%) rotate(${destinationX >= fromX ? 90 : -90}deg)` }}>
       <img src={fleetIcon(fleet)} alt="" />
     </span>
   );
@@ -122,7 +122,7 @@ export default function SolarMap({ game, system, viewed, nowMs: now, onSelect }:
   const guarded = new Set(game.fleets.filter((fleet) => fleet.status === FLEET_STATUS.stationed).map((fleet) => fleet.targetId));
 
   // the system a fleet's origin planet is in
-  const originSystem = (id: number) => game.planets.find((planet) => planet.id === id)!.systemId;
+  const originSystem = (planetId: number) => game.planets.find((planet) => planet.id === planetId)!.systemId;
   const local = flyingFleets(game).filter((fleet) => !isCrossSystem(game, fleet) && originSystem(fleet.originId) === system.id);
   const slots = planets.length;
 

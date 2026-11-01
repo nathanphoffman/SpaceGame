@@ -1,11 +1,11 @@
-import { ELEMENTS, buildingInfo, mineType, type Element, type PlanetDTO, type Res } from "@/lib/defs";
+import { ELEMENTS, buildingInfo, mineType, type Element, type PlanetDTO, type Resources } from "@/lib/defs";
 
 /** how many of an element the planet holds `seconds` after the last server update, counting what its mines produce meanwhile */
-export const stockAfter = (planet: PlanetDTO, rate: Res, seconds: number) => (element: string) =>
+export const stockAfter = (planet: PlanetDTO, rate: Resources, seconds: number) => (element: string) =>
   (planet.resources[element] ?? 0) + (rate[element] ?? 0) * seconds;
 
 /** why something can't be bought right now (undefined = it can), used for the disabled-button tooltips */
-export function shortfallText(cost: Res, stock: (element: string) => number) {
+export function shortfallText(cost: Resources, stock: (element: string) => number) {
   const missing = Object.entries(cost)
     .filter(([element, needed]) => stock(element) < needed)
     .map(([element, needed]) => `${Math.ceil(needed - stock(element))} more ${ELEMENTS[element as Element]?.name ?? element}`);

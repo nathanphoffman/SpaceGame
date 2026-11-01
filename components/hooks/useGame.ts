@@ -15,9 +15,9 @@ export function useGame(view: GameView) {
   const [clock, setClock] = useState(Date.now());
   const [error, setError] = useState("");
 
-  const apply = (g: GameState) => {
-    setGame(g);
-    setOffset(g.nowMs - Date.now());
+  const apply = (loadedGame: GameState) => {
+    setGame(loadedGame);
+    setOffset(loadedGame.nowMs - Date.now());
   };
 
   const refresh = useCallback(async () => {
@@ -34,18 +34,18 @@ export function useGame(view: GameView) {
 
   useEffect(() => {
     refresh();
-    const a = setInterval(refresh, REFRESH_MS);
-    const b = setInterval(() => setClock(Date.now()), CLOCK_TICK_MS);
+    const refreshTimer = setInterval(refresh, REFRESH_MS);
+    const clockTimer = setInterval(() => setClock(Date.now()), CLOCK_TICK_MS);
 
-    return () => { clearInterval(a); clearInterval(b); };
+    return () => { clearInterval(refreshTimer); clearInterval(clockTimer); };
   }, [refresh]);
 
   const sendAction = async (body: object) => {
     const r = await fetch("/api/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, view: { sx, sy, system } }) });
-    const j = await r.json();
+    const reply = await r.json();
 
-    if (!r.ok) setError(j.error);
-    else { setError(""); apply(j); }
+    if (!r.ok) setError(reply.error);
+    else { setError(""); apply(reply); }
   };
 
   return { game, error, act: sendAction, nowMs: clock + offset };

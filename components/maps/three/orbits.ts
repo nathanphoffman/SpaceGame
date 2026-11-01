@@ -24,11 +24,11 @@ const startPhase = (seed: number) => (((seed * PHASE_HASH) % PHASE_STEPS) / PHAS
 export const systemRadius = (planets: PlanetDTO[]) => Math.max(0, ...planets.map((p) => sceneDistance(p.orbit)));
 
 /** where a planet is at the given server time (ms) */
-export function planetPosition(planet: PlanetDTO, nowMs: number, out: THREE.Vector3) {
+export function planetPosition(planet: PlanetDTO, nowMs: number, result: THREE.Vector3) {
   const angle = startPhase(planet.seed) - (nowMs / MS_PER_SECOND / periodSeconds(planet.orbit)) * Math.PI * 2;
   const distance = sceneDistance(planet.orbit);
 
-  return out.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+  return result.set(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
 }
 
 /** the circle a planet travels along */

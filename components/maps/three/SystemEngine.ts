@@ -4,7 +4,7 @@ import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { MS_PER_SECOND, type GameState, type PlanetDTO, type SystemDTO, FLEET_STATUS } from "@/lib/defs";
 import { flightOf } from "@/lib/galaxy/flight";
 import { BACKDROP_RADIUS, backdrop } from "@/components/maps/three/glow";
-import { startFly, stepFly, type Fly } from "@/components/maps/three/cameraFlight";
+import { startFly, stepFly, type CameraFlight } from "@/components/maps/three/cameraFlight";
 import { orbitRing, planetPosition, systemRadius } from "@/components/maps/three/orbits";
 import { bindPointer, pickAt, type Pickable } from "@/components/maps/three/pointer";
 import { HIGH_DETAIL, LOW_DETAIL, createPlanetNode, createShip, createStar, disposeTree, placeShip, setDetail, type PlanetNode, type ShipNode } from "@/components/maps/three/systemParts";
@@ -45,7 +45,7 @@ export class SystemEngine {
   private stars = backdrop();
   private content = new THREE.Group(); // everything that depends on the system, replaced when it changes
   private world: World = { systemId: -1, planetKey: "", planets: new Map(), ships: new Map(), pickables: [], star: null };
-  private view = { selected: null as number | null, follow: null as number | null, fly: null as Fly | null };
+  private view = { selected: null as number | null, follow: null as number | null, fly: null as CameraFlight | null };
   private clock = { serverOffset: 0, last: performance.now(), game: null as GameState | null };
   private running = { frame: 0, disposed: false, unbind: () => {}, resize: null as ResizeObserver | null };
   private scratch = new THREE.Vector3();
@@ -71,7 +71,7 @@ export class SystemEngine {
   update(game: GameState, system: SystemDTO, serverNow: number, selectedId: number | null) {
     this.clock.serverOffset = serverNow - performance.now();
     this.clock.game = game;
-    const planets = game.planets.filter((p) => p.systemId === system.id).sort((a, b) => a.orbit - b.orbit);
+    const planets = game.planets.filter((p) => p.systemId === system.id).sort((first, second) => first.orbit - second.orbit);
     const isNewSystem = system.id !== this.world.systemId;
 
     if (isNewSystem || planets.map((p) => p.id).join() !== this.world.planetKey) this.build(system, planets);
@@ -128,12 +128,12 @@ export class SystemEngine {
     this.content.add(star, ...lights);
     this.world.star = star;
 
-    for (const dto of planets) {
-      const node = createPlanetNode(dto);
+    for (const planetData of planets) {
+      const node = createPlanetNode(planetData);
       setDetail(node, LOW_DETAIL);
-      this.content.add(node.holder, orbitRing(dto.orbit, ORBIT_SEGMENTS));
-      this.world.planets.set(dto.id, node);
-      this.world.pickables.push({ id: dto.id, object: node.holder, radiusPx: PLANET_PICK_RADIUS_PX });
+      this.content.add(node.holder, orbitRing(planetData.orbit, ORBIT_SEGMENTS));
+      this.world.planets.set(planetData.id, node);
+      this.world.pickables.push({ id: planetData.id, object: node.holder, radiusPx: PLANET_PICK_RADIUS_PX });
     }
 
     if (isNewSystem) this.resetCamera();
@@ -235,11 +235,11 @@ export class SystemEngine {
     for (const ship of this.world.ships.values()) {
       const outbound = ship.fleet.status === FLEET_STATUS.outbound;
       const from = this.world.planets.get(outbound ? ship.fleet.originId : ship.fleet.targetId);
-      const to = this.world.planets.get(outbound ? ship.fleet.targetId : ship.fleet.originId);
+      const destination = this.world.planets.get(outbound ? ship.fleet.targetId : ship.fleet.originId);
 
-      if (!from || !to || !game) continue;
+      if (!from || !destination || !game) continue;
 
-      placeShip(ship, from.holder.position, to.holder.position, flightOf(game, ship.fleet, now).k);
+      placeShip(ship, from.holder.position, destination.holder.position, flightOf(game, ship.fleet, now).k);
     }
   }
 

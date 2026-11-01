@@ -1,13 +1,13 @@
 import { STAR_BY_SEED } from "@/lib/data/catalog";
 import { SUN_TEMP_K, STEFAN_BOLTZMANN_POWER } from "./constants";
 import { mulberry32 } from "./noise";
-import type { RGB, StarParams } from "./types";
+import type { RgbColor, StarParams } from "./types";
 
 // Real stellar classification (Morgan-Keenan): spectral class O B A F G K M from hot to cool,
 // a 0-9 subtype, and a luminosity class (V main sequence, III giant, I supergiant, D white dwarf).
 
 // apparent colour per class (the standard "blackbody as seen by eye" table)
-const CLASS_COLOR: Record<string, RGB> = {
+const CLASS_COLOR: Record<string, RgbColor> = {
   O: [0.608, 0.69, 1], B: [0.667, 0.749, 1], A: [0.792, 0.843, 1], F: [0.973, 0.969, 1],
   G: [1, 0.957, 0.918], K: [1, 0.824, 0.631], M: [1, 0.8, 0.435],
 };
@@ -52,9 +52,9 @@ const GIANT_RADIUS = { base: 12, spread: 40, redBonus: 20 }; // solar radii
 const SUPERGIANT_RADIUS = { red: { base: 250, spread: 600 }, blue: { base: 30, spread: 60 } };
 const SIZE_LOOK = { base: 0.6, perDecade: 0.35, referenceRadius: 0.1, min: 0.5, max: 1.8 }; // display size grows with the log of the radius
 const GLARE_LOOK = { base: 0.35, perDecade: 0.12, offset: 0.2, min: 0.2, minLuminosity: 1e-3 };
-const WHITE_DWARF = { radius: 0.012, color: [0.82, 0.88, 1] as RGB, size: 0.5, bright: 0.35 };
+const WHITE_DWARF = { radius: 0.012, color: [0.82, 0.88, 1] as RgbColor, size: 0.5, bright: 0.35 };
 
-const mixColors = (first: RGB, second: RGB, t: number): RGB => [first[0] + (second[0] - first[0]) * t, first[1] + (second[1] - first[1]) * t, first[2] + (second[2] - first[2]) * t];
+const mixColors = (first: RgbColor, second: RgbColor, fraction: number): RgbColor => [first[0] + (second[0] - first[0]) * fraction, first[1] + (second[1] - first[1]) * fraction, first[2] + (second[2] - first[2]) * fraction];
 
 /** display size and glare from radius (solar radii) and temperature (K); luminosity ~ R^2 T^4 */
 function starLook(radius: number, temp: number) {
@@ -66,7 +66,7 @@ function starLook(radius: number, temp: number) {
 }
 
 /** the class colour blended toward the next (cooler) class by subtype */
-function classColor(starClass: string, subtype: number): RGB {
+function classColor(starClass: string, subtype: number): RgbColor {
   const next = CLASS_ORDER[Math.min(CLASS_ORDER.indexOf(starClass) + 1, CLASS_ORDER.length - 1)];
 
   return mixColors(CLASS_COLOR[starClass], CLASS_COLOR[next], (subtype / SUBTYPES) * SUBTYPE_BLEND);

@@ -15,9 +15,9 @@ export async function POST(request: Request) {
     if (body.action === ACTION.reset) await resetGame();
 
     // load what the client is looking at, plus any planets the action itself refers to
-    const planetIds = [body.planetId, body.originId, body.targetId].filter((n) => Number.isInteger(n));
-    const v = body.view ?? {};
-    const view = { sx: v.sx, sy: v.sy, system: v.system, planets: planetIds };
+    const planetIds = [body.planetId, body.originId, body.targetId].filter((candidate) => Number.isInteger(candidate));
+    const value = body.view ?? {};
+    const view = { sx: value.sx, sy: value.sy, system: value.system, planets: planetIds };
     const { state } = await withGame((world, time) => {
       switch (body.action) {
         case "build": return startBuilding(world, time, body.planetId, body.type);

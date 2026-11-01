@@ -10,7 +10,7 @@ export const GALAXY_VERSION = "local-neighbourhood-3";
 /** real bodies and stars get seeds from here up; generated planets use 1..99999 */
 export const SEED_BASE = 1_000_000;
 
-const D2R = Math.PI / 180;
+const DEGREES_TO_RADIANS = Math.PI / 180;
 const MINUTES_PER_DEGREE = 60; // arc-minutes in a degree, and minutes in an hour of right ascension
 const DEGREES_PER_HOUR = 15; // the sky turns 15 degrees per hour of right ascension
 // the north galactic pole in J2000 equatorial coordinates (degrees)
@@ -20,17 +20,17 @@ const GALACTIC_POLE_L = 122.93192;
 const HUNDREDTHS = 100;
 
 /** J2000 equatorial coordinates -> position in the galactic plane (light-years, Sol at the origin) */
-function galacticXY(raH: number, raM: number, decD: number, decM: number, ly: number): [number, number] {
-  const ra = (raH + raM / MINUTES_PER_DEGREE) * DEGREES_PER_HOUR * D2R;
-  const dec = (decD < 0 ? -1 : 1) * (Math.abs(decD) + decM / MINUTES_PER_DEGREE) * D2R;
-  const pole = { ra: GALACTIC_POLE_RA * D2R, dec: GALACTIC_POLE_DEC * D2R, l: GALACTIC_POLE_L * D2R };
-  const b = Math.asin(Math.sin(dec) * Math.sin(pole.dec) + Math.cos(dec) * Math.cos(pole.dec) * Math.cos(ra - pole.ra));
-  const l = pole.l - Math.atan2(
-    Math.cos(dec) * Math.sin(ra - pole.ra),
-    Math.sin(dec) * Math.cos(pole.dec) - Math.cos(dec) * Math.sin(pole.dec) * Math.cos(ra - pole.ra),
+function galacticXY(raHours: number, raMinutes: number, decD: number, decM: number, lightYears: number): [number, number] {
+  const rightAscension = (raHours + raMinutes / MINUTES_PER_DEGREE) * DEGREES_PER_HOUR * DEGREES_TO_RADIANS;
+  const declination = (decD < 0 ? -1 : 1) * (Math.abs(decD) + decM / MINUTES_PER_DEGREE) * DEGREES_TO_RADIANS;
+  const pole = { ra: GALACTIC_POLE_RA * DEGREES_TO_RADIANS, dec: GALACTIC_POLE_DEC * DEGREES_TO_RADIANS, l: GALACTIC_POLE_L * DEGREES_TO_RADIANS };
+  const latitude = Math.asin(Math.sin(declination) * Math.sin(pole.dec) + Math.cos(declination) * Math.cos(pole.dec) * Math.cos(rightAscension - pole.ra));
+  const longitude = pole.l - Math.atan2(
+    Math.cos(declination) * Math.sin(rightAscension - pole.ra),
+    Math.sin(declination) * Math.cos(pole.dec) - Math.cos(declination) * Math.sin(pole.dec) * Math.cos(rightAscension - pole.ra),
   );
 
-  return [ly * Math.cos(b) * Math.cos(l), ly * Math.cos(b) * Math.sin(l)];
+  return [lightYears * Math.cos(latitude) * Math.cos(longitude), lightYears * Math.cos(latitude) * Math.sin(longitude)];
 }
 
 export const SYSTEMS: SystemSpec[] = STARS.map(([name, raH, raM, decD, decM, ly, spec, tempK, radius], index) => { // build one system per catalogue star, attaching the planets known for that star

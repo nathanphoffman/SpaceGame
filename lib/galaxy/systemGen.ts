@@ -82,17 +82,17 @@ function arm(composition: { symbol: string }[], random: () => number) {
  * Generate the planets we don't know about. A system gets 2d6 planets in total, so a star with
  * several confirmed planets gets few extras. `known` are the real orbits, which stay where they are.
  */
-export function fillSystem(sys: { id: number; name: string; seed: number; complete: boolean }, known: { orbit: number; id: number }[]): Filler[] {
-  if (sys.complete) return [];
+export function fillSystem(system: { id: number; name: string; seed: number; complete: boolean }, known: { orbit: number; id: number }[]): Filler[] {
+  if (system.complete) return [];
 
-  const want = Math.max(0, planetCount(sys.seed) - known.length);
-  const random = mulberry32(sys.seed * SEED_MULTIPLIER + SEED_OFFSET);
+  const want = Math.max(0, planetCount(system.seed) - known.length);
+  const random = mulberry32(system.seed * SEED_MULTIPLIER + SEED_OFFSET);
 
   for (let draw = 0; draw < WARM_UP_DRAWS; draw++) random();
 
-  const scale = orbitScale(starParams(sys.seed));
+  const scale = orbitScale(starParams(system.seed));
   const taken = known.map((planet) => planet.orbit);
-  const out: Filler[] = [];
+  const result: Filler[] = [];
 
   for (let index = 0; index < want; index++) {
     const spot = (index + HALF + (random() - HALF) * ORBIT_JITTER) / want; // 0..1 along the range of orbits, with some jitter
@@ -108,16 +108,16 @@ export function fillSystem(sys: { id: number; name: string; seed: number; comple
     const seed = 1 + Math.floor(random() * SEED_RANGE);
     const hostile = random() < HOSTILE_CHANCE;
     const { buildings, resources } = hostile ? arm(planetStats(seed).composition, random) : { buildings: {}, resources: {} };
-    const number = known.length + out.length + 1;
+    const number = known.length + result.length + 1;
 
-    out.push({
-      id: sys.id * SYSTEM_ID_STRIDE + number,
-      name: number < NAMED_LETTERS ? `${sys.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}` : planetName(seed),
+    result.push({
+      id: system.id * SYSTEM_ID_STRIDE + number,
+      name: number < NAMED_LETTERS ? `${system.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}` : planetName(seed),
       orbit, kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, resources, buildings, // hostile planets are enemy bases, the rest are free to settle
       defense: hostile ? Math.round(BASE_DEFENSE + random() * random() * DEFENSE_RANGE) : 0,
       seed,
     });
   }
 
-  return out;
+  return result;
 }

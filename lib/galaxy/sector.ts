@@ -13,8 +13,8 @@ export const validSector = (sectorX: number, sectorY: number) =>
 export const sectorCentre = (sectorX: number, sectorY: number) => ({ x: (sectorX - CENTER) * SECTOR_LY, y: (sectorY - CENTER) * SECTOR_LY });
 
 /** the sector a light-year position falls in */
-export const sectorOf = (x: number, y: number): [number, number] =>
-  [CENTER + Math.round(x / SECTOR_LY), CENTER + Math.round(y / SECTOR_LY)];
+export const sectorOf = (xLy: number, y: number): [number, number] =>
+  [CENTER + Math.round(xLy / SECTOR_LY), CENTER + Math.round(y / SECTOR_LY)];
 
 const FIRST_GENERATED_ID = 1000; // ids below this are the hand-made catalog
 const IDS_PER_SECTOR = 100;
@@ -52,7 +52,7 @@ export function sectorStars(sectorX: number, sectorY: number): SectorStar[] {
   const random = sectorRng(sectorX, sectorY);
   const count = countFrom(random);
   const centre = sectorCentre(sectorX, sectorY);
-  const out: SectorStar[] = [];
+  const result: SectorStar[] = [];
 
   for (let number = 0; number < count; number++) {
     let x = 0, y = 0;
@@ -61,12 +61,12 @@ export function sectorStars(sectorX: number, sectorY: number): SectorStar[] {
       x = centre.x + (random() - HALF) * SECTOR_LY * USABLE_SECTOR_SHARE;
       y = centre.y + (random() - HALF) * SECTOR_LY * USABLE_SECTOR_SHARE;
 
-      if (out.every((other) => Math.hypot(other.x - x, other.y - y) > MIN_STAR_GAP_LY)) break;
+      if (result.every((other) => Math.hypot(other.x - x, other.y - y) > MIN_STAR_GAP_LY)) break;
     }
 
     const seed = 1 + Math.floor(random() * SEED_RANGE);
-    out.push({ id: generatedSystemId(sectorX, sectorY, number), name: starName(seed), seed, x: Math.round(x * HUNDREDTHS) / HUNDREDTHS, y: Math.round(y * HUNDREDTHS) / HUNDREDTHS });
+    result.push({ id: generatedSystemId(sectorX, sectorY, number), name: starName(seed), seed, x: Math.round(x * HUNDREDTHS) / HUNDREDTHS, y: Math.round(y * HUNDREDTHS) / HUNDREDTHS });
   }
 
-  return out;
+  return result;
 }

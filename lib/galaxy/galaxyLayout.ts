@@ -13,24 +13,24 @@ const SAME_SPOT = 0.001; // closer than this, stars have no direction to be push
  */
 export function mapPositions(systems: { id: number; x: number; y: number }[], centre: { x: number; y: number }, halfWidthLy: number) {
   const scale = MAP_HALF_SPAN / halfWidthLy; // sector edge sits 6% in from the map edge
-  const pts = systems.map((s) => ({ id: s.id, x: MAP_CENTRE + (s.x - centre.x) * scale, y: MAP_CENTRE - (s.y - centre.y) * scale })); // north is up
+  const points = systems.map((s) => ({ id: s.id, x: MAP_CENTRE + (s.x - centre.x) * scale, y: MAP_CENTRE - (s.y - centre.y) * scale })); // north is up
 
   for (let pass = 0; pass < NUDGE_PASSES; pass++) {
-    for (let index = 0; index < pts.length; index++) {
-      for (let j = index + 1; j < pts.length; j++) {
-        const dx = pts[j].x - pts[index].x, dy = pts[j].y - pts[index].y;
-        const d = Math.hypot(dx, dy);
+    for (let index = 0; index < points.length; index++) {
+      for (let otherIndex = index + 1; otherIndex < points.length; otherIndex++) {
+        const deltaX = points[otherIndex].x - points[index].x, deltaY = points[otherIndex].y - points[index].y;
+        const gap = Math.hypot(deltaX, deltaY);
 
-        if (d >= MIN_GAP) continue;
-        const push = (MIN_GAP - d) / 2;
-        const [ux, uy] = d > SAME_SPOT ? [dx / d, dy / d] : [1, 0];
-        pts[index].x -= ux * push; pts[index].y -= uy * push;
-        pts[j].x += ux * push; pts[j].y += uy * push;
+        if (gap >= MIN_GAP) continue;
+        const push = (MIN_GAP - gap) / 2;
+        const [ux, uy] = gap > SAME_SPOT ? [deltaX / gap, deltaY / gap] : [1, 0];
+        points[index].x -= ux * push; points[index].y -= uy * push;
+        points[otherIndex].x += ux * push; points[otherIndex].y += uy * push;
       }
     }
   }
 
   const clamp = (value: number) => Math.min(MAP_MAX, Math.max(MAP_MIN, value));
 
-  return new Map(pts.map((point) => [point.id, { x: clamp(point.x), y: clamp(point.y) }]));
+  return new Map(points.map((point) => [point.id, { x: clamp(point.x), y: clamp(point.y) }]));
 }

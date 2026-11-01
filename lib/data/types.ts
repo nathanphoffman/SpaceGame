@@ -1,17 +1,17 @@
-import type { PlanetKind, RGB } from "@/lib/planets/types";
+import type { PlanetKind, RgbColor } from "@/lib/planets/types";
 
 /** Hand-picked appearance for a real body. Anything left out falls back to a seeded random value. */
 export type Look = {
   label?: string;          // shown instead of the generic kind name, e.g. "Ice giant"
-  low?: RGB;
-  high?: RGB;
-  ocean?: RGB;
-  bands?: RGB[];           // gas giant bands
-  atmosphere?: RGB;
+  low?: RgbColor;
+  high?: RgbColor;
+  ocean?: RgbColor;
+  bands?: RgbColor[];           // gas giant bands
+  atmosphere?: RgbColor;
   seaLevel?: number;
   bump?: number;
   craters?: number;
-  rings?: { inner: number; outer: number; tilt: number; color: RGB }; // inner/outer in planet radii
+  rings?: { inner: number; outer: number; tilt: number; color: RgbColor }; // inner/outer in planet radii
 };
 
 export type BodySpec = {

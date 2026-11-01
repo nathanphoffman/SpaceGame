@@ -2,11 +2,11 @@ import { Pool } from "pg";
 import { GALAXY_VERSION } from "@/lib/data/catalog";
 import { seedGalaxy } from "@/lib/server/seedGalaxy";
 
-const g = globalThis as unknown as { __pool?: Pool; __ready?: Promise<void> };
+const context = globalThis as unknown as { __pool?: Pool; __ready?: Promise<void> };
 
 export const pool =
-  g.__pool ??
-  (g.__pool = new Pool({
+  context.__pool ??
+  (context.__pool = new Pool({
     connectionString: process.env.DATABASE_URL ?? "postgres://space:space@localhost:5440/spacegame",
   }));
 
@@ -106,15 +106,15 @@ async function wipeIfStale() {
 }
 
 export function ready(): Promise<void> {
-  return (g.__ready ??= (async () => { // set up the database once per server process: later calls get the same promise
+  return (context.__ready ??= (async () => { // set up the database once per server process: later calls get the same promise
     await pool.query(SCHEMA);
     await migrateToElements();
     await wipeIfStale();
     await seedGalaxy(pool);
-  })().catch((e) => {
-    g.__ready = undefined;
+  })().catch((event) => {
+    context.__ready = undefined;
 
-    throw e;
+    throw event;
   }));
 }
 

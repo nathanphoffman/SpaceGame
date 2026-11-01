@@ -50,10 +50,10 @@ function addLabel(parent: THREE.Object3D, text: string, starClass: string) {
 
 /** frees the geometry and materials under an object */
 export function disposeTree(root: THREE.Object3D) {
-  root.traverse((o) => { // visit every mesh under this object
-    const m = o as THREE.Mesh;
-    m.geometry?.dispose();
-    const mat = m.material as THREE.Material | THREE.Material[] | undefined;
+  root.traverse((object) => { // visit every mesh under this object
+    const mesh = object as THREE.Mesh;
+    mesh.geometry?.dispose();
+    const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
 
     // a material can be one material, a list of them, or missing; handle all three
     (Array.isArray(mat) ? mat : mat ? [mat] : []).forEach((x) => x.dispose());
@@ -86,10 +86,10 @@ export function setDetail(node: PlanetNode, detail: number) {
 export function createPlanetNode(planet: PlanetDTO): PlanetNode {
   const params = planetParams(planet.seed);
   const holder = new THREE.Group(), mesh = new THREE.Group();
-  const dot = glowSprite(OWNER_COLOR[planet.kind], OWNER_DOT_GLOW, OWNER_DOT_OPACITY); // a screen-size dot so far-away planets can still be found
-  dot.material.sizeAttenuation = false;
-  dot.scale.setScalar(OWNER_DOT_SIZE);
-  holder.add(mesh, dot);
+  const ownerDot = glowSprite(OWNER_COLOR[planet.kind], OWNER_DOT_GLOW, OWNER_DOT_OPACITY); // a screen-size dot so far-away planets can still be found
+  ownerDot.material.sizeAttenuation = false;
+  ownerDot.scale.setScalar(OWNER_DOT_SIZE);
+  holder.add(mesh, ownerDot);
 
   return { dto: planet, holder, mesh, spin: params.spin, radius: params.radius * PLANET_SCALE, detail: 0, label: addLabel(holder, planet.name, `body ${planet.kind}`) };
 }
@@ -112,12 +112,12 @@ export function createShip(fleet: FleetDTO): ShipNode {
 }
 
 /** points the ship and its trail from one planet to the other, `progress` (0..1) of the way along */
-export function placeShip(ship: ShipNode, from: THREE.Vector3, to: THREE.Vector3, progress: number) {
-  ship.holder.position.lerpVectors(from, to, progress);
-  ship.holder.lookAt(to);
+export function placeShip(ship: ShipNode, from: THREE.Vector3, destination: THREE.Vector3, progress: number) {
+  ship.holder.position.lerpVectors(from, destination, progress);
+  ship.holder.lookAt(destination);
   const points = ship.trail.geometry.attributes.position as THREE.BufferAttribute;
   points.setXYZ(0, from.x, from.y, from.z);
-  points.setXYZ(1, to.x, to.y, to.z);
+  points.setXYZ(1, destination.x, destination.y, destination.z);
   points.needsUpdate = true;
   ship.trail.computeLineDistances();
 }

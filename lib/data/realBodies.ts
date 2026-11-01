@@ -6,20 +6,20 @@ const GAS_RADIUS = { min: 1.0, max: 1.45, fromKm: 40000, perKm: 0.45, perKmDivis
 const ROCK_RADIUS = { min: 0.35, max: 1.25, base: 0.45, perDoubling: 0.32, referenceKm: 3000 }; // other worlds grow with each doubling of diameter
 
 /** on-screen size (game units, ~0.35 .. 1.45) from a real diameter */
-export function bodyRadius(kind: PlanetKind, km: number) {
-  if (kind === "gas") return Math.min(GAS_RADIUS.max, Math.max(GAS_RADIUS.min, GAS_RADIUS.min + (GAS_RADIUS.perKm * (km - GAS_RADIUS.fromKm)) / GAS_RADIUS.perKmDivisor));
+export function bodyRadius(kind: PlanetKind, kilometres: number) {
+  if (kind === "gas") return Math.min(GAS_RADIUS.max, Math.max(GAS_RADIUS.min, GAS_RADIUS.min + (GAS_RADIUS.perKm * (kilometres - GAS_RADIUS.fromKm)) / GAS_RADIUS.perKmDivisor));
 
-  return Math.min(ROCK_RADIUS.max, Math.max(ROCK_RADIUS.min, ROCK_RADIUS.base + ROCK_RADIUS.perDoubling * Math.log2(km / ROCK_RADIUS.referenceKm)));
+  return Math.min(ROCK_RADIUS.max, Math.max(ROCK_RADIUS.min, ROCK_RADIUS.base + ROCK_RADIUS.perDoubling * Math.log2(kilometres / ROCK_RADIUS.referenceKm)));
 }
 
 /** "Fe30 O28 Si18" -> composition list, biggest share first */
 export function parseComposition(text: string) {
-  return text.split(/\s+/).map((tok) => { // split the composition text like "Fe30 O28" on spaces
+  return text.split(/\s+/).map((token) => { // split the composition text like "Fe30 O28" on spaces
     // split a token such as Fe30 into its element letters and its percentage
-    const [, symbol, percent] = /^([A-Za-z]+)([\d.]+)$/.exec(tok)!;
+    const [, symbol, percent] = /^([A-Za-z]+)([\d.]+)$/.exec(token)!;
 
     return { symbol, name: ELEMENTS[symbol as Element].name, pct: Number(percent) };
-  }).sort((a, b) => b.pct - a.pct);
+  }).sort((first, second) => second.pct - first.pct);
 }
 
 /** Pin a seeded random world to what we know about a real one. Bodies with a `look` are fully specified. */

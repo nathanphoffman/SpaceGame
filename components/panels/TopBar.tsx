@@ -1,12 +1,12 @@
-import { ELEMENTS, ELEMENT_ORDER, type PlanetDTO, type Res } from "@/lib/defs";
-import { Ico } from "@/components/ui";
+import { ELEMENTS, ELEMENT_ORDER, type PlanetDTO, type Resources } from "@/lib/defs";
+import { Icon } from "@/components/ui";
 
 type Props = {
   planets: PlanetDTO[]; // your planets
   current: PlanetDTO;
   stock: (symbol: string) => number;
-  rate: Res;
-  onSelect: (id: number) => void;
+  rate: Resources;
+  onSelect: (planetId: number) => void;
   onReset: () => void;
 };
 
@@ -17,7 +17,7 @@ export default function TopBar({ planets, current, stock, rate, onSelect, onRese
       <div className="tabs">
         {planets.map((planet) => ( // one tab per base you own
           <button key={planet.id} className={planet.id === current.id ? "on" : ""} onClick={() => onSelect(planet.id)}>
-            <Ico src="/icons/planets/planet_player.svg" /> {planet.name}
+            <Icon src="/icons/planets/planet_player.svg" /> {planet.name}
           </button>
         ))}
 

@@ -1,16 +1,16 @@
 import type { PoolClient } from "pg";
-import { type Res, type SystemDTO, FLEET_STATUS, type FleetStatus, type Mission, type Owner, type QueueKind } from "@/lib/defs";
+import { type Resources, type SystemDTO, FLEET_STATUS, type FleetStatus, type Mission, type Owner, type QueueKind } from "@/lib/defs";
 
 export type Planet = {
   id: number; name: string; system_id: number; orbit: number; kind: Owner;
-  resources: Res; buildings: Record<string, number>; ships: Record<string, number>;
+  resources: Resources; buildings: Record<string, number>; ships: Record<string, number>;
   defense: number; seed: number; shared: boolean; updated_at: Date;
 };
 
 export type QueueItem = { id: string; planet_id: number; kind: QueueKind; type: string; start_at: Date; finish_at: Date };
 export type Fleet = {
   id: string; origin_id: number; target_id: number; mission: Mission;
-  ships: Record<string, number>; loot: Res; depart_at: Date; arrive_at: Date; return_at: Date;
+  ships: Record<string, number>; loot: Resources; depart_at: Date; arrive_at: Date; return_at: Date;
   status: FleetStatus; report: string;
 };
 

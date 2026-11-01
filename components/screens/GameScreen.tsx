@@ -15,8 +15,8 @@ import { MS_PER_SECOND, productionRates, type FleetDTO, type GameState, type Pla
 import { planetStats } from "@/lib/planets/planetStats";
 import Reports from "./Reports";
 
-type Act = ReturnType<typeof useGame>["act"];
-type Props = { game: GameState; error: string; act: Act; now: number; nav: Navigation };
+type SendAction = ReturnType<typeof useGame>["act"];
+type Props = { game: GameState; error: string; act: SendAction; now: number; nav: Navigation };
 
 /** everything about the planets the player is looking at, worked out once per render */
 function describeScene(game: GameState, navigation: Navigation, nowMs: number) {

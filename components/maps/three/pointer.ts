@@ -10,24 +10,24 @@ const scratch = new THREE.Vector3();
 
 /** The pickable closest to the pointer, if the pointer is inside its click radius. */
 export function pickAt(event: MouseEvent, element: HTMLElement, pickables: Pickable[], camera: THREE.Camera): number | null {
-  const r = element.getBoundingClientRect();
-  const mx = event.clientX - r.left, my = event.clientY - r.top;
+  const bounds = element.getBoundingClientRect();
+  const pointerX = event.clientX - bounds.left, pointerY = event.clientY - bounds.top;
   let best: number | null = null, bestD = Infinity;
 
-  for (const p of pickables) {
-    p.object.getWorldPosition(scratch).project(camera);
+  for (const pickable of pickables) {
+    pickable.object.getWorldPosition(scratch).project(camera);
 
     if (scratch.z > 1) continue; // behind the camera
-    const d = Math.hypot((scratch.x * HALF + HALF) * r.width - mx, (-scratch.y * HALF + HALF) * r.height - my);
+    const gap = Math.hypot((scratch.x * HALF + HALF) * bounds.width - pointerX, (-scratch.y * HALF + HALF) * bounds.height - pointerY);
 
-    if (d < p.radiusPx && d < bestD) { best = p.id; bestD = d; }
+    if (gap < pickable.radiusPx && gap < bestD) { best = pickable.id; bestD = gap; }
   }
 
   return best;
 }
 
 /** Click (not drag) and hover-cursor handling on `el`. Returns a function that removes the listeners. */
-export function bindPointer(el: HTMLElement, pick: (e: MouseEvent) => number | null, onClick: (id: number | null) => void) {
+export function bindPointer(el: HTMLElement, pick: (e: MouseEvent) => number | null, onClick: (pickedId: number | null) => void) {
   let hover: number | null = null;
 
   const onDown = (down: PointerEvent) => { // a click only counts if the pointer barely moved between press and release, otherwise it was a drag

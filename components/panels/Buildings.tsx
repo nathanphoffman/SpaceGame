@@ -1,6 +1,6 @@
 import {
   MAX_BUILDING_LEVEL, MS_PER_SECOND, buildCost, buildSeconds, buildingInfo, mineElement, mineRate, toRoman,
-  type BuildingInfo, type PlanetDTO, type QueueDTO, type Res,
+  type BuildingInfo, type PlanetDTO, type QueueDTO, type Resources,
 } from "@/lib/defs";
 
 import { Cost, elementColor, fmtTime } from "@/components/ui";
@@ -13,7 +13,7 @@ type Props = {
   types: string[]; // building types this planet can build
   queue: QueueDTO[]; // building queue for this planet
   nowMs: number;
-  shortfall: (cost: Res) => string | undefined;
+  shortfall: (cost: Resources) => string | undefined;
   sendAction: (body: object) => Promise<void>;
 };
 
@@ -72,7 +72,7 @@ function MineOutput({ tile }: { tile: TileState }) {
   );
 }
 
-function NextLevel({ tile, cost }: { tile: TileState; cost: Res }) {
+function NextLevel({ tile, cost }: { tile: TileState; cost: Resources }) {
   if (tile.level >= MAX_BUILDING_LEVEL) return <div className="sub good">Maximum level</div>;
 
   return (
@@ -116,7 +116,7 @@ function BuildingTile({ type, props }: { type: string; props: Props }) {
   const tile = tileState(type, props);
   const cost = buildCost(type, tile.level);
   const maxed = tile.level >= MAX_BUILDING_LEVEL;
-  const why = maxed ? `Already at the maximum level (${toRoman(MAX_BUILDING_LEVEL)})` : props.shortfall(cost);
+  const blocker = maxed ? `Already at the maximum level (${toRoman(MAX_BUILDING_LEVEL)})` : props.shortfall(cost);
 
   return (
     <div className="tile" title={tile.info.desc}>
@@ -125,7 +125,7 @@ function BuildingTile({ type, props }: { type: string; props: Props }) {
       <MineOutput tile={tile} />
       <NextLevel tile={tile} cost={cost} />
       <BuildProgress active={tile.queued[0]} now={props.nowMs} />
-      <button disabled={!!why} title={why} onClick={() => props.sendAction({ action: "build", planetId: props.planet.id, type })}>{buttonLabel(tile)}</button>
+      <button disabled={!!blocker} title={blocker} onClick={() => props.sendAction({ action: "build", planetId: props.planet.id, type })}>{buttonLabel(tile)}</button>
     </div>
   );
 }

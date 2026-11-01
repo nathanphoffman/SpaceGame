@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MS_PER_SECOND, SHIPS, shipSeconds, type PlanetDTO, type QueueDTO, type Res, type ShipType, ACTION } from "@/lib/defs";
+import { MS_PER_SECOND, SHIPS, shipSeconds, type PlanetDTO, type QueueDTO, type Resources, type ShipType, ACTION } from "@/lib/defs";
 import { Cost, SHIP_TYPES, fmtTime } from "@/components/ui";
 
 type Props = {
@@ -7,7 +7,7 @@ type Props = {
   planet: PlanetDTO;
   queue: QueueDTO[]; // ship queue for this planet
   nowMs: number;
-  shortfall: (cost: Res) => string | undefined;
+  shortfall: (cost: Resources) => string | undefined;
   sendAction: (body: object) => Promise<void>;
 };
 
@@ -46,7 +46,7 @@ type TileProps = { type: ShipType; props: Props; level: number; quantity: number
 function ShipTile({ type, props, level, quantity, onQuantity, onInfo }: TileProps) {
   const ship = SHIPS[type];
   const queued = props.queue.filter((item) => item.type === type);
-  const why = buildBlocker(ship, level, quantity, props.shortfall);
+  const blocker = buildBlocker(ship, level, quantity, props.shortfall);
 
   return (
     <div className="tile">
@@ -60,7 +60,7 @@ function ShipTile({ type, props, level, quantity, onQuantity, onInfo }: TileProp
       {queued[0] && <div className="sub good">+{queued.length} · next {fmtTime(queued[0].finishAt - props.nowMs)}</div>}
       <div className="tile-actions">
         <input type="number" min={MIN_BATCH} max={MAX_BATCH} value={quantity} onChange={(event) => onQuantity(Number(event.target.value))} />
-        <button disabled={!!why} title={why} onClick={() => props.sendAction({ action: ACTION.ship, planetId: props.planet.id, type, qty: quantity })}>Build</button>
+        <button disabled={!!blocker} title={blocker} onClick={() => props.sendAction({ action: ACTION.ship, planetId: props.planet.id, type, qty: quantity })}>Build</button>
       </div>
     </div>
   );
