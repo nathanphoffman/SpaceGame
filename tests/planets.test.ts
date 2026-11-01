@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SYSTEMS } from "@/lib/data/catalog";
 import { mulberry32, noise3, fbm } from "@/lib/planets/noise";
@@ -74,5 +75,18 @@ describe("stars", () => {
     const sun = { radius: 1, temp: 5772 };
     expect(equilibriumTempK(sun, 0.5)).toBeGreaterThan(equilibriumTempK(sun, 2));
     expect(equilibriumTempK(sun, 1)).toBeCloseTo(278, 0);
+  });
+});
+
+describe("generated worlds never change", () => {
+  // recorded from the generator when it was first written: if these differ, every saved game's planets would look different
+  const recorded = JSON.parse(readFileSync(new URL("./fixtures/planets.json", import.meta.url), "utf8"));
+
+  it("keeps every planet, composition and star exactly as recorded", () => {
+    recorded.seeds.forEach((seed: number, index: number) => {
+      expect(JSON.parse(JSON.stringify(planetParams(seed)))).toEqual(recorded.params[index]);
+      expect(JSON.parse(JSON.stringify(planetStats(seed)))).toEqual(recorded.stats[index]);
+      expect(JSON.parse(JSON.stringify(starParams(seed)))).toEqual(recorded.stars[index]);
+    });
   });
 });
