@@ -201,155 +201,174 @@ export function settle(world: World, now: Date) {
 
 // ---------- entry point ----------
 
-export async function withGame<T>(fn: (w: World, now: Date) => T, view: View = {}): Promise<{ result: T; state: GameState }> {
+const ADVISORY_LOCK_ID = 42; // one writer at a time: every game action takes this lock
+
+export async function withGame<T>(action: (world: World, now: Date) => T, view: View = {}): Promise<{ result: T; state: GameState }> {
   await ready();
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-    await client.query("SELECT pg_advisory_xact_lock(42)"); // one writer at a time
+    await client.query("SELECT pg_advisory_xact_lock($1)", [ADVISORY_LOCK_ID]);
 
     // stars and planets are generated the first time they are looked at
     if (view.sx !== undefined && view.sy !== undefined && validSector(view.sx, view.sy)) await ensureSector(client, view.sx, view.sy);
 
     if (view.system !== undefined) await ensureSystem(client, view.system);
-    const w = await load(client, view);
+
+    const world = await load(client, view);
     const now = new Date();
-    settle(w, now);
-    const result = fn(w, now);
-    await save(client, w);
+    settle(world, now);
+    const result = action(world, now);
+    await save(client, world);
     await client.query("COMMIT");
 
-    return { result, state: toState(w, now) };
-  } catch (e) {
+    return { result, state: toState(world, now) };
+  } catch (failure) {
     await client.query("ROLLBACK");
 
-    throw e;
+    throw failure;
   } finally {
     client.release();
   }
 }
 
-function toState(w: World, now: Date): GameState {
+function toState(world: World, now: Date): GameState {
   return {
     nowMs: now.getTime(),
-    systems: w.systems,
-    planets: w.planets.map((p) => ({
-      id: p.id, name: p.name, systemId: p.system_id, orbit: p.orbit, kind: p.kind,
-      resources: p.resources, buildings: p.buildings, ships: p.ships, defense: p.defense, seed: p.seed, shared: p.shared,
+    systems: world.systems,
+    planets: world.planets.map((planet) => ({
+      id: planet.id, name: planet.name, systemId: planet.system_id, orbit: planet.orbit, kind: planet.kind,
+      resources: planet.resources, buildings: planet.buildings, ships: planet.ships, defense: planet.defense, seed: planet.seed, shared: planet.shared,
     })),
-    queue: w.queue.map((database) => ({
-      id: database.id, planetId: database.planet_id, kind: database.kind, type: database.type,
-      startAt: database.start_at.getTime(), finishAt: database.finish_at.getTime(),
+    queue: world.queue.map((item) => ({
+      id: item.id, planetId: item.planet_id, kind: item.kind, type: item.type,
+      startAt: item.start_at.getTime(), finishAt: item.finish_at.getTime(),
     })),
-    fleets: w.fleets.map((f) => ({
-      id: f.id, originId: f.origin_id, targetId: f.target_id, mission: f.mission, ships: f.ships, loot: f.loot,
-      departAt: f.depart_at.getTime(), arriveAt: f.arrive_at.getTime(), returnAt: f.return_at.getTime(),
-      status: f.status, report: f.report,
+    fleets: world.fleets.map((fleet) => ({
+      id: fleet.id, originId: fleet.origin_id, targetId: fleet.target_id, mission: fleet.mission, ships: fleet.ships, loot: fleet.loot,
+      departAt: fleet.depart_at.getTime(), arriveAt: fleet.arrive_at.getTime(), returnAt: fleet.return_at.getTime(),
+      status: fleet.status, report: fleet.report,
     })),
   };
 }
 
 // ---------- actions ----------
 
-function ownPlanet(w: World, id: number) {
-  const p = w.planets.find((x) => x.id === id);
+function ownPlanet(world: World, planetId: number) {
+  const planet = world.planets.find((candidate) => candidate.id === planetId);
 
-  if (!p || p.kind !== PLANET_KIND.player) throw new GameError("Not your planet");
+  if (!planet || planet.kind !== PLANET_KIND.player) throw new GameError("Not your planet");
 
-  return p;
+  return planet;
 }
 
-function pay(p: Planet, cost: Resources) {
-  for (const [el, n] of Object.entries(cost)) {
-    if ((p.resources[el] ?? 0) < n) throw new GameError(`Not enough ${ELEMENTS[el as keyof typeof ELEMENTS]?.name ?? el}`);
+/** take the cost from the planet's stock, or refuse if it can't afford it */
+function pay(planet: Planet, cost: Resources) {
+  for (const [element, amount] of Object.entries(cost)) {
+    if ((planet.resources[element] ?? 0) < amount) throw new GameError(`Not enough ${ELEMENTS[element as keyof typeof ELEMENTS]?.name ?? element}`);
   }
 
-  for (const [el, n] of Object.entries(cost)) p.resources[el] = (p.resources[el] ?? 0) - n;
+  for (const [element, amount] of Object.entries(cost)) planet.resources[element] = (planet.resources[element] ?? 0) - amount;
 }
 
-const lastFinish = (w: World, planetId: number, kind: string, now: Date) => // queue entries for one planet and kind
-  // the latest finish time in the queue, or now if the queue is empty
-  w.queue.filter((q) => q.planet_id === planetId && q.kind === kind).reduce((multiplier, q) => (q.finish_at > multiplier ? q.finish_at : multiplier), now);
+/** when the last queued thing of this kind on this planet finishes, or now if there is none */
+const lastFinish = (world: World, planetId: number, kind: string, now: Date) =>
+  world.queue.filter((item) => item.planet_id === planetId && item.kind === kind).reduce((latest, item) => (item.finish_at > latest ? item.finish_at : latest), now);
 
-export function startBuilding(w: World, now: Date, planetId: number, type: string) {
+export function startBuilding(world: World, now: Date, planetId: number, type: string) {
   if (!buildingInfo(type)) throw new GameError("Unknown building");
-  const p = ownPlanet(w, planetId);
+
+  const planet = ownPlanet(world, planetId);
   const element = mineElement(type);
 
-  if (element && !planetStats(p.seed).composition.some((c) => c.symbol === element)) {
+  if (element && !planetStats(planet.seed).composition.some((part) => part.symbol === element)) {
     throw new GameError(`There is no ${ELEMENTS[element].name} on this planet to mine`);
   }
 
-  const queued = w.queue.filter((q) => q.planet_id === p.id && q.kind === QUEUE_KIND.building && q.type === type).length;
-  const level = (p.buildings[type] ?? 0) + queued;
+  const queued = world.queue.filter((item) => item.planet_id === planet.id && item.kind === QUEUE_KIND.building && item.type === type).length;
+  const level = (planet.buildings[type] ?? 0) + queued;
 
   if (level >= MAX_BUILDING_LEVEL) throw new GameError(`${buildingInfo(type)!.name} is already at the maximum level (${MAX_BUILDING_LEVEL})`);
-  pay(p, buildCost(type, level));
-  const start = lastFinish(w, p.id, QUEUE_KIND.building, now);
+
+  pay(planet, buildCost(type, level));
+  const start = lastFinish(world, planet.id, QUEUE_KIND.building, now);
   const finish = new Date(start.getTime() + buildSeconds(type, level) * MS_PER_SECOND);
-  w.queue.push({ id: randomUUID(), planet_id: p.id, kind: QUEUE_KIND.building, type, start_at: start, finish_at: finish });
+  world.queue.push({ id: randomUUID(), planet_id: planet.id, kind: QUEUE_KIND.building, type, start_at: start, finish_at: finish });
 }
 
-export function buildShips(w: World, now: Date, planetId: number, type: ShipType, qty: number) {
+export function buildShips(world: World, now: Date, planetId: number, type: ShipType, quantity: number) {
   if (!(type in SHIPS)) throw new GameError("Unknown ship");
-  const p = ownPlanet(w, planetId);
 
-  if (!(p.buildings.shipyard > 0)) throw new GameError("Build a shipyard first");
-  qty = Math.floor(qty);
+  const planet = ownPlanet(world, planetId);
 
-  if (!(qty >= MIN_BATCH && qty <= MAX_BATCH)) throw new GameError(`Quantity must be ${MIN_BATCH}-${MAX_BATCH}`);
-  const s = SHIPS[type];
-  pay(p, Object.fromEntries(Object.entries(s.cost).map(([el, n]) => [el, n * qty])));
-  let start = lastFinish(w, p.id, QUEUE_KIND.ship, now);
+  if (!(planet.buildings.shipyard > 0)) throw new GameError("Build a shipyard first");
 
-  for (let index = 0; index < qty; index++) {
-    const finish = new Date(start.getTime() + shipSeconds(type, p.buildings.shipyard) * MS_PER_SECOND);
-    w.queue.push({ id: randomUUID(), planet_id: p.id, kind: QUEUE_KIND.ship, type, start_at: start, finish_at: finish });
+  const count = Math.floor(quantity);
+
+  if (!(count >= MIN_BATCH && count <= MAX_BATCH)) throw new GameError(`Quantity must be ${MIN_BATCH}-${MAX_BATCH}`);
+
+  pay(planet, Object.fromEntries(Object.entries(SHIPS[type].cost).map(([element, amount]) => [element, amount * count])));
+  let start = lastFinish(world, planet.id, QUEUE_KIND.ship, now);
+
+  for (let built = 0; built < count; built++) {
+    const finish = new Date(start.getTime() + shipSeconds(type, planet.buildings.shipyard) * MS_PER_SECOND);
+    world.queue.push({ id: randomUUID(), planet_id: planet.id, kind: QUEUE_KIND.ship, type, start_at: start, finish_at: finish });
     start = finish;
   }
 }
 
-export function sendFleet(w: World, now: Date, originId: number, targetId: number, ships: Record<string, number>) {
-  const origin = ownPlanet(w, originId);
-  const target = w.planets.find((p) => p.id === targetId);
-
-  if (!target) throw new GameError("Unknown target");
-
-  if (target.kind === PLANET_KIND.player) throw new GameError("That planet is already yours");
+/** the ships the player asked to send, checked against what the origin has; refuses anything impossible */
+function chooseShips(origin: Planet, requested: Record<string, number>) {
   const sent: Record<string, number> = {};
 
-  for (const [t, n] of Object.entries(ships)) {
-    const count = Math.floor(Number(n));
+  for (const [type, amount] of Object.entries(requested)) {
+    const count = Math.floor(Number(amount));
 
-    if (!(t in SHIPS) || !(count > 0)) continue;
+    if (!(type in SHIPS) || !(count > 0)) continue;
 
-    if ((origin.ships[t] ?? 0) < count) throw new GameError(`Not enough ${SHIPS[t as ShipType].name}s`);
-    sent[t] = count;
+    if ((origin.ships[type] ?? 0) < count) throw new GameError(`Not enough ${SHIPS[type as ShipType].name}s`);
+
+    sent[type] = count;
   }
 
   if (Object.keys(sent).length === 0) throw new GameError("Select at least one ship");
 
+  return sent;
+}
+
+export function sendFleet(world: World, now: Date, originId: number, targetId: number, ships: Record<string, number>) {
+  const origin = ownPlanet(world, originId);
+  const target = world.planets.find((candidate) => candidate.id === targetId);
+
+  if (!target) throw new GameError("Unknown target");
+
+  if (target.kind === PLANET_KIND.player) throw new GameError("That planet is already yours");
+
+  const sent = chooseShips(origin, ships);
+
   // a colony ship settles a neutral planet; any other fleet fights what is there and then guards it
   const mission = target.kind === PLANET_KIND.empty && sent.colony_ship > 0 ? MISSION.colonize : MISSION.attack;
 
-  for (const [t, n] of Object.entries(sent)) origin.ships[t] -= n;
+  for (const [type, count] of Object.entries(sent)) origin.ships[type] -= count;
+
   const flight =
-    flightSeconds({ systemId: origin.system_id, orbit: origin.orbit }, { systemId: target.system_id, orbit: target.orbit }, w.systems) * MS_PER_SECOND;
-  w.fleets.push({
+    flightSeconds({ systemId: origin.system_id, orbit: origin.orbit }, { systemId: target.system_id, orbit: target.orbit }, world.systems) * MS_PER_SECOND;
+  world.fleets.push({
     id: randomUUID(), origin_id: origin.id, target_id: target.id, mission, ships: sent,
     loot: {}, depart_at: now, arrive_at: new Date(now.getTime() + flight),
     return_at: new Date(now.getTime() + flight * 2), status: FLEET_STATUS.outbound, report: "",
   });
 }
 
-export function recallFleet(w: World, now: Date, fleetId: string) {
-  const f = w.fleets.find((x) => x.id === fleetId);
+export function recallFleet(world: World, now: Date, fleetId: string) {
+  const fleet = world.fleets.find((candidate) => candidate.id === fleetId);
 
-  if (!f || f.status !== FLEET_STATUS.stationed) throw new GameError("That fleet isn't guarding anything");
-  const flight = f.arrive_at.getTime() - f.depart_at.getTime();
-  f.arrive_at = now; // start of the return leg
-  f.return_at = new Date(now.getTime() + flight);
-  f.status = FLEET_STATUS.returning;
-  f.report = "Fleet recalled.";
+  if (!fleet || fleet.status !== FLEET_STATUS.stationed) throw new GameError("That fleet isn't guarding anything");
+
+  const flight = fleet.arrive_at.getTime() - fleet.depart_at.getTime();
+  fleet.arrive_at = now; // start of the return leg
+  fleet.return_at = new Date(now.getTime() + flight);
+  fleet.status = FLEET_STATUS.returning;
+  fleet.report = "Fleet recalled.";
 }
