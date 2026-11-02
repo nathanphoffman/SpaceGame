@@ -1,14 +1,22 @@
 "use client";
 
-import GameScreen from "@/components/screens/GameScreen";
 import { useGame } from "@/components/hooks/useGame";
 import { useNavigation } from "@/components/hooks/useNavigation";
+import GameScreen from "@/components/screens/GameScreen";
 
 export default function Page() {
-  const navigation = useNavigation();
-  const { game, error, act, nowMs: now } = useGame(navigation.view);
+	const navigation = useNavigation();
+	const { game, error, act, nowMs: now } = useGame(navigation.view);
 
-  if (!game) return <div style={{ padding: 24 }}>{error || "Loading…"}</div>;
+	if (!game) return <div style={{ padding: 24 }}>{error || "Loading…"}</div>;
 
-  return <GameScreen game={game} error={error} act={act} now={now} nav={navigation} />;
+	return (
+		<GameScreen
+			game={game}
+			error={error}
+			act={act}
+			now={now}
+			nav={navigation}
+		/>
+	);
 }

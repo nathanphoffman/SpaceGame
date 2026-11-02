@@ -1,20 +1,20 @@
 // Fills the gaps in a star system: planets we haven't discovered yet are generated, deterministically.
-import { PLANET_KIND, mineType, type Owner } from "@/lib/defs";
-import { SUN_TEMP_K, STEFAN_BOLTZMANN_POWER } from "@/lib/planets/constants";
-import { mulberry32 } from "@/lib/planets/noise";
+import { mineType, type Owner, PLANET_KIND } from "@/lib/defs";
+import { STEFAN_BOLTZMANN_POWER, SUN_TEMP_K } from "@/lib/planets/constants";
 import { planetName } from "@/lib/planets/names";
+import { mulberry32 } from "@/lib/planets/noise";
 import { planetStats } from "@/lib/planets/planetStats";
 import { starParams } from "@/lib/planets/starParams";
 
 export type Filler = {
-  id: number;
-  name: string;
-  orbit: number; // AU
-  kind: Exclude<Owner, typeof PLANET_KIND.player>;
-  resources: Record<string, number>;
-  buildings: Record<string, number>;
-  defense: number;
-  seed: number;
+	id: number;
+	name: string;
+	orbit: number; // AU
+	kind: Exclude<Owner, typeof PLANET_KIND.player>;
+	resources: Record<string, number>;
+	buildings: Record<string, number>;
+	defense: number;
+	seed: number;
 };
 
 const COUNT_SEED = { multiplier: 977, offset: 13 };
@@ -32,11 +32,15 @@ const SYSTEM_ID_STRIDE = 100;
 
 /** 2d6: 2 and 12 are rare (1 in 36 each), 7 is the most common. */
 export function planetCount(starSeed: number) {
-  const random = mulberry32(starSeed * COUNT_SEED.multiplier + COUNT_SEED.offset);
+	const random = mulberry32(
+		starSeed * COUNT_SEED.multiplier + COUNT_SEED.offset,
+	);
 
-  for (let draw = 0; draw < COUNT_WARM_UP_DRAWS; draw++) random();
+	for (let draw = 0; draw < COUNT_WARM_UP_DRAWS; draw++) random();
 
-  return 2 + Math.floor(random() * DICE_SIDES) + Math.floor(random() * DICE_SIDES); // two d6 (each 0..5, +1 each)
+	return (
+		2 + Math.floor(random() * DICE_SIDES) + Math.floor(random() * DICE_SIDES)
+	); // two d6 (each 0..5, +1 each)
 }
 
 const MAX_STAR_SCALE = 3;
@@ -55,83 +59,135 @@ const SEED_MULTIPLIER = 4801;
 const SEED_OFFSET = 29;
 
 // true when the orbit is within the too-close ratio of any orbit already taken, on either side
-const crowds = (orbit: number, taken: number[]) => taken.some((other) => orbit / other < TOO_CLOSE && other / orbit < TOO_CLOSE);
+const crowds = (orbit: number, taken: number[]) =>
+	taken.some((other) => orbit / other < TOO_CLOSE && other / orbit < TOO_CLOSE);
 
 /** dim stars have their zone of orbits closer in: scale the orbit range with the star's brightness */
 function orbitScale(star: { radius: number; temp: number }) {
-  const luminosity = star.radius * star.radius * Math.pow(star.temp / SUN_TEMP_K, STEFAN_BOLTZMANN_POWER);
+	const luminosity =
+		star.radius *
+		star.radius *
+		(star.temp / SUN_TEMP_K) ** STEFAN_BOLTZMANN_POWER;
 
-  return Math.min(MAX_STAR_SCALE, Math.max(MIN_STAR_SCALE, Math.sqrt(luminosity)));
+	return Math.min(
+		MAX_STAR_SCALE,
+		Math.max(MIN_STAR_SCALE, Math.sqrt(luminosity)),
+	);
 }
 
 /** hostile bases run mines on their planet's most common elements and sit on a stockpile */
 function arm(composition: { symbol: string }[], random: () => number) {
-  const buildings: Record<string, number> = {};
-  const resources: Record<string, number> = {};
+	const buildings: Record<string, number> = {};
+	const resources: Record<string, number> = {};
 
-  for (const { symbol } of composition.slice(0, Math.min(1 + Math.floor(random() * MAX_ARMED_ELEMENTS), composition.length))) {
-    const level = 1 + Math.floor(random() * MAX_MINE_LEVEL);
-    buildings[mineType(symbol)] = level;
-    resources[symbol] = STOCKPILE_PER_LEVEL * level;
-  }
+	for (const { symbol } of composition.slice(
+		0,
+		Math.min(1 + Math.floor(random() * MAX_ARMED_ELEMENTS), composition.length),
+	)) {
+		const level = 1 + Math.floor(random() * MAX_MINE_LEVEL);
+		buildings[mineType(symbol)] = level;
+		resources[symbol] = STOCKPILE_PER_LEVEL * level;
+	}
 
-  return { buildings, resources };
+	return { buildings, resources };
 }
 
 /** an orbit for the planet in slot `index` of `want`: evenly spread on a log scale with some jitter, pushed out of the way of crowding orbits, or null if no room is left */
-function pickOrbit(index: number, want: number, scale: number, taken: number[], random: () => number) {
-  const spot = (index + HALF + (random() - HALF) * ORBIT_JITTER) / want; // 0..1 along the range of orbits, with some jitter
-  let orbit = INNERMOST_AU * scale * Math.pow(ORBIT_SPREAD, spot);
+function pickOrbit(
+	index: number,
+	want: number,
+	scale: number,
+	taken: number[],
+	random: () => number,
+) {
+	const spot = (index + HALF + (random() - HALF) * ORBIT_JITTER) / want; // 0..1 along the range of orbits, with some jitter
+	let orbit = INNERMOST_AU * scale * ORBIT_SPREAD ** spot;
 
-  for (let nudges = 0; nudges < MAX_NUDGES && crowds(orbit, taken); nudges++) orbit *= ORBIT_NUDGE;
+	for (let nudges = 0; nudges < MAX_NUDGES && crowds(orbit, taken); nudges++)
+		orbit *= ORBIT_NUDGE;
 
-  return crowds(orbit, taken) ? null : Math.round(orbit * MILLI) / MILLI;
+	return crowds(orbit, taken) ? null : Math.round(orbit * MILLI) / MILLI;
 }
 
 /** a made-up planet's seed, and whether it is a hostile base */
 function drawBasics(random: () => number) {
-  return { seed: 1 + Math.floor(random() * SEED_RANGE), hostile: random() < HOSTILE_CHANCE };
+	return {
+		seed: 1 + Math.floor(random() * SEED_RANGE),
+		hostile: random() < HOSTILE_CHANCE,
+	};
 }
 
 /** one made-up planet; hostile ones are enemy bases with the mines and stockpile they were armed with, the rest are free to settle */
-function makePlanet(system: { id: number; name: string }, number: number, orbit: number, basics: { seed: number; hostile: boolean }, owns: { buildings: Record<string, number>; resources: Record<string, number> }, random: () => number): Filler {
-  const { seed, hostile } = basics;
+function makePlanet(
+	system: { id: number; name: string },
+	number: number,
+	orbit: number,
+	basics: { seed: number; hostile: boolean },
+	owns: {
+		buildings: Record<string, number>;
+		resources: Record<string, number>;
+	},
+	random: () => number,
+): Filler {
+	const { seed, hostile } = basics;
 
-  return {
-    id: system.id * SYSTEM_ID_STRIDE + number,
-    name: number < NAMED_LETTERS ? `${system.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}` : planetName(seed),
-    orbit, kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, resources: owns.resources, buildings: owns.buildings,
-    defense: hostile ? Math.round(BASE_DEFENSE + random() * random() * DEFENSE_RANGE) : 0,
-    seed,
-  };
+	return {
+		id: system.id * SYSTEM_ID_STRIDE + number,
+		name:
+			number < NAMED_LETTERS
+				? `${system.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}`
+				: planetName(seed),
+		orbit,
+		kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty,
+		resources: owns.resources,
+		buildings: owns.buildings,
+		defense: hostile
+			? Math.round(BASE_DEFENSE + random() * random() * DEFENSE_RANGE)
+			: 0,
+		seed,
+	};
 }
 
 /**
  * Generate the planets we don't know about. A system gets 2d6 planets in total, so a star with
  * several confirmed planets gets few extras. `known` are the real orbits, which stay where they are.
  */
-export function fillSystem(system: { id: number; name: string; seed: number; complete: boolean }, known: { orbit: number; id: number }[]): Filler[] {
-  if (system.complete) return [];
+export function fillSystem(
+	system: { id: number; name: string; seed: number; complete: boolean },
+	known: { orbit: number; id: number }[],
+): Filler[] {
+	if (system.complete) return [];
 
-  const want = Math.max(0, planetCount(system.seed) - known.length);
-  const random = mulberry32(system.seed * SEED_MULTIPLIER + SEED_OFFSET);
+	const want = Math.max(0, planetCount(system.seed) - known.length);
+	const random = mulberry32(system.seed * SEED_MULTIPLIER + SEED_OFFSET);
 
-  for (let draw = 0; draw < WARM_UP_DRAWS; draw++) random();
+	for (let draw = 0; draw < WARM_UP_DRAWS; draw++) random();
 
-  const scale = orbitScale(starParams(system.seed));
-  const taken = known.map((planet) => planet.orbit);
-  const result: Filler[] = [];
+	const scale = orbitScale(starParams(system.seed));
+	const taken = known.map((planet) => planet.orbit);
+	const result: Filler[] = [];
 
-  for (let index = 0; index < want; index++) {
-    const orbit = pickOrbit(index, want, scale, taken, random);
+	for (let index = 0; index < want; index++) {
+		const orbit = pickOrbit(index, want, scale, taken, random);
 
-    if (orbit === null) continue; // no room left here
+		if (orbit === null) continue; // no room left here
 
-    taken.push(orbit);
-    const basics = drawBasics(random);
-    const owns = basics.hostile ? arm(planetStats(basics.seed).composition, random) : { buildings: {}, resources: {} };
-    result.push(makePlanet(system, known.length + result.length + 1, orbit, basics, owns, random));
-  }
+		taken.push(orbit);
+		const basics = drawBasics(random);
+		const owns = basics.hostile
+			? arm(planetStats(basics.seed).composition, random)
+			: { buildings: {}, resources: {} };
+		result.push(
+			makePlanet(
+				system,
+				known.length + result.length + 1,
+				orbit,
+				basics,
+				owns,
+				random,
+			),
+		);
+	}
 
-  return result;
+	return result;
 }

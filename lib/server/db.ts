@@ -2,13 +2,18 @@ import { Pool } from "pg";
 import { GALAXY_VERSION } from "@/lib/data/catalog";
 import { seedGalaxy } from "@/lib/server/seedGalaxy";
 
-const context = globalThis as unknown as { __pool?: Pool; __ready?: Promise<void> };
+const context = globalThis as unknown as {
+	__pool?: Pool;
+	__ready?: Promise<void>;
+};
 
 export const pool =
-  context.__pool ??
-  (context.__pool = new Pool({
-    connectionString: process.env.DATABASE_URL ?? "postgres://space:space@localhost:5440/spacegame",
-  }));
+	context.__pool ??
+	(context.__pool = new Pool({
+		connectionString:
+			process.env.DATABASE_URL ??
+			"postgres://space:space@localhost:5440/spacegame",
+	}));
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS systems (
@@ -72,54 +77,68 @@ CREATE TABLE IF NOT EXISTS fleets (
 
 // Games saved before the elements update used metal/crystal: Fe/Si are their direct replacements.
 async function migrateToElements() {
-  const { rows } = await pool.query(
-    "SELECT 1 FROM information_schema.columns WHERE table_name='planets' AND column_name='metal'",
-  );
+	const { rows } = await pool.query(
+		"SELECT 1 FROM information_schema.columns WHERE table_name='planets' AND column_name='metal'",
+	);
 
-  if (rows.length) {
-    await pool.query("UPDATE planets SET resources = jsonb_build_object('Fe', metal, 'Si', crystal)");
-    await pool.query("ALTER TABLE planets DROP COLUMN metal, DROP COLUMN crystal");
-  }
+	if (rows.length) {
+		await pool.query(
+			"UPDATE planets SET resources = jsonb_build_object('Fe', metal, 'Si', crystal)",
+		);
 
-  await pool.query(`UPDATE planets SET buildings = (buildings - 'metal_mine' - 'crystal_mine')
+		await pool.query(
+			"ALTER TABLE planets DROP COLUMN metal, DROP COLUMN crystal",
+		);
+	}
+
+	await pool.query(`UPDATE planets SET buildings = (buildings - 'metal_mine' - 'crystal_mine')
       || jsonb_strip_nulls(jsonb_build_object('mine_Fe', buildings->'metal_mine', 'mine_Si', buildings->'crystal_mine'))
     WHERE buildings ? 'metal_mine' OR buildings ? 'crystal_mine'`);
 
-  // ship upgrades were tried and removed
-  await pool.query("DELETE FROM queue WHERE kind='upgrade'");
-  await pool.query("ALTER TABLE planets DROP COLUMN IF EXISTS ship_levels");
-  await pool.query("ALTER TABLE fleets DROP COLUMN IF EXISTS levels");
-  await pool.query("UPDATE queue SET type='mine_Fe' WHERE type='metal_mine'");
-  await pool.query("UPDATE queue SET type='mine_Si' WHERE type='crystal_mine'");
-  await pool.query(`UPDATE fleets SET loot = jsonb_strip_nulls(jsonb_build_object('Fe', loot->'metal', 'Si', loot->'crystal'))
+	// ship upgrades were tried and removed
+	await pool.query("DELETE FROM queue WHERE kind='upgrade'");
+	await pool.query("ALTER TABLE planets DROP COLUMN IF EXISTS ship_levels");
+	await pool.query("ALTER TABLE fleets DROP COLUMN IF EXISTS levels");
+	await pool.query("UPDATE queue SET type='mine_Fe' WHERE type='metal_mine'");
+	await pool.query("UPDATE queue SET type='mine_Si' WHERE type='crystal_mine'");
+	await pool.query(`UPDATE fleets SET loot = jsonb_strip_nulls(jsonb_build_object('Fe', loot->'metal', 'Si', loot->'crystal'))
     WHERE loot ? 'metal' OR loot ? 'crystal'`);
 }
 
 /** A saved game from an older galaxy (different stars/planets) can't be carried over: start fresh. */
 async function wipeIfStale() {
-  const { rows } = await pool.query("SELECT value FROM meta WHERE key='galaxy'");
+	const { rows } = await pool.query(
+		"SELECT value FROM meta WHERE key='galaxy'",
+	);
 
-  if (rows[0]?.value === GALAXY_VERSION) return;
-  await pool.query("TRUNCATE queue, fleets, planets, systems, sectors");
-  await pool.query("ALTER TABLE systems ALTER COLUMN x TYPE double precision, ALTER COLUMN y TYPE double precision");
-  await pool.query("INSERT INTO meta (key,value) VALUES ('galaxy',$1) ON CONFLICT (key) DO UPDATE SET value=$1", [GALAXY_VERSION]);
+	if (rows[0]?.value === GALAXY_VERSION) return;
+	await pool.query("TRUNCATE queue, fleets, planets, systems, sectors");
+	await pool.query(
+		"ALTER TABLE systems ALTER COLUMN x TYPE double precision, ALTER COLUMN y TYPE double precision",
+	);
+
+	await pool.query(
+		"INSERT INTO meta (key,value) VALUES ('galaxy',$1) ON CONFLICT (key) DO UPDATE SET value=$1",
+		[GALAXY_VERSION],
+	);
 }
 
 export function ready(): Promise<void> {
-  return (context.__ready ??= (async () => { // set up the database once per server process: later calls get the same promise
-    await pool.query(SCHEMA);
-    await migrateToElements();
-    await wipeIfStale();
-    await seedGalaxy(pool);
-  })().catch((event) => {
-    context.__ready = undefined;
+	return (context.__ready ??= (async () => {
+		// set up the database once per server process: later calls get the same promise
+		await pool.query(SCHEMA);
+		await migrateToElements();
+		await wipeIfStale();
+		await seedGalaxy(pool);
+	})().catch((event) => {
+		context.__ready = undefined;
 
-    throw event;
-  }));
+		throw event;
+	}));
 }
 
 export async function resetGame() {
-  await ready();
-  await pool.query("TRUNCATE queue, fleets, planets, systems, sectors");
-  await seedGalaxy(pool);
+	await ready();
+	await pool.query("TRUNCATE queue, fleets, planets, systems, sectors");
+	await seedGalaxy(pool);
 }
