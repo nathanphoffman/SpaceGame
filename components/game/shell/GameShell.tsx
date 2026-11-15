@@ -19,8 +19,9 @@ import { TradePanel } from "@/components/game/panels/TradePanel";
 import { PlanetDetails } from "@/components/game/panels/PlanetDetails";
 import { useEscape } from "@/components/game/shell/useEscape";
 import { EndScreen } from "@/components/game/shell/EndScreen";
+import { MS_PER_SECOND } from "@/lib/defs";
 
-const TICK_MS = 1000;
+const TICK_MS = MS_PER_SECOND;
 
 /** Local clock that re-renders every second so ships keep moving between server updates. */
 function useLocalNow(): number {

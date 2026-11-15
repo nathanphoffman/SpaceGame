@@ -1,8 +1,7 @@
-import { type FleetDTO, FLEET_STATUS, MISSION, PLANET_KIND, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
+import { type FleetDTO, MS_PER_SECOND, FLEET_STATUS, MISSION, PLANET_KIND, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
 import { sectorOf } from "@/lib/galaxy/sector";
 import type { FleetViewDto, GalaxyMapDto, PlayerViewDto } from "./schemas";
 
-const MS_PER_GAME_SECOND = 1000;
 const FIRST_ORBIT_AU = 1; // the API has no orbit distance, so planets are spaced one AU apart in listed order
 const HASH_MULTIPLIER = 31;
 const HASH_MODULUS = 2147483647;
@@ -61,9 +60,9 @@ function fleetOf(fleet: FleetViewDto, ids: IdMap): FleetDTO {
 		mission: MISSION.attack,
 		ships: fleet.ships,
 		loot: fleet.cargo,
-		departAt: fleet.departAt * MS_PER_GAME_SECOND,
-		arriveAt: fleet.arriveAt * MS_PER_GAME_SECOND,
-		returnAt: fleet.arriveAt * MS_PER_GAME_SECOND,
+		departAt: fleet.departAt * MS_PER_SECOND,
+		arriveAt: fleet.arriveAt * MS_PER_SECOND,
+		returnAt: fleet.arriveAt * MS_PER_SECOND,
 		status: FLEET_STATUS.outbound,
 		report: "",
 		hostile: fleet.side === "Enemy",
@@ -74,7 +73,7 @@ function fleetOf(fleet: FleetViewDto, ids: IdMap): FleetDTO {
 export function toGameState(map: GalaxyMapDto, view: PlayerViewDto): { game: GameState; ids: IdMap } {
 	const ids = makeIdMap(map.systems.flatMap((system) => [system.id, ...system.planets.map((planet) => planet.id)])); // planet ids may be strings, the map wants stable numbers
 	const game: GameState = {
-		nowMs: view.gameTime * MS_PER_GAME_SECOND,
+		nowMs: view.gameTime * MS_PER_SECOND,
 		systems: systemsOf(map, ids),
 		planets: planetsOf(map, ids),
 		queue: [],

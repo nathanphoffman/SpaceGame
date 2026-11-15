@@ -13,14 +13,14 @@ namespace SpaceGame.Core;
 /// <param name="EarthAttackGrowth">Each Earth attack fleet is this many times the last.</param>
 /// <param name="EarthAttackPerExtraPlayer">Extra size per player beyond the first (0.25 is +25%).</param>
 public sealed record EnemyConfig(
-    long TickSeconds = 3600,
+    long TickSeconds = GameSeconds.Hour,
     int IncomePerPlanetPerTick = 40,
     int HomeGarrisonFighters = 10,
     int EscortFighters = 4,
     double AttackStrengthRatio = 1.5,
     int SightHops = 2,
-    long FirstEarthAttackSeconds = 36 * 3600,
-    long EarthAttackIntervalSeconds = 18 * 3600,
+    long FirstEarthAttackSeconds = 36 * GameSeconds.Hour,
+    long EarthAttackIntervalSeconds = 18 * GameSeconds.Hour,
     int FirstEarthAttackFighters = 6,
     double EarthAttackGrowth = 1.35,
     double EarthAttackPerExtraPlayer = 0.25)

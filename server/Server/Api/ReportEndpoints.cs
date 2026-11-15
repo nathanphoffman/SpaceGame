@@ -24,6 +24,7 @@ public static class ReportEndpoints
 
         var rows = await repo.ReportsAsync(id);
 
+        // Parse each stored row; rows that are not valid battle reports are dropped.
         return Results.Ok(rows.Select(ReportRecorder.Parse).OfType<Core.BattleReport>().ToList());
     }
 

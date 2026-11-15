@@ -66,3 +66,23 @@ Run from the engine with seed 1, one player who does nothing:
 
 So the first Earth attack is at hour 36 (about 13 real minutes in) and a player who ignores Earth loses at hour 56.6
 (about 20 real minutes in). An active player needs Earth defenses and fighters by then.
+
+## Earth attack check, wave by wave (TimeScale 168)
+
+```
+dotnet run --project server/Sim -- waves "6 fighter, 2 battleship" --timescale 168 --waves 6 [--defense] [--weapons] [--players N]
+```
+
+One fixed defense (6 fighters and 2 battleships, 1 player, 1000 runs, seed 1) against each scheduled attack:
+
+| Wave | Launch hour | Real minute | Attackers | Defense held (no extras) | Defense held (Defense building + Weapons) |
+|---|---|---|---|---|---|
+| 1 | 36 | 12.9 | 6 | 100.0% | 100.0% |
+| 2 | 54 | 19.3 | 8 | 99.8% | 100.0% |
+| 3 | 72 | 25.7 | 11 | 86.9% | 99.9% |
+| 4 | 90 | 32.1 | 15 | 22.4% | 89.5% |
+| 5 | 108 | 38.6 | 20 | 0.7% | 19.5% |
+| 6 | 126 | 45.0 | 27 | 0.0% | 0.0% |
+
+The numbers look right: a small defense holds the first waves, and the x1.35 growth forces a player to keep building
+(by wave 4 a static fleet needs the Defense building and Weapons, by wave 6 it needs a bigger fleet). No config change.

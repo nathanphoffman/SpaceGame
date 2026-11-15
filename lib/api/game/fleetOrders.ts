@@ -5,6 +5,7 @@ import { postQuote } from "@/lib/api/generated/api";
 import type { Resources, SendFleetBody } from "@/lib/api/generated/model";
 import { commandBody, ELEMENTS, type ElementName } from "@/lib/api/game/commands";
 import type { CommandBody } from "@/lib/api/generated/model";
+import { SECONDS_PER_MINUTE } from "@/lib/defs";
 
 const quoteSchema = PostQuoteResponse.transform((quote) => ({
 	ok: quote.ok,
@@ -47,7 +48,8 @@ export function recallFleetCommand(fleetId: string): CommandBody {
 /** Asks the server how long a trip would take. */
 export function useQuote(gameId: string) {
 	return useMutation<QuoteResult, Error, FleetDraft>({
-		mutationFn: async (draft) => quoteSchema.parse((await postQuote(gameId, sendFleetBody(draft))).data),
+		// apiFetch hands back the JSON body itself, not the { data } wrapper the generated types describe.
+		mutationFn: async (draft) => quoteSchema.parse((await postQuote(gameId, sendFleetBody(draft))) as unknown),
 	});
 }
 
@@ -58,5 +60,3 @@ export function formatDuration(totalSeconds: number): string {
 
 	return minutes > 0 ? `${minutes}m ${seconds % SECONDS_PER_MINUTE}s` : `${seconds}s`;
 }
-
-const SECONDS_PER_MINUTE = 60;

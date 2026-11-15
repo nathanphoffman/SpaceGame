@@ -4,10 +4,9 @@ import { useState } from "react";
 import { HowToPlay } from "@/components/game/shell/HowToPlay";
 import { useEscape } from "@/components/game/shell/useEscape";
 import type { PlayerViewDto } from "@/lib/api/adapters/schemas";
+import { MINUTES_PER_HOUR, SECONDS_PER_MINUTE } from "@/lib/defs";
 
 export const WIN_SCORE = 500;
-const SECONDS_PER_MINUTE = 60;
-const MINUTES_PER_HOUR = 60;
 const PAD = 2;
 const PERCENT = 100;
 

@@ -26,6 +26,7 @@ public sealed class GameRepository(GameDbContext db)
     public Task<LoadedGame?> LoadByCodeAsync(string code) => LoadWhereAsync(g => g.Code == code);
 
     public Task<List<Guid>> RunningGameIdsAsync() =>
+        // Only running games, ids only.
         db.Games.AsNoTracking().Where(g => g.Status == RunningStatus).Select(g => g.Id).ToListAsync();
 
     public Task<PlayerRow?> PlayerByTokenHashAsync(string hash) =>
@@ -38,6 +39,7 @@ public sealed class GameRepository(GameDbContext db)
         db.Reports.AsNoTracking().FirstOrDefaultAsync(r => r.GameId == gameId && r.Id == reportId && r.Kind == BattleKind);
 
     public Task<List<ReportRow>> ReportsAsync(Guid gameId) =>
+        // Battle reports of one game, oldest first.
         db.Reports.AsNoTracking().Where(r => r.GameId == gameId && r.Kind == BattleKind).OrderBy(r => r.GameTime).ToListAsync();
 
     public Task<ReportRow?> OutcomeAsync(Guid gameId) =>

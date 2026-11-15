@@ -8,6 +8,7 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
 {
     public const int MaxPlayers = 8;
     public const int MaxNameLength = 30;
+    private static readonly string NameLengthMessage = $"Player name must be 1 to {MaxNameLength} characters.";
     public const string WeekMode = "week";
     public const string TestMode = "test";
     public const string LobbyStatus = "lobby";
@@ -40,7 +41,7 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
 
         if (name.Length is 0 or > MaxNameLength)
         {
-            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status400BadRequest, "Player name must be 1 to 30 characters.");
+            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status400BadRequest, NameLengthMessage);
         }
 
         var game = await repo.LoadByCodeAsync(JoinCodes.Normalize(req.Code));
@@ -50,27 +51,35 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
             return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status404NotFound, "No game has that code.");
         }
 
-        if (game.Status != LobbyStatus)
-        {
-            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status409Conflict, "That game has already started.");
-        }
+        var refusal = JoinRefusal(game, await repo.PlayersAsync(game.Id), name);
 
-        var players = await repo.PlayersAsync(game.Id);
-
-        if (players.Count >= MaxPlayers)
+        if (refusal is not null)
         {
-            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status409Conflict, "That game is full.");
-        }
-
-        if (players.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)))
-        {
-            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status409Conflict, "That name is already taken in this game.");
+            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status409Conflict, refusal);
         }
 
         var playerId = Guid.NewGuid();
         var token = await AddGuestAsync(game.Id, playerId, name);
 
         return ServiceResult<JoinGameResponse>.Success(new(game.Id, playerId, token));
+    }
+
+    // Returns why the player cannot join this lobby, or null when they can.
+    private static string? JoinRefusal(LoadedGame game, IReadOnlyList<PlayerRow> players, string name)
+    {
+        if (game.Status != LobbyStatus)
+        {
+            return "That game has already started.";
+        }
+
+        if (players.Count >= MaxPlayers)
+        {
+            return "That game is full.";
+        }
+
+        return players.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+            ? "That name is already taken in this game."
+            : null;
     }
 
     public async Task<ServiceResult<LobbyResponse>> LobbyAsync(Guid gameId)
@@ -135,7 +144,7 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
     {
         if (string.IsNullOrWhiteSpace(req.Name) || req.Name.Trim().Length > MaxNameLength)
         {
-            return "Player name must be 1 to 30 characters.";
+            return NameLengthMessage;
         }
 
         if (req.Mode is not (WeekMode or TestMode))

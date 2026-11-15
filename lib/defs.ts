@@ -59,6 +59,7 @@ const SAME_SYSTEM_FLIGHT = { min: 5, base: 5, perAU: 6 };
 const CROSS_SYSTEM_FLIGHT = { base: 15, maxOrbitAU: 12, perOrbitAU: 3 };
 export const MS_PER_SECOND = 1000;
 export const SECONDS_PER_MINUTE = 60;
+export const MINUTES_PER_HOUR = 60;
 const MINE_ICONS = {
 	gas: "/icons/buildings/gas_mine.svg",
 	gem: "/icons/buildings/crystal_mine.svg",

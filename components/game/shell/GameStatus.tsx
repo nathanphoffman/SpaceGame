@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ApiError } from "@/lib/api/core/client";
 import { friendlyError } from "@/lib/api/core/errors";
-
-const HTTP_NOT_FOUND = 404;
+import { HTTP_NOT_FOUND } from "@/lib/api/core/httpStatus";
 
 const isNotFound = (error: Error): boolean => error instanceof ApiError && error.status === HTTP_NOT_FOUND;
 

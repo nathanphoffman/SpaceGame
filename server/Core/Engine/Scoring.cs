@@ -3,7 +3,7 @@ namespace SpaceGame.Core;
 /// <summary>Points: 1 per game hour for every held objective, and 1 on capturing one.</summary>
 public static class Scoring
 {
-    private const long SecondsPerHour = 3600;
+    private const long SecondsPerHour = GameSeconds.Hour;
     private const int CapturePoints = 1;
 
     /// <summary>Records a capture: always a PlanetCaptured event, and a point when the planet is an objective.</summary>

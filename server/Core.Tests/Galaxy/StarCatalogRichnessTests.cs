@@ -24,22 +24,19 @@ public class StarCatalogRichnessTests
     }
 
     [Theory]
-    [InlineData("Jupiter")]
-    [InlineData("Saturn")]
-    [InlineData("Uranus")]
-    [InlineData("Neptune")]
-    public void SolGasGiantsHaveHelium3(string name)
+    [InlineData("Jupiter", 9)]
+    [InlineData("Saturn", 9)]
+    [InlineData("Uranus", 9)]
+    [InlineData("Neptune", 9)]
+    [InlineData("Epsilon Eridani b", 10)]
+    public void GasGiantsHaveHelium3(string name, int atLeast)
     {
-        Assert.True(Of(name).Helium3 >= 9);
+        Assert.True(Of(name).Helium3 >= atLeast);
         Assert.True(Of(name).Helium3 > StarCatalog.Earth.Richness.Helium3);
     }
 
     [Fact]
-    public void ExoplanetGasGiantsHaveHelium3()
-    {
-        Assert.True(Of("Epsilon Eridani b").Helium3 >= 10);
-        Assert.True(Of("Proxima b").Helium3 <= 5);
-    }
+    public void RockyExoplanetsHaveLittleHelium3() => Assert.True(Of("Proxima b").Helium3 <= 5);
 
     [Fact]
     public void RichnessOfReadsEachElement()

@@ -1,8 +1,6 @@
 import { ApiError } from "@/lib/api/core/client";
+import { HTTP_CONFLICT, HTTP_FORBIDDEN, HTTP_NOT_FOUND } from "@/lib/api/core/httpStatus";
 
-const HTTP_NOT_FOUND = 404;
-const HTTP_CONFLICT = 409;
-const HTTP_FORBIDDEN = 403;
 const GENERIC_MESSAGE = "Something went wrong";
 
 const FALLBACKS: Record<number, string> = {

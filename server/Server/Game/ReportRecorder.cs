@@ -12,6 +12,7 @@ public static class ReportRecorder
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public static IReadOnlyList<ReportRow> RowsFor(Guid gameId, IEnumerable<GameEvent> events) =>
+        // Keep only battle events and turn each into a stored row.
         events.Where(gameEvent => gameEvent.Kind == BattleKind).Select(gameEvent => ToRow(gameId, gameEvent)).ToList();
 
     public static BattleReport? Parse(ReportRow reportRow) =>

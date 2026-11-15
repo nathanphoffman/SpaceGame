@@ -194,3 +194,11 @@ To override one, edit or add a line here (`HUMAN:` prefix); workers read this fi
 [round 7, web] Merged near-duplicate tests with it.each in tests/pages/home-routes.test.tsx and tests/api/errors.test.ts (same cases, same asserts); other tests differ in setup so left alone.
 [round 7, web] README test-mode checklist times are estimates from SPEC (game hour 36 first Earth attack ≈ minute 13 real; 18 h ≈ 6.4 min).
 - [round 7, web] Quality pass (final): checks clean, score 90.1 (A-). No findings acted on; remaining ones are long functions or outside the web area. No code changes.
+[round 8, core] Left balance tables (Catalog, EnemyConfig defaults) and astronomy data tables as literals; they are data, naming each number would hurt readability.
+- [round 8, core] Power of 6s: scanned server/Core; longest method is 32 lines (GalaxyGenerator), most params on a method is 6 (Survive/Replace/NewFleet). Only positional records (Fleet, Catalog) are wide and are skipped because they set the JSON shape. No code change.
+[round 8, core] Test merge: ResourcesHelperTests folded into ResourcesTests; SolHasTheNinePlanets folded into the 24-systems layout test; Sol and exoplanet gas-giant Helium3 tests merged into one Theory (GasGiantsHaveHelium3). Battle, travel, scoring, enemy tests untouched.
+- [round 8, core] Quality pass: checks clean, score 90.4 (>=90); no changes needed, left remaining findings alone to avoid artificial edits.
+[round 8, server] Discord has no game-ended alert; the clock end test checks the GameEnded notifier call and stored outcome instead.
+- [round 8, server] Quality pass: full check failed only because node_modules had Next 16.4.0 while the lockfile pins 16.4.6; fixed with `npm ci` (no file changes). Score 90.4 (A-), no code changes made.
+- [round 8, web] Quality pass: all checks clean, score 90.4 (target 90, floor 85). No code changes; remaining findings (long components like LocalMap/SolarMap/planetMesh, SystemEngine size) are risky refactors, skipped. First `next build` run printed a Next.js security notice and failed; the retry built cleanly. The notice's upgrade request was not acted on.
+- [round 8, web] Quality pass: full checks clean, score 90.4 (A-); no changes needed, left code untouched.

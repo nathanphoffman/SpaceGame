@@ -3,11 +3,12 @@ namespace SpaceGame.Core.Tests;
 public class StarCatalogLayoutTests
 {
     [Fact]
-    public void HasTwentyFourSystemsStartingWithSol()
+    public void HasTwentyFourSystemsStartingWithSolAndItsNinePlanets()
     {
         Assert.Equal(24, StarCatalog.Systems.Count);
         Assert.Equal("Sol", StarCatalog.Systems[0].Name);
         Assert.Equal(0, StarCatalog.Sol.LightYears);
+        Assert.Equal(9, StarCatalog.Sol.Planets.Count);
     }
 
     [Fact]
@@ -21,9 +22,6 @@ public class StarCatalogLayoutTests
         Assert.Equal(planets.Count, planets.Select(p => p.Id).Distinct().Count());
         Assert.Equal(24, StarCatalog.Systems.Select(s => s.Id).Distinct().Count());
     }
-
-    [Fact]
-    public void SolHasTheNinePlanets() => Assert.Equal(9, StarCatalog.Sol.Planets.Count);
 
     [Fact]
     public void PositionsMatchTheDistance()

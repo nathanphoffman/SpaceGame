@@ -1,6 +1,6 @@
 import { loadSession } from "@/lib/api/core/session";
+import { HTTP_NO_CONTENT } from "@/lib/api/core/httpStatus";
 
-const HTTP_NO_CONTENT = 204;
 const DEFAULT_BASE_URL = "";
 
 export const HTTP_POST = "POST";

@@ -10,7 +10,8 @@ public interface IDiscordNotifier
 
 public sealed class DiscordNotifier(HttpClient http, ILogger<DiscordNotifier> log) : IDiscordNotifier
 {
-    public static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(5);
+    private const int RequestTimeoutSeconds = 5;
+    public static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(RequestTimeoutSeconds);
 
     public async Task FleetSpottedAsync(string webhookUrl, string targetPlanetId, long arrivesAtGameTime, string strengthHint)
     {

@@ -70,6 +70,16 @@ Code-quality score (`codequality . --quick`): **90.4** (up 0.5 from 89.9, floor 
 - **failed to merge**: nothing.
 - Full checks were not run: milestone i is open, so the game is not complete. Round 7 build notes: `orval` was missing from node_modules until `npm install`.
 
+## Round 8
+Code-quality score (`codequality . --quick`): **90.3** (down 0.1 from 90.4, floor met). Weakest: "Minimize dependencies" 67.9% (old TS server deps), "Test what matters" 80.4%.
+
+- **core**: shared `GameSeconds` constants replacing duplicated time literals, "Power of 6s" check (nothing easy left), tests merged into Theories, `waves` command in `server/Sim` with the result in the Core README. No config change.
+- **server**: magic-number and "Simple beats clever" cleanups, folder and long-method cleanup, test-mode full-game test with the fake engine (GameEnded notification sent once, outcome endpoint).
+- **web**: constants merged, named handlers in `FleetSendDialog`, `useQuote` test (and a fix), README checklist wording fixed.
+- **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests still needs the user's OK. Milestone i and the "old server gone" Done item stay open.
+- **failed to merge**: nothing.
+- Full checks were not run: milestone i is open, so the game is not complete (COMPLETE not created).
+
 ## Milestones
 - [x] a. Rules in C# (Core): done; Sim used for the balance pass.
 - [x] b. World (Core): done, travel and objective tests exist.

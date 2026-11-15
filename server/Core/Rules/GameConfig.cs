@@ -10,7 +10,7 @@ public sealed record GameConfig(
     long PrepSeconds = GameConfig.DefaultPrepSeconds)
 {
     private const int DefaultScoreTarget = 500;
-    private const long SecondsPerWeek = 7 * 24 * 3600;
+    private const long SecondsPerWeek = GameSeconds.Week;
     private const long DefaultPrepSeconds = 5 * 60;
 
     /// <summary>Every ship, building and upgrade.</summary>
@@ -20,7 +20,7 @@ public sealed record GameConfig(
     public int DefenseBonus { get; init; } = 1;
 
     /// <summary>Seconds a shipyard needs to repair a stack of damaged ships completely.</summary>
-    public long HealSeconds { get; init; } = 3600;
+    public long HealSeconds { get; init; } = GameSeconds.Hour;
 
     /// <summary>The enemy's income, garrison and expedition numbers.</summary>
     public EnemyConfig Enemy { get; init; } = new();

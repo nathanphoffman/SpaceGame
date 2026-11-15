@@ -31,7 +31,7 @@ public static class MineOutput
 /// </summary>
 public sealed record Stockpile(Resources Amount, long Time, Resources Carry)
 {
-    private const long SecondsPerHour = 3600;
+    private const long SecondsPerHour = GameSeconds.Hour;
     private const long CarryPerUnit = (long)MineOutput.MilliPerUnit * SecondsPerHour;
 
     /// <summary>A stockpile with a starting amount at a time.</summary>

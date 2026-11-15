@@ -13,7 +13,7 @@ Open http://localhost:3000, create a game and share the code with friends. The h
 
 1. `npm ci`, then `npm run play` (needs Docker and the .NET 10 SDK). Wait until Next prints `Ready`.
 2. Open http://localhost:3000. In "Create a game", type your name, set Mode to "1-hour test" and press Create. You land in the lobby as the host.
-3. Friends open the same address (or the "Share" link from the lobby), type the game code under "Join a game", add their name and press Join. Up to 8 players.
+3. Friends open the same address (or the link next to "Share:" in the lobby), type the game code under "Join a game", add their name and press Join. Up to 8 players.
 4. When everyone is listed under "Players", the host presses "Start game". The game page opens for all players.
 5. Test mode runs 168x faster than a real week, so the game ends after about one hour.
 
@@ -21,10 +21,10 @@ Open http://localhost:3000, create a game and share the code with friends. The h
 
 Times are real minutes after the host presses "Start game" (game time runs 168x faster).
 
-- **Minute 5:** The galaxy map shows your team's planets. Open your home system, click a planet and build a mine or a shipyard; the build shows in the queue. Queue a ship once a shipyard is done. "Fleets in flight" lists any trip, with its prep countdown first. Press "? How to play" and Escape to close it.
-- **Minute 20:** Mines have paid out and the resource counts in the top bar have grown. Send a fleet (or a Colony ship) to another planet: "Get quote" shows the trip time, then "Send fleet". Watch the ship move on the map. The first Earth attack arrives around minute 13 to 20, so look for "Incoming attacks" in the warning strip, then a battle toast and an entry under "Reports".
-- **Minute 40:** The team score bar has moved (objective planets give points each game hour). Open a battle report ("Read the report") to see rounds and losses. Later Earth attacks arrive about every 6 minutes and are bigger each time, so check that your defense holds.
-- **Minute 60:** The game ends at the one-week limit (about 60 minutes) or earlier if a side reaches 500 points or a home world falls. The "Game over" screen shows the winner, both scores and each player's points, battles won and planets captured. "Back to home" returns to the start page.
+- **Minute 5:** The galaxy map shows your team's planets. Open your home system, click a planet and build a mine or a shipyard; the build shows in the queue. Queue a ship once a shipyard is done. "Fleets in flight" lists any trip (use "Recall" to call one back). Press "? How to play" and Escape to close it.
+- **Minute 20:** Mines have paid out and the resource counts in the top bar have grown. Send a fleet (or a Colony ship) to another planet: "Get quote" shows the trip time, then press "Send". Watch the ship move on the map. The first Earth attack arrives around minute 13 to 20, so look for "Incoming attacks" in the warning strip, then a battle toast with a "Read the report" link (the full list is at `/game/<gameId>/reports`).
+- **Minute 40:** The team score bar has moved (objective planets give points each game hour). Open a battle report from the toast to see rounds and losses. Later Earth attacks arrive about every 6 minutes and are bigger each time, so check that your defense holds.
+- **Minute 60:** The game ends at the one-week limit (about 60 minutes) or earlier if a side reaches 500 points or a home world falls. The "Game over" screen shows the winner, both scores and each player's points, battles won and planets captured. The screen has no button; open the start page address to play again.
 
 ## Controls
 

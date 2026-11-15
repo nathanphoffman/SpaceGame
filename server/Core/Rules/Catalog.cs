@@ -39,29 +39,27 @@ public sealed record Catalog(
     IReadOnlyList<UpgradeSpec> Upgrades,
     MineRules Mine)
 {
-    private const long Minute = 60;
-    private const long Hour = 3600;
 
     /// <summary>The starting numbers from SPEC.md.</summary>
     public static readonly Catalog Default = new(
         [
-            new(ShipType.Scout, 0, 0, 1, 3.0, 0, new(10, 10, 0, 0), 5 * Minute),
-            new(ShipType.Hauler, 0, 0, 1, 1.0, 100, new(40, 20, 0, 0), 30 * Minute),
-            new(ShipType.Colony, 0, 0, 1, 1.0, 0, new(80, 60, 0, 0), Hour),
-            new(ShipType.Fighter, 5, 1, 1, 1.5, 0, new(20, 0, 0, 0), 10 * Minute),
-            new(ShipType.Battleship, 4, 2, 4, 1.0, 0, new(60, 0, 20, 0), 45 * Minute),
-            new(ShipType.Dreadnought, 3, 5, 10, 0.6, 0, new(200, 0, 150, 100), 4 * Hour),
+            new(ShipType.Scout, 0, 0, 1, 3.0, 0, new(10, 10, 0, 0), 5 * GameSeconds.Minute),
+            new(ShipType.Hauler, 0, 0, 1, 1.0, 100, new(40, 20, 0, 0), 30 * GameSeconds.Minute),
+            new(ShipType.Colony, 0, 0, 1, 1.0, 0, new(80, 60, 0, 0), GameSeconds.Hour),
+            new(ShipType.Fighter, 5, 1, 1, 1.5, 0, new(20, 0, 0, 0), 10 * GameSeconds.Minute),
+            new(ShipType.Battleship, 4, 2, 4, 1.0, 0, new(60, 0, 20, 0), 45 * GameSeconds.Minute),
+            new(ShipType.Dreadnought, 3, 5, 10, 0.6, 0, new(200, 0, 150, 100), 4 * GameSeconds.Hour),
         ],
         [
-            new(BuildingType.Mine, 3, new(50, 0, 0, 0), 20 * Minute, 1.6, 1.5),
-            new(BuildingType.Shipyard, 1, new(100, 0, 0, 0), 30 * Minute, 1.0, 1.0),
-            new(BuildingType.Defense, 1, new(100, 0, 20, 0), Hour, 1.0, 1.0),
+            new(BuildingType.Mine, 3, new(50, 0, 0, 0), 20 * GameSeconds.Minute, 1.6, 1.5),
+            new(BuildingType.Shipyard, 1, new(100, 0, 0, 0), 30 * GameSeconds.Minute, 1.0, 1.0),
+            new(BuildingType.Defense, 1, new(100, 0, 20, 0), GameSeconds.Hour, 1.0, 1.0),
         ],
         [
-            new(UpgradeType.Engines, 3, new(0, 0, 40, 10), 2 * Hour, 1.5, 0.25),
-            new(UpgradeType.Weapons, 1, new(0, 0, 100, 40), 4 * Hour, 1.0, 1),
-            new(UpgradeType.Armor, 1, new(0, 0, 80, 30), 3 * Hour, 1.0, 1),
-            new(UpgradeType.Mining, 3, new(0, 0, 50, 20), 2 * Hour, 1.5, 0.30),
+            new(UpgradeType.Engines, 3, new(0, 0, 40, 10), 2 * GameSeconds.Hour, 1.5, 0.25),
+            new(UpgradeType.Weapons, 1, new(0, 0, 100, 40), 4 * GameSeconds.Hour, 1.0, 1),
+            new(UpgradeType.Armor, 1, new(0, 0, 80, 30), 3 * GameSeconds.Hour, 1.0, 1),
+            new(UpgradeType.Mining, 3, new(0, 0, 50, 20), 2 * GameSeconds.Hour, 1.5, 0.30),
         ],
         new MineRules(BaseOutputPerHour: 20, OutputGrowth: 1.3));
 
