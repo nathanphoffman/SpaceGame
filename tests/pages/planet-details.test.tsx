@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildBuildingBody, cancelQueueItemBody, commandBody, queueShipBody, sendCommand, startUpgradeBody } from "@/lib/api/commands";
-import { PlanetDetails } from "@/components/game/PlanetDetails";
+import { buildBuildingBody, cancelQueueItemBody, commandBody, queueShipBody, sendCommand, startUpgradeBody } from "@/lib/api/game/commands";
+import { PlanetDetails } from "@/components/game/panels/PlanetDetails";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { galaxyMapFixture } from "../fixtures/apiMap";

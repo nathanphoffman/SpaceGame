@@ -39,7 +39,7 @@ import type {
   SendFleetBody
 } from './model';
 
-import { apiFetch } from '../client';
+import { apiFetch } from '../core/client';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];

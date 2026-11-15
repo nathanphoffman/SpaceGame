@@ -39,6 +39,17 @@ Code-quality score (`codequality . --quick`): **90.0** (down 0.6 from 90.6, floo
 - **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests needs the user's OK (the user's rule is to ask before deleting). Milestone i and the "old server gone" Done item cannot finish until then. Deleting them would also lift the dependency score.
 - **failed to merge**: nothing. Two glue fixes after merge (Core `Map` fills systems, CORS for localhost:3000).
 
+## Round 5
+Code-quality score (`codequality . --quick`): **89.9** (down 0.1 from 90.0, just under the 90 floor; round 6 starts with quality items). Weakest: call depth in tests (235 of 471 entry points over 6), "Minimize dependencies" 68% (old TS server deps), test count far above the ideal (370 vs 139, only fixed by deleting dead code, not tests).
+
+- **core**: quality passes (renamed clashing helper names, FleetBattles and test files split into partials/subfolders), Sim `--weapons` flag, balance numbers in DECISIONS (no config change), `FleetView.SightHops`, `Reason` on every enemy order plus `EnemyOrder` events.
+- **server**: Discord test fixture, test-mode full game on the real engine, hardening tests (wrong-game token, bad body, parallel commands), startup/health/README.
+- **web**: components/game and lib/api regrouped into subfolders, game page loading/not-found/error states, reconnect end-to-end test, how-to-play panel and Escape to close, narrow-screen CSS and top-bar tests. Scout range hint not drawn yet (SightHops now exists).
+- **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests still needs the user's OK. Milestone i and the "old server gone" Done item stay open until then. It would also lift the dependency score.
+- **failed to merge**: nothing. One glue fix (regenerate the API client after core's `SightHops`).
+- `npm run build` still prints a Next.js security-advisory stop on the first run and passes on retry; round 6 web has an item to upgrade Next.
+- Full checks were not run in the planning step because milestone i and the quality floor are not met, so the game is not complete.
+
 ## Milestones
 - [x] a. Rules in C# (Core): done; Sim used for the balance pass.
 - [x] b. World (Core): done, travel and objective tests exist.
@@ -47,6 +58,6 @@ Code-quality score (`codequality . --quick`): **90.0** (down 0.6 from 90.6, floo
 - [x] e. Enemy and endgame (Core): done.
 - [x] f. Server: done; real-engine end-to-end test passes.
 - [x] g. Client plumbing (web): done, generated Zod in use.
-- [~] h. Game UI (web): all panels done; no scout range hint (view has no range data); live wiring only tested with a fake hub.
+- [~] h. Game UI (web): all panels done; `SightHops` is available but the scout range hint is not drawn; live wiring only tested with a fake hub.
 - [~] i. Cleanup: README and `npm run play` done; deleting the old TS server and legacy UI blocked on the user's OK.
-- [~] j. Balance and polish: balance run done; fast test-mode full game and docs polish left.
+- [~] j. Balance and polish: balance run done; server test-mode full game test done; docs polish and a final test-mode play-through note left.

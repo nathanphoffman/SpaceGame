@@ -1,10 +1,10 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { AttackWarnings } from "@/components/game/AttackWarnings";
-import { BattleToast } from "@/components/game/BattleToast";
-import { ReportList, ReportSummary } from "@/components/game/ReportViews";
-import { attachGameEvents, type HubConnectionLike } from "@/lib/api/gameEvents";
+import { AttackWarnings } from "@/components/game/shell/AttackWarnings";
+import { BattleToast } from "@/components/game/shell/BattleToast";
+import { ReportList, ReportSummary } from "@/components/game/reports/ReportViews";
+import { attachGameEvents, type HubConnectionLike } from "@/lib/api/game/gameEvents";
 import { battleReportSchema } from "@/lib/api/reports";
 import { playerViewFixture } from "../fixtures/apiMap";
 

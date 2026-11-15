@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cancelQueueItemBody } from "@/lib/api/commands";
+import { cancelQueueItemBody } from "@/lib/api/game/commands";
 
 describe("cancelQueueItemBody", () => {
 	it("builds a cancelQueueItem command for the planet and item", () => {

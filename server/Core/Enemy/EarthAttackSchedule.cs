@@ -23,6 +23,9 @@ public static class EarthAttackSchedule
 
         if (state.EnemyHome is null || nowSeconds < DueAt(state.Config.Enemy, index)) return null;
 
-        return new LaunchEarthAttack(Fighters(state.Config.Enemy, index, state.Players.Count));
+        return new LaunchEarthAttack(Fighters(state.Config.Enemy, index, state.Players.Count))
+        {
+            Reason = $"Scheduled attack {index + 1} on Earth is due.",
+        };
     }
 }

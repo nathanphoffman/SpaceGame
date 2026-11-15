@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useGameEvents } from "@/lib/api/useGameEvents";
+import { useGameEvents } from "@/lib/api/game/useGameEvents";
 import { useGetLobby, useStartGame } from "@/lib/api/generated/api";
 import { gamePath, isHostPlayer, joinLink, parseLobby } from "@/lib/api/lobby";
 
-import { friendlyError } from "@/lib/api/errors";
-import { loadSession } from "@/lib/api/session";
+import { friendlyError } from "@/lib/api/core/errors";
+import { loadSession } from "@/lib/api/core/session";
 import { LobbyView } from "./LobbyView";
 
 const errorText = friendlyError;

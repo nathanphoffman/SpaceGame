@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ApiError } from "@/lib/api/client";
-import { friendlyError } from "@/lib/api/errors";
+import { ApiError } from "@/lib/api/core/client";
+import { friendlyError } from "@/lib/api/core/errors";
 
 describe("friendlyError", () => {
 	it("uses the ProblemDetails detail", () => {

@@ -34,6 +34,15 @@ public class HostTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var response = await _factory.CreateClient().GetAsync("/health");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("\"status\":\"ok\"", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public void DefaultConnectionMatchesComposeDatabase()
+    {
+        var compose = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "../../../../../docker-compose.yml"));
+        Assert.Contains("\"5440:5432\"", compose);
+        Assert.Contains("Port=5440", SpaceGame.Server.Persistence.PersistenceSetup.DefaultConnection);
     }
 
     [Fact]

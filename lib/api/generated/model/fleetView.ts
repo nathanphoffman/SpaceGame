@@ -25,4 +25,6 @@ export interface FleetView {
   arriveAt: number | string;
   ships: FleetViewShips;
   cargo: Resources;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  sightHops?: number | string;
 }

@@ -6,11 +6,14 @@ namespace SpaceGame.Server.Persistence;
 public static class PersistenceSetup
 {
     public const string ConnectionName = "Postgres";
+
+    /// <summary>Matches docker-compose.yml, so `docker compose up -d db` + `dotnet run` works with no settings.</summary>
+    public const string DefaultConnection = "Host=localhost;Port=5440;Database=spacegame;Username=space;Password=space";
     public const string MigrateOnStartSetting = "Database:MigrateOnStart";
 
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration config)
     {
-        var connection = config.GetConnectionString(ConnectionName) ?? "Host=localhost;Database=spacegame;Username=postgres";
+        var connection = config.GetConnectionString(ConnectionName) ?? DefaultConnection;
         services.AddDbContext<GameDbContext>(o => o.UseNpgsql(connection));
         services.AddScoped<GameRepository>();
         services.AddScoped<GameWriter>();

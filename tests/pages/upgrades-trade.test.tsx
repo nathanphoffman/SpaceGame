@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { TradePanel } from "@/components/game/TradePanel";
-import { UpgradePanel } from "@/components/game/ShipyardPanel";
-import { startUpgradeBody } from "@/lib/api/commands";
+import { TradePanel } from "@/components/game/panels/TradePanel";
+import { UpgradePanel } from "@/components/game/panels/ShipyardPanel";
+import { startUpgradeBody } from "@/lib/api/game/commands";
 import { playerViewSchema } from "@/lib/api/adapters/schemas";
-import { sendFleetCommand } from "@/lib/api/fleetOrders";
+import { sendFleetCommand } from "@/lib/api/game/fleetOrders";
 import { wireViewFixture } from "../fixtures/apiMap";
 
 const wrap = (node: React.ReactNode) => renderToString(<QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>);

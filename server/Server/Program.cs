@@ -48,6 +48,8 @@ app.MapOpenApi("/openapi.json");
 app.MapGet("/health", () => Results.Ok(new HealthResponse("ok"))).WithName("Health");
 app.MapGameEndpoints();
 app.MapHub<SpaceGame.Server.Hubs.GameHub>("/hubs/game");
+app.Lifetime.ApplicationStarted.Register(() =>
+    Console.WriteLine($"Space Game server listening on {string.Join(", ", app.Urls)} (health: /health)"));
 app.Run();
 
 public sealed record HealthResponse(string Status);

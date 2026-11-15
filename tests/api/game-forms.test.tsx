@@ -1,15 +1,15 @@
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/core/client";
 import {
 	createGame,
 	createGameSchema,
 	fieldErrors,
 	joinGame,
 	joinGameSchema,
-} from "@/lib/api/gameForms";
+} from "@/lib/api/game/gameForms";
 
-import { loadSession } from "@/lib/api/session";
+import { loadSession } from "@/lib/api/core/session";
 
 const store = new Map<string, string>();
 

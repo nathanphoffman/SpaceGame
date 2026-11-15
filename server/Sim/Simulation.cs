@@ -5,19 +5,20 @@ namespace SpaceGame.Sim;
 /// <summary>Totals over many simulated battles.</summary>
 public sealed record SimSummary(
     int Runs, int AttackerWins, double AttackerSurvivors, double DefenderSurvivors,
-    double AttackerCostLost, double DefenderCostLost);
+    double AttackerCostLost, double DefenderCostLost, bool Defense = false, bool Weapons = false);
 
 /// <summary>Runs one fight many times with seeded dice.</summary>
 public static class Simulation
 {
+    private const int WeaponsLevels = 1; // the Weapons upgrade (level 1) for the defenders' ships
     private const int DefenseBonus = 1; // the Defense building: defenders hit one number lower
 
     /// <summary>Fights <see cref="SimArgs.Runs"/> times and averages the outcome.</summary>
     public static SimSummary Run(SimArgs args)
     {
         var dice = new SeededDice(args.Seed);
-        var attackers = ToSide(args.Attackers);
-        var defenders = ToSide(args.Defenders);
+        var attackers = ToSide(args.Attackers, 0);
+        var defenders = ToSide(args.Defenders, args.Weapons ? WeaponsLevels : 0);
         var bonus = args.Defense ? DefenseBonus : 0;
         int wins = 0, attSurvivors = 0, defSurvivors = 0, attLost = 0, defLost = 0;
 
@@ -34,30 +35,36 @@ public static class Simulation
 
         double runCount = args.Runs;
 
-        return new SimSummary(args.Runs, wins, attSurvivors / runCount, defSurvivors / runCount, attLost / runCount, defLost / runCount);
+        return new SimSummary(args.Runs, wins, attSurvivors / runCount, defSurvivors / runCount, attLost / runCount, defLost / runCount, args.Defense, args.Weapons);
     }
 
     private const double PercentScale = 100.0;
 
     /// <summary>The text printed by the console app.</summary>
     public static string Format(SimSummary summary) => string.Join(Environment.NewLine,
+        $"Options: defense {(summary.Defense ? "on" : "off")}, weapons {(summary.Weapons ? "on" : "off")}",
         $"Runs: {summary.Runs}",
         $"Attacker win rate: {PercentScale * summary.AttackerWins / summary.Runs:F1}%",
         $"Average survivors: attackers {summary.AttackerSurvivors:F2}, defenders {summary.DefenderSurvivors:F2}",
         $"Efficiency (average resource cost lost): attackers {summary.AttackerCostLost:F1}, defenders {summary.DefenderCostLost:F1}");
 
-    private static BattleSide ToSide(IReadOnlyDictionary<ShipType, int> fleet)
+    private static BattleSide ToSide(IReadOnlyDictionary<ShipType, int> fleet, int weaponsLevel)
     {
         var ships = new List<BattleShip>();
 
         foreach (var (type, count) in fleet)
         {
             var spec = Catalog.Default.Ship(type);
-            ships.AddRange(Enumerable.Repeat(new BattleShip(type, spec.HitsOn, spec.Shots, spec.Hp), count));
+            ships.AddRange(Enumerable.Repeat(new BattleShip(type, HitsOn(spec, weaponsLevel), spec.Shots, spec.Hp), count));
         }
 
         return new BattleSide(ships);
     }
+
+    private const int BestHitsOn = 2;
+
+    private static int HitsOn(ShipSpec spec, int weaponsLevel) =>
+        spec.HitsOn > 0 ? Math.Max(BestHitsOn, spec.HitsOn - weaponsLevel) : 0;
 
     private static int CostOfLosses(BattleSide before, BattleSide after)
     {

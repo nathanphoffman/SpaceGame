@@ -7,7 +7,11 @@ namespace SpaceGame.Core;
 public sealed record FleetView(
     FleetId Id, PlayerId? Owner, Side Side, PlanetId From, PlanetId To,
     long LaunchAt, long DepartAt, long ArriveAt,
-    IReadOnlyDictionary<ShipType, int> Ships, Resources Cargo);
+    IReadOnlyDictionary<ShipType, int> Ships, Resources Cargo)
+{
+    /// <summary>How many star hops this fleet can see: 2 with a Scout, otherwise 1.</summary>
+    public int SightHops { get; init; } = 1;
+}
 
 /// <summary>What one player may see, with fog of war applied and the stockpile brought up to date.</summary>
 /// <param name="Version">Changes whenever the state changes.</param>

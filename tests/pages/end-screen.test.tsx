@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { QueryClient } from "@tanstack/react-query";
-import { EndScreen } from "@/components/game/EndScreen";
-import { attachGameEvents, type HubConnectionLike } from "@/lib/api/gameEvents";
+import { EndScreen } from "@/components/game/shell/EndScreen";
+import { attachGameEvents, type HubConnectionLike } from "@/lib/api/game/gameEvents";
 import { playerViewFixture } from "../fixtures/apiMap";
 
 const outcome = {

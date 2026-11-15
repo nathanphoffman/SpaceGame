@@ -7,6 +7,10 @@ public static class Visibility
     private const int ScoutSightHops = 2;
     private const double ChancesPerRoll = 6.0;
 
+    /// <summary>Star hops a group of ships can see: a Scout sees further.</summary>
+    public static int SightHops(IReadOnlyDictionary<ShipType, int> ships) =>
+        ships.GetValueOrDefault(ShipType.Scout) > 0 ? ScoutSightHops : ShipSightHops;
+
     /// <summary>Own fleets, plus every team fleet and any enemy fleet the team can see.</summary>
     public static IReadOnlyList<FleetView> FleetsFor(GameState state, PlayerId player, long nowSeconds)
     {
@@ -72,8 +76,7 @@ public static class Visibility
 
         foreach (var fleet in state.Fleets.Where(f => f.Side == Side.Team))
         {
-            var hops = fleet.Ships.GetValueOrDefault(ShipType.Scout) > 0 ? ScoutSightHops : ShipSightHops;
-            Watch(sight, Position(fleet, nowSeconds), hops);
+            Watch(sight, Position(fleet, nowSeconds), SightHops(fleet.Ships));
         }
 
         return sight;

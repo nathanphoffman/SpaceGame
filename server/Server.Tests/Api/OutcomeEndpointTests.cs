@@ -95,6 +95,7 @@ public class OutcomeEndpointTests
             EventKind = EventNotifications.GameEndedKind,
             DataOverrides = new() { ["teamScore"] = "lots", ["contributions"] = "{not json" },
         };
+
         var response = await OutcomeAfterEndingWith(engine);
         var body = await response.Content.ReadFromJsonAsync<GameOutcome>();
 

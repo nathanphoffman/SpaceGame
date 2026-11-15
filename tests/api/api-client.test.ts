@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiFetch } from "@/lib/api/client";
-import { clearSession, loadSession, SESSION_KEY, saveSession } from "@/lib/api/session";
+import { ApiError, apiFetch } from "@/lib/api/core/client";
+import { clearSession, loadSession, SESSION_KEY, saveSession } from "@/lib/api/core/session";
 
 function memoryStorage(): Storage {
 	const data = new Map<string, string>();

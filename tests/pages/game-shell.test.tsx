@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { formatTimeLeft, scorePercent, GameTopBar } from "@/components/game/GameTopBar";
+import { formatTimeLeft, scorePercent, GameTopBar } from "@/components/game/shell/GameTopBar";
 import { toGameState } from "@/lib/api/adapters/mapAdapter";
 import { galaxyMapFixture, playerViewFixture } from "../fixtures/apiMap";
 

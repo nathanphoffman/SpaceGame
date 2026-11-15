@@ -1,4 +1,4 @@
-// Battle simulator: dotnet run --project server/Sim -- fight "10 fighter" "2 battleship" --runs 1000 [--defense] [--seed S]
+// Battle simulator: dotnet run --project server/Sim -- fight "10 fighter" "2 battleship" --runs 1000 [--defense] [--weapons] [--seed S]
 using SpaceGame.Sim;
 
 try

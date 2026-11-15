@@ -20,7 +20,10 @@ public static class EnemyAttack
             var target = WeakestFor(state, fleet, targets);
 
             if (Visibility.Strength(catalog, fleet) >= state.Config.Enemy.AttackStrengthRatio * DefenderStrength(state, target)
-                && Visibility.Strength(catalog, fleet) > 0) return new LaunchAttack(fleet.Id, target);
+                && Visibility.Strength(catalog, fleet) > 0) return new LaunchAttack(fleet.Id, target)
+                {
+                    Reason = $"Fleet {fleet.Id.Value} is clearly stronger than the weakest visible planet {target.Value}.",
+                };
         }
 
         return null;

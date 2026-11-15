@@ -17,5 +17,5 @@ public sealed record Fleet(
     public IReadOnlyDictionary<ShipType, int> Damage { get; init; } = new Dictionary<ShipType, int>();
 
     /// <summary>The map record of this fleet.</summary>
-    public FleetView ToView() => new(Id, Owner, Side, From, To, LaunchAt, DepartAt, ArriveAt, Ships, Cargo);
+    public FleetView ToView() => new(Id, Owner, Side, From, To, LaunchAt, DepartAt, ArriveAt, Ships, Cargo) { SightHops = Visibility.SightHops(Ships) };
 }

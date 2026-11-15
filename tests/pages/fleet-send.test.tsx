@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { FleetSendDialog } from "@/components/game/FleetSendDialog";
-import { FleetList } from "@/components/game/FleetList";
-import { formatDuration, recallFleetCommand, sendFleetBody, sendFleetCommand } from "@/lib/api/fleetOrders";
+import { FleetSendDialog } from "@/components/game/commands/FleetSendDialog";
+import { FleetList } from "@/components/game/panels/FleetList";
+import { formatDuration, recallFleetCommand, sendFleetBody, sendFleetCommand } from "@/lib/api/game/fleetOrders";
 import { playerViewFixture } from "../fixtures/apiMap";
 
 afterEach(() => vi.unstubAllGlobals());

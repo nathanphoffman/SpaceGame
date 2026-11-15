@@ -57,6 +57,7 @@ export const getStateResponseFleetsItemCargoHydrogenRegExpTwo = new RegExp('^-?(
 export const getStateResponseFleetsItemCargoTitaniumRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 export const getStateResponseFleetsItemCargoHelium3RegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 export const getStateResponseFleetsItemCargoTotalRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemSightHopsRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 export const getStateResponseReportsItemTimeRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 export const getStateResponseReportsItemRoundsRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 export const getStateResponseHoldingsItemMinesRegExpThree = new RegExp('^-?(?:0|[1-9]\\d*)$');
@@ -105,7 +106,8 @@ export const GetStateResponse = zod.object({
   "helium3": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemCargoHelium3RegExpTwo)]),
   "total": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemCargoTotalRegExpTwo)]).optional(),
   "hasNegative": zod.boolean().optional()
-})
+}),
+  "sightHops": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemSightHopsRegExpTwo)]).optional()
 })),
   "reports": zod.array(zod.object({
   "id": zod.string(),

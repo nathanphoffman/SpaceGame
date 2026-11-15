@@ -1,8 +1,8 @@
-# server tasks (round 5)
+# server tasks (round 6)
 
-Owns `server/Server/**`, `server/Server.Tests/**`, `server/openapi.json`, `lib/server/**`, `app/api/**`. Core is still being built in parallel: depend only on the `IGameEngine` interface and the fake engine in `Server.Tests`.
+Owns `server/Server/**`, `server/Server.Tests/**`, `server/openapi.json`, `lib/server/**`, `app/api/**`. Depend only on `IGameEngine` and the fake engine in `Server.Tests`.
 - [!] Delete the old TS server (`lib/server`, `app/api`) and anything else only they use (milestone i). Blocked: needs the user's OK to delete files; do not do it until this line is changed.
-- [ ] Quality: the score is 90.0. Flatten long call chains in `Server.Tests` (e.g. `DiscordSessionTests.SetUpAsync`) with small direct fixtures, split test folders and files with more than 6 items/functions where reasonable. Do not widen `.codequalityignore`.
-- [ ] Test-mode full game (milestone j): a test using the real `GameEngine` in test mode (TimeScale 168) with a fake clock: create, join, start, then advance the clock until the game ends; check `GET /outcome` returns winner, reason, scores and contributions, and `GameEnded` is sent over the hub fake exactly once.
-- [ ] Hardening: tests that a request with a token from another game, a missing token and a bad command body are refused with ProblemDetails (401/403/400), and that two parallel commands on one game never lose a version (per-game lock).
-- [ ] Startup: make sure a fresh `docker compose up` + `dotnet run` works with migrations and prints the URL; add a `/health` endpoint with a test and a line in the README.
+- [ ] Quality: the score is 89.9. In `Server.Tests` (11 items, `Api` has 12) move files into subfolders of about 6, and flatten call chains (`DiscordSessionTests`, `GameSessionTests` has 13 tests: split it). Do not widen `.codequalityignore`.
+- [ ] Quality: in `GameOutcome.cs` the two swallowed catches (lines ~37 and ~55) should log a warning (ILogger) while still falling back to "unknown"; add a test that checks the fallback and the log.
+- [ ] Restart safety: a test that creates and starts a game, drops the session cache (new `GameSession`/host on the same database), and checks state, clock and `Advance` carry on from the persisted version without losing events.
+- [ ] Docs: README section on test mode (TimeScale 168, 1-hour game), the Discord webhook setting and the `/health` and `/outcome` endpoints, checked against the code.

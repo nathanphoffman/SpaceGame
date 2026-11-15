@@ -1,6 +1,6 @@
 "use client";
 
-import { friendlyError } from "@/lib/api/errors";
+import { friendlyError } from "@/lib/api/core/errors";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -13,7 +13,7 @@ import {
 	joinGame,
 	joinGameSchema,
 	lobbyPath,
-} from "@/lib/api/gameForms";
+} from "@/lib/api/game/gameForms";
 
 type Errors = Record<string, string>;
 

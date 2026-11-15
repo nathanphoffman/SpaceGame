@@ -42,6 +42,7 @@ const MAX_BATCH = 20;
 
 // ---------- simulation ----------
 
+// Advances a planet's resources and finished queue items up to `time`, event by event.
 function accrue(planet: Planet, time: Date) {
 	if (time <= planet.updated_at) return;
 
@@ -253,6 +254,7 @@ function earliestDue(world: World, currentTime: Date) {
 
 	// the action to run for the earliest due event, kept in a variable the compiler can't narrow
 	let action: (() => void) | null = null;
+	// remembers the event if it is due and earlier than any seen so far
 	const consider = (when: Date, run: () => void) => {
 		if (when <= currentTime && (!earliest || when < earliest)) {
 			earliest = when;
@@ -402,6 +404,7 @@ const lastFinish = (world: World, planetId: number, kind: string, now: Date) =>
 			now,
 		);
 
+// Starts a building order: checks the rules and cost, takes the resources and queues it.
 export function startBuilding(
 	world: World,
 	now: Date,
@@ -455,6 +458,7 @@ export function startBuilding(
 	});
 }
 
+// Queues a batch of ships on a planet: checks the batch size and cost, takes the resources and queues them.
 export function buildShips(
 	world: World,
 	now: Date,

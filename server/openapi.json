@@ -701,6 +701,14 @@
           },
           "cargo": {
             "$ref": "#/components/schemas/Resources"
+          },
+          "sightHops": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },

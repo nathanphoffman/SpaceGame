@@ -5,6 +5,9 @@ public abstract record EnemyOrder
 {
     /// <summary>Points the order spends.</summary>
     public abstract int Cost(Catalog catalog);
+
+    /// <summary>A short sentence saying why the enemy did this; kept in the events so players can follow its thinking.</summary>
+    public string Reason { get; init; } = "";
 }
 
 /// <summary>Buys fighters that join the garrison at the home world.</summary>

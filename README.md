@@ -15,6 +15,7 @@ Open http://localhost:3000, create a game and share the code with friends. The h
 - On your planets: build mines, shipyards and defense, and queue ships.
 - Pick ships and a target planet to send a fleet. The dialog shows the trip time (5 minutes prep plus flight). Recall a fleet from the fleet list.
 - Use a Colony ship to claim a new planet. Watch the warning strip for incoming enemy fleets and open reports for battle results.
+- Press Escape to close the planet panel or the how-to-play panel. The "? How to play" button in the top bar shows a short rules summary.
 - The bars in the top bar show score progress; the game ends when a team reaches the target or the week runs out.
 
 ## Server (.NET)
@@ -28,7 +29,7 @@ Environment variables (ASP.NET style, `__` for nested keys):
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ConnectionStrings__Postgres` | `Host=localhost;Database=spacegame;Username=postgres` | Database connection. For the compose DB: `Host=localhost;Port=5440;Database=spacegame;Username=space;Password=space` |
+| `ConnectionStrings__Postgres` | `Host=localhost;Port=5440;Database=spacegame;Username=space;Password=space` | Database connection (the default matches the compose DB) |
 | `Database__MigrateOnStart` | `true` | Apply pending EF migrations when the server starts |
 | `GameClock__TickSeconds` | `5` | How often the clock advances running games (min 1) |
 | `ASPNETCORE_URLS` | `http://localhost:5000` | Address the server listens on |
@@ -36,8 +37,8 @@ Environment variables (ASP.NET style, `__` for nested keys):
 Run steps:
 
 1. `docker compose up -d db` starts Postgres.
-2. Set `ConnectionStrings__Postgres` (see the table) and run `dotnet run --project server/Server`.
-3. Open `/health` to check it is up. The OpenAPI document is `server/openapi.json`.
+2. Run `dotnet run --project server/Server`. It applies migrations and prints the URL it listens on.
+3. Open `/health` (returns `{"status":"ok"}`) to check it is up. The OpenAPI document is `server/openapi.json`.
 
 Test-mode game: create a game with `"mode": "test"`. It runs 168x faster than `"week"` mode, so a week of game time passes in about one hour. Use `GameClock__TickSeconds=1` to make it smoother.
 

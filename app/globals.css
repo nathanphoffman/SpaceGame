@@ -833,3 +833,42 @@ input[type="number"] {
 	line-height: 1;
 	color: var(--accent);
 }
+
+.howto {
+	position: absolute;
+	top: 3rem;
+	left: 1rem;
+	max-width: 24rem;
+	padding: 0.75rem 1rem;
+	background: #111a;
+	border: 1px solid #556;
+	z-index: 10;
+}
+
+/* Narrow screens: top bar wraps tightly, panels and tables fit the width. */
+@media (max-width: 600px) {
+	.topbar {
+		gap: 8px;
+		padding: 8px;
+	}
+	.topbar .spacer {
+		flex-basis: 100%;
+		height: 0;
+	}
+	.layout {
+		padding: 8px;
+		gap: 8px;
+	}
+	.panel {
+		overflow-x: auto;
+	}
+	.howto {
+		left: 0.5rem;
+		right: 0.5rem;
+		max-width: none;
+	}
+	.end-screen {
+		padding: 12px;
+		overflow-x: auto;
+	}
+}

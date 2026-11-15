@@ -15,7 +15,7 @@ public static class EnemyBrain
 
         if (EarthAttackSchedule.Due(state, nowSeconds) is { } earthAttack) orders.Add(earthAttack);
 
-        orders.AddRange(EnemyFleets(state).Where(f => CanClaim(state, f)).Select(f => new ClaimPlanet(f.Id)));
+        orders.AddRange(EnemyFleets(state).Where(f => CanClaim(state, f)).Select(f => new ClaimPlanet(f.Id) { Reason = $"Fleet {f.Id.Value} carries a Colony ship and sits at a free planet." }));
 
         if (RefillGarrison(state, budget) is { } refill)
         {
@@ -48,7 +48,7 @@ public static class EnemyBrain
         var affordable = budget / state.Config.Catalog.Ship(ShipType.Fighter).Cost.Total;
         var count = Math.Min(missing, affordable);
 
-        return count > 0 ? new BuyGarrison(count) : null;
+        return count > 0 ? new BuyGarrison(count) { Reason = "Home garrison is below its target." } : null;
     }
 
     // One expedition at a time: only when no enemy Colony ship is on its way or waiting to claim.
@@ -59,7 +59,7 @@ public static class EnemyBrain
 
         if (order.Cost(state.Config.Catalog) > budget) return null;
 
-        return ExpeditionTarget(state) is { } target ? order with { Target = target } : null;
+        return ExpeditionTarget(state) is { } target ? order with { Target = target, Reason = $"No Colony ship is out, so expand to the nearest free system ({target.Value})." } : null;
     }
 
     /// <summary>The first planet of the unclaimed system nearest to Earth; null when every system is taken.</summary>

@@ -1,6 +1,6 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
-import { attachGameEvents, type HubConnectionLike } from "@/lib/api/gameEvents";
+import { attachGameEvents, type HubConnectionLike } from "@/lib/api/game/gameEvents";
 
 function fakeConnection() {
 	const handlers = new Map<string, (...args: never[]) => void>();
@@ -85,5 +85,31 @@ describe("attachGameEvents", () => {
 		fake.dropping();
 		fake.reconnect();
 		expect(onReconnecting.mock.calls).toEqual([[true], [false]]);
+	});
+});
+
+describe("reconnect end to end", () => {
+	it("refetches state after a drop and clears the reconnecting flag", async () => {
+		const client = new QueryClient();
+		const fetchState = vi.fn(async () => ({ version: 1 }));
+		const observer = new QueryObserver(client, { queryKey: ["/api/games/g1/state"], queryFn: fetchState });
+		const unsubscribe = observer.subscribe(() => undefined);
+		await vi.waitFor(() => expect(observer.getCurrentResult().isSuccess).toBe(true));
+
+		const fake = fakeConnection();
+		let reconnecting = false;
+		attachGameEvents(fake.connection, client, "g1", {
+			onFleetSpotted: vi.fn(),
+			onReconnecting: (value) => (reconnecting = value),
+		});
+
+		fake.dropping();
+		expect(reconnecting).toBe(true);
+		expect(fetchState).toHaveBeenCalledTimes(1);
+
+		fake.reconnect();
+		expect(reconnecting).toBe(false);
+		await vi.waitFor(() => expect(fetchState).toHaveBeenCalledTimes(2));
+		unsubscribe();
 	});
 });

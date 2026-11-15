@@ -12,13 +12,13 @@ internal static class EnemyTurns
         for (var due = result.EnemyLastTick + tick; due <= nowSeconds; due += tick)
         {
             result = FleetArrivals.Resolve(result, due, events, dice);
-            result = Take(result, dice, due);
+            result = RunTurn(result, dice, due, events);
         }
 
         return result;
     }
 
-    private static GameState Take(GameState state, IDice dice, long atSeconds)
+    private static GameState RunTurn(GameState state, IDice dice, long atSeconds, List<GameEvent> events)
     {
         var catalog = state.Config.Catalog;
         var spent = 0;
@@ -27,11 +27,15 @@ internal static class EnemyTurns
         foreach (var order in EnemyBrain.Decide(state, dice, atSeconds))
         {
             result = Apply(result, order, atSeconds);
+            events.Add(OrderEvent(order, atSeconds));
             spent += order.Cost(catalog);
         }
 
         return result with { EnemyBudget = state.EnemyBudget + EnemyBrain.Income(state) - spent, EnemyLastTick = atSeconds };
     }
+
+    private static GameEvent OrderEvent(EnemyOrder order, long atSeconds) =>
+        new(atSeconds, "EnemyOrder", new Dictionary<string, string> { ["order"] = order.GetType().Name, ["reason"] = order.Reason });
 
     private static GameState Apply(GameState state, EnemyOrder order, long atSeconds) => order switch
     {
