@@ -1,23 +1,20 @@
+using SpaceGame.Server.Game;
+
 namespace SpaceGame.Server.Tests;
 
 public class GameClockOptionsTests
 {
-    [Fact]
-    public void Tick_defaults_to_five_seconds()
+    [Theory]
+    [InlineData(null, 5)]
+    [InlineData(0, 1)]
+    public void Tick_defaults_to_five_seconds_and_is_never_shorter_than_one(int? tickSeconds, int expected)
     {
-        Assert.Equal(TimeSpan.FromSeconds(5), new SpaceGame.Server.Game.GameClockOptions().Interval);
+        var options = tickSeconds is { } seconds ? new GameClockOptions { TickSeconds = seconds } : new GameClockOptions();
+        Assert.Equal(TimeSpan.FromSeconds(expected), options.Interval);
     }
 
-    [Fact]
-    public void Tick_is_never_shorter_than_one_second()
-    {
-        Assert.Equal(TimeSpan.FromSeconds(1), new SpaceGame.Server.Game.GameClockOptions { TickSeconds = 0 }.Interval);
-    }
-
-    [Fact]
-    public void Scale_is_1_in_week_mode_and_168_in_test_mode()
-    {
-        Assert.Equal(1, SpaceGame.Server.Game.TimeScale.For("week"));
-        Assert.Equal(168, SpaceGame.Server.Game.TimeScale.For("test"));
-    }
+    [Theory]
+    [InlineData("week", 1)]
+    [InlineData("test", 168)]
+    public void Scale_depends_on_mode(string mode, int expected) => Assert.Equal(expected, TimeScale.For(mode));
 }

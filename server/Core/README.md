@@ -86,3 +86,21 @@ One fixed defense (6 fighters and 2 battleships, 1 player, 1000 runs, seed 1) ag
 
 The numbers look right: a small defense holds the first waves, and the x1.35 growth forces a player to keep building
 (by wave 4 a static fleet needs the Defense building and Weapons, by wave 6 it needs a bigger fleet). No config change.
+
+## 4 and 8 players (TimeScale 168)
+
+Same fixed defense as above (6 fighters and 2 battleships, 1000 runs, seed 1), `--players 4` and `--players 8`.
+Defense held, no extras / with Defense building + Weapons:
+
+| Wave | Launch hour | 4 players: attackers | 4 players: held | 8 players: attackers | 8 players: held |
+|---|---|---|---|---|---|
+| 1 | 36 | 10 | 94.1% / 100.0% | 16 | 12.1% / 78.2% |
+| 2 | 54 | 14 | 34.3% / 95.0% | 22 | 0.1% / 5.5% |
+| 3 | 72 | 19 | 0.7% / 30.6% | 30 | 0.0% / 0.0% |
+| 4 | 90 | 26 | 0.0% / 0.2% | 41 | 0.0% / 0.0% |
+| 5 | 108 | 35 | 0.0% / 0.0% | 55 | 0.0% / 0.0% |
+| 6 | 126 | 47 | 0.0% / 0.0% | 74 | 0.0% / 0.0% |
+
+The starting defense alone survives wave 1 with 4 players but not with 8, which is intended: more players
+share Earth's defense and bring more ships. Waves threaten at every size and none beats a sensible
+shared defense on wave 1 to 2. No config change.

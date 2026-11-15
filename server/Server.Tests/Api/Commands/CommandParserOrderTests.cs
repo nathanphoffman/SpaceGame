@@ -40,14 +40,15 @@ public class CommandParserOrderTests
         Assert.Equal(new PlanetId("b"), send.To);
     }
 
-    [Fact]
-    public void Send_fleet_rejects_empty_unknown_and_zero_ships()
+    [Theory]
+    [InlineData("\"a\"", "null")]
+    [InlineData("\"a\"", "{}")]
+    [InlineData("\"a\"", """{"Ufo":1}""")]
+    [InlineData("\"a\"", """{"Scout":0}""")]
+    [InlineData("null", """{"Scout":1}""")]
+    public void Send_fleet_rejects_missing_or_invalid_parts(string from, string ships)
     {
-        Assert.Null(Parse(Fleet("\"a\"", "null")).Command);
-        Assert.Null(Parse(Fleet("\"a\"", "{}")).Command);
-        Assert.Null(Parse(Fleet("\"a\"", """{"Ufo":1}""")).Command);
-        Assert.Null(Parse(Fleet("\"a\"", """{"Scout":0}""")).Command);
-        Assert.Null(Parse(Fleet("null", """{"Scout":1}""")).Command);
+        Assert.Null(Parse(Fleet(from, ships)).Command);
     }
 
     private static string Fleet(string from, string ships) =>

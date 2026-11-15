@@ -14,7 +14,7 @@ public class ResourcesTests
     }
 
     [Fact]
-    public void SubtractRemovesEachElement()
+    public void SubtractScaleAndTotalWork()
     {
         var r = new Resources(10, 20, 30, 40);
         Assert.Equal(100, r.Total);

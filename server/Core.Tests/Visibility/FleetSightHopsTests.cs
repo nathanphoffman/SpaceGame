@@ -13,14 +13,12 @@ public class FleetSightHopsTests
         return fleet.ToView();
     }
 
-    [Fact]
-    public void ScoutFleetSeesTwoHops() => Assert.Equal(2, ViewOf(ShipType.Scout).SightHops);
-
     [Theory]
-    [InlineData(ShipType.Fighter)]
-    [InlineData(ShipType.Hauler)]
-    [InlineData(ShipType.Dreadnought)]
-    public void OtherFleetsSeeOneHop(ShipType type) => Assert.Equal(1, ViewOf(type).SightHops);
+    [InlineData(ShipType.Scout, 2)]
+    [InlineData(ShipType.Fighter, 1)]
+    [InlineData(ShipType.Hauler, 1)]
+    [InlineData(ShipType.Dreadnought, 1)]
+    public void FleetSightDependsOnShipType(ShipType type, int hops) => Assert.Equal(hops, ViewOf(type).SightHops);
 
     [Fact]
     public void SightHopsSurvivesJsonRoundTrip()

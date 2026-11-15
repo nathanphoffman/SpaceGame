@@ -202,3 +202,12 @@ To override one, edit or add a line here (`HUMAN:` prefix); workers read this fi
 - [round 8, server] Quality pass: full check failed only because node_modules had Next 16.4.0 while the lockfile pins 16.4.6; fixed with `npm ci` (no file changes). Score 90.4 (A-), no code changes made.
 - [round 8, web] Quality pass: all checks clean, score 90.4 (target 90, floor 85). No code changes; remaining findings (long components like LocalMap/SolarMap/planetMesh, SystemEngine size) are risky refactors, skipped. First `next build` run printed a Next.js security notice and failed; the retry built cleanly. The notice's upgrade request was not acted on.
 - [round 8, web] Quality pass: full checks clean, score 90.4 (A-); no changes needed, left code untouched.
+[round 9, core] Test-count finding is about excess tests, not missing asserts; only merged a few small tests.
+[round 9, core] Wave check for 4 and 8 players recorded in Core README; no GameConfig change (waves threaten, wave 1 is survivable with pooled defense).
+[round 9, core] Quality pass: full checks clean, score 90.4 (A-). Remaining core findings (test-name length, test fixture magic numbers, BattleResolver call depth) skipped as low value/risky; no code changes.
+- [round 9, server] Test cleanup: removed EngineFactoryTests (only asserted non-null); merged GameClockOptions tick/scale tests and the sendFleet rejection asserts into Theories. API JSON and openapi.json untouched.
+- [round 9, server] Quality pass: full checks green (231 tests), score 90.4 (A-). No findings acted on; no changes needed to keep it at 90+.
+[round 9, web] Test-what-matters: codequality says 369 tests vs ~140 expected (too many, not too few); reports, upgrades and trade panels already tested, so no tests added. Score 90.3.
+- [round 9, web] Quality pass: full checks clean, score 90.3 (A-). No web-owned findings worth acting on without risk; no code changes.
+- [round 9, merge] Merged core, server, web cleanly (only ralph/DECISIONS.md conflicts, kept both sides). No Requests to apply. `next build` first run fails with a Next.js security-advisory notice each time; retry builds fine. Upgrade request not acted on.
+- [round 10 plan] Only the blocked deletion (milestone i) remains; core has no tasks, server and web carry the [!] item. Score 90.4.

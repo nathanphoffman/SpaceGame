@@ -80,6 +80,16 @@ Code-quality score (`codequality . --quick`): **90.3** (down 0.1 from 90.4, floo
 - **failed to merge**: nothing.
 - Full checks were not run: milestone i is open, so the game is not complete (COMPLETE not created).
 
+## Round 9
+Code-quality score (`codequality . --quick`): **90.4** (unchanged from round 8, floor met). Weakest: "Minimize dependencies" (old TS server deps), "Test what matters" 81.4% (too many tests, not too few).
+
+- **core**: merged a few overlapping tests, 4-player and 8-player wave check recorded in the Core README. No config change.
+- **server**: removed `EngineFactoryTests`, merged tests into Theories. API JSON and `openapi.json` unchanged.
+- **web**: checked the "Test what matters" finding; no code change needed.
+- **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests still needs the user's OK. Milestone i and the "old server gone" Done item stay open.
+- **failed to merge**: nothing.
+- Full checks were not run: milestone i is open, so the game is not complete (COMPLETE not created). No new work items are planned for round 10; only the blocked deletion remains.
+
 ## Milestones
 - [x] a. Rules in C# (Core): done; Sim used for the balance pass.
 - [x] b. World (Core): done, travel and objective tests exist.
