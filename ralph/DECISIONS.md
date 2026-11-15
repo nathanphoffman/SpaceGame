@@ -211,3 +211,4 @@ To override one, edit or add a line here (`HUMAN:` prefix); workers read this fi
 - [round 9, web] Quality pass: full checks clean, score 90.3 (A-). No web-owned findings worth acting on without risk; no code changes.
 - [round 9, merge] Merged core, server, web cleanly (only ralph/DECISIONS.md conflicts, kept both sides). No Requests to apply. `next build` first run fails with a Next.js security-advisory notice each time; retry builds fine. Upgrade request not acted on.
 - [round 10 plan] Only the blocked deletion (milestone i) remains; core has no tasks, server and web carry the [!] item. Score 90.4.
+- HUMAN (round 10): Deleting the old TS server (`lib/server`, `app/api`), the `/legacy` UI (`app/legacy`, `components/screens|panels|hooks`), `lib/defs.ts`, `lib/economy.ts` and the old `lib/` tests is APPROVED. Do not block on it. Delete them, fix what imported them, keep every check green and the quality score at 90+.
