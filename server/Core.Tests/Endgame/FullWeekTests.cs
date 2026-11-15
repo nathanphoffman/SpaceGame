@@ -22,7 +22,7 @@ public class FullWeekTests
         }
     }
 
-    private static (GameState State, List<GameEvent> Events) PlayIdleWeek(int seed)
+    private static (GameState State, List<GameEvent> Events) SimulateIdleWeek(int seed)
     {
         var setup = new GameSetup(seed, [new PlayerSetup(new PlayerId("p1"), "Ann")], new GameConfig());
         var state = Engine.NewGame(setup);
@@ -42,7 +42,7 @@ public class FullWeekTests
     [Fact]
     public void IdleWeekEndsTheGame()
     {
-        var (state, events) = PlayIdleWeek(Seed);
+        var (state, events) = SimulateIdleWeek(Seed);
 
         Assert.NotNull(state.Outcome);
         Assert.Single(events, e => e.Kind == "GameEnded");
@@ -51,7 +51,7 @@ public class FullWeekTests
     [Fact]
     public void EnemyAttackOnEarthComesOnSchedule()
     {
-        var (state, _) = PlayIdleWeek(Seed);
+        var (state, _) = SimulateIdleWeek(Seed);
 
         Assert.NotEmpty(state.EnemyPlanets);
         Assert.True(state.EarthAttacksSent >= 1);
@@ -60,8 +60,8 @@ public class FullWeekTests
     [Fact]
     public void SameSeedGivesTheSameWeek()
     {
-        var first = PlayIdleWeek(Seed);
-        var second = PlayIdleWeek(Seed);
+        var first = SimulateIdleWeek(Seed);
+        var second = SimulateIdleWeek(Seed);
 
         Assert.Equal(JsonSerializer.Serialize(first.State), JsonSerializer.Serialize(second.State));
         Assert.Equal(JsonSerializer.Serialize(first.Events), JsonSerializer.Serialize(second.Events));

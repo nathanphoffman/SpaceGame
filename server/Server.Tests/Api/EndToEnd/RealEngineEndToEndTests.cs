@@ -76,7 +76,7 @@ public class RealEngineEndToEndTests
         var result = await CommandAsync(m, new { type = "queueShip", planet = home, shipType = "Fighter", count = 1 });
         Assert.True(result.Ok, result.Error);
 
-        m.Time.Advance(TimeSpan.FromSeconds(WaitSeconds));
+        m.Time.MoveForward(TimeSpan.FromSeconds(WaitSeconds));
         await m.Factory.Services.GetRequiredService<GameClock>().TickAsync();
         var after = await StateAsync(m, m.Host.GameId, m.Host.PlayerToken);
         Assert.True(after.GameTime >= WaitSeconds);

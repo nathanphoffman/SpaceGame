@@ -10,10 +10,10 @@ public static class SessionFixture
 {
     private const int SecondsPassed = 60;
 
-    public static GameSession Build(StoredGame stored, IGameEngine engine, DiscordNotifier discord)
+    public static GameSession MakeSession(StoredGame stored, IGameEngine engine, DiscordNotifier discord)
     {
         var clock = new FakeClock(StoredGame.StartTime);
-        clock.Advance(TimeSpan.FromSeconds(SecondsPassed));
+        clock.MoveForward(TimeSpan.FromSeconds(SecondsPassed));
 
         return new GameSession(stored.Repo, stored.Writer, engine, clock, new GameLocks(), new NullGameNotifier(), discord, NullLogger<GameSession>.Instance);
     }

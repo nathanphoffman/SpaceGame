@@ -1,9 +1,8 @@
-# web tasks (round 7)
+# web tasks (round 8)
 
 Owns `app/**` (not `app/api/**`), `components/**`, `lib/**` (not `lib/server/**`), `tests/**`, `orval.config.ts`. Do not change how the renderer (`components/maps/**`, `components/planet/**`) looks or works. Read the Next docs in `node_modules/next/dist/docs/` before writing Next code. Build against `server/openapi.json` and the generated client in `lib/api/generated` (never edit generated files).
 - [!] Delete `/legacy` (app/legacy, components/screens, components/panels, components/hooks), then `lib/defs.ts` and `lib/economy.ts` if unused, and the old `lib/` tests (milestone i). Blocked: needs the user's OK to delete files; do not do it until this line is changed.
-- [ ] Quality: the score is 89.9. Add a one-line "how it works" comment above each unexplained regex and chained/nested-closure line in `components/game/reports/ReportViews.tsx` and `components/game/panels/TradePanel.tsx`, then the rest of the `RULE-03-CLEVER-IS-EXPLAINED` findings in web files outside the renderer and legacy folders.
-- [ ] Quality: replace the 3 plain `<img>`/`<a>` tags with `next/image` / `next/link` in non-renderer, non-legacy files (`TS-NEXT-002`); check the Next docs first; tests and build stay green.
-- [ ] Quality: replace strings repeated 3+ times in non-renderer, non-legacy web files (`"planet"`, `"fleet"`, `"lobby"`, ...) with constants in `lib/`; shorten names under 4 characters (`id`, `now`) in files you touch.
-- [ ] Quality: web tests: merge near-duplicate `it(...)` cases with `it.each` in `tests/**` and `lib/**` tests outside the legacy set, without losing coverage; list it in DECISIONS.md. Do not delete files.
-- [ ] Polish (milestone j): add a short "final test-mode play-through" checklist to the README (what to see at minute 5, 20, 40, 60) checked against the pages and the game UI.
+- [ ] Quality: the score is 90.4. Run `codequality . --full` and fix the worst "No magic numbers" findings in `components/game/**`, `components/home/**`, `components/lobby/**`, `lib/api/**` (named constants in `lib/`). Skip renderer and legacy files.
+- [ ] Quality: "Simple beats clever" in the same non-renderer, non-legacy files: split long chained expressions into named steps or add a one-line comment. Tests and build stay green.
+- [ ] Quality: "Test what matters": add tests for any non-renderer game component or `lib/api` helper with no test (check by looking in `tests/**`), focusing on the trip timer, warnings and end screen.
+- [ ] Polish (milestone j): walk through the README test-mode checklist against the real pages and fix wording that no longer matches the UI.

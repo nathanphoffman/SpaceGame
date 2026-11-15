@@ -60,6 +60,16 @@ Code-quality score (`codequality . --quick`): **89.9** (unchanged from round 5, 
 - **failed to merge**: nothing.
 - Full checks were not run: milestone i is open and the score is under 90, so the game is not complete.
 
+## Round 7
+Code-quality score (`codequality . --quick`): **90.4** (up 0.5 from 89.9, floor met). Weakest: "Minimize dependencies" 67.7% (old TS server deps), "Simple beats clever" 80.6%, "Test what matters" 81.6%, "No magic numbers" 85.5%, "Power of 6s" 83.5%.
+
+- **core**: removed the blocking `.Result`, renamed clashing test helpers, flattened the `FullHp` chain, merged duplicate tests into Theories, Core README with balance numbers and a test-mode game description. `GameState` split skipped on purpose (JSON shape risk).
+- **server**: renamed Discord test helpers, grouped folders, merged tests into Theories, README on the test-game run order.
+- **web**: comments on unexplained code, constants for repeated strings, `it.each` merges, README play-through checklist. The 3 plain `<img>` are in renderer files and stay.
+- **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests still needs the user's OK. Milestone i and the "old server gone" Done item stay open. It would also lift the dependency score.
+- **failed to merge**: nothing.
+- Full checks were not run: milestone i is open, so the game is not complete. Round 7 build notes: `orval` was missing from node_modules until `npm install`.
+
 ## Milestones
 - [x] a. Rules in C# (Core): done; Sim used for the balance pass.
 - [x] b. World (Core): done, travel and objective tests exist.
@@ -69,5 +79,5 @@ Code-quality score (`codequality . --quick`): **89.9** (unchanged from round 5, 
 - [x] f. Server: done; real-engine end-to-end test passes.
 - [x] g. Client plumbing (web): done, generated Zod in use.
 - [x] h. Game UI (web): all panels done; scout range shown as text hint; live wiring tested with a fake connection.
-- [~] i. Cleanup: README and `npm run play` done; deleting the old TS server and legacy UI blocked on the user's OK.
-- [~] j. Balance and polish: balance run done; server test-mode full game test done; Core README, server and web docs done; only a final test-mode play-through note is left.
+- [~] i. Cleanup: README and `npm run play` done; old TS server (`lib/server`, `app/api`) and legacy UI still in the repo, blocked on the user's OK to delete.
+- [~] j. Balance and polish: balance run done; server test-mode full game test done; Core README, server and web docs done; test-mode play-through checklist is in the web README. Done apart from the final tuning from a real play-through.

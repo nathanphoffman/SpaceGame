@@ -17,6 +17,15 @@ Open http://localhost:3000, create a game and share the code with friends. The h
 4. When everyone is listed under "Players", the host presses "Start game". The game page opens for all players.
 5. Test mode runs 168x faster than a real week, so the game ends after about one hour.
 
+### Final test-mode play-through checklist
+
+Times are real minutes after the host presses "Start game" (game time runs 168x faster).
+
+- **Minute 5:** The galaxy map shows your team's planets. Open your home system, click a planet and build a mine or a shipyard; the build shows in the queue. Queue a ship once a shipyard is done. "Fleets in flight" lists any trip, with its prep countdown first. Press "? How to play" and Escape to close it.
+- **Minute 20:** Mines have paid out and the resource counts in the top bar have grown. Send a fleet (or a Colony ship) to another planet: "Get quote" shows the trip time, then "Send fleet". Watch the ship move on the map. The first Earth attack arrives around minute 13 to 20, so look for "Incoming attacks" in the warning strip, then a battle toast and an entry under "Reports".
+- **Minute 40:** The team score bar has moved (objective planets give points each game hour). Open a battle report ("Read the report") to see rounds and losses. Later Earth attacks arrive about every 6 minutes and are bigger each time, so check that your defense holds.
+- **Minute 60:** The game ends at the one-week limit (about 60 minutes) or earlier if a side reaches 500 points or a home world falls. The "Game over" screen shows the winner, both scores and each player's points, battles won and planets captured. "Back to home" returns to the start page.
+
 ## Controls
 
 - Click a system on the galaxy map to open it; click a planet for its details.
@@ -49,6 +58,8 @@ Run steps:
 3. Open `/health` (returns `{"status":"ok"}`) to check it is up. The OpenAPI document is `server/openapi.json`.
 
 Test-mode game: create a game with `"mode": "test"`. It runs 168x faster than `"week"` mode, so a week of game time passes in about one hour. Use `GameClock__TickSeconds=1` to make it smoother.
+
+1-hour test game, server side only: (1) `docker compose up -d db`, (2) `GameClock__TickSeconds=1 dotnet run --project server/Server` (migrates the database, then listens on :5000), (3) `curl -X POST localhost:5000/api/games -H 'Content-Type: application/json' -d '{"name":"Me","mode":"test"}'` and keep the `playerToken`, (4) `curl -X POST localhost:5000/api/games/<gameId>/start -H "Authorization: Bearer <playerToken>"`.
 
 Discord alerts: pass an optional `discordWebhookUrl` (must be an `https` URL, otherwise the create call fails with a 400) when creating a game. The server then posts one message to that webhook for each enemy fleet spotted heading for your planets. If Discord is down or the URL is wrong, the game carries on and only a warning is logged.
 

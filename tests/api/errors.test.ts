@@ -3,12 +3,11 @@ import { ApiError } from "@/lib/api/core/client";
 import { friendlyError } from "@/lib/api/core/errors";
 
 describe("friendlyError", () => {
-	it("uses the ProblemDetails detail", () => {
-		expect(friendlyError(new ApiError(409, { detail: "Game is full" }))).toBe("Game is full");
-	});
-
-	it("falls back by status", () => {
-		expect(friendlyError(new ApiError(403, {}))).toContain("host");
+	it.each([
+		["uses the ProblemDetails detail", new ApiError(409, { detail: "Game is full" }), "Game is full"],
+		["falls back by status", new ApiError(403, {}), "host"],
+	])("%s", (_name, error, expected) => {
+		expect(friendlyError(error)).toContain(expected);
 	});
 
 	it("handles unknown values", () => {

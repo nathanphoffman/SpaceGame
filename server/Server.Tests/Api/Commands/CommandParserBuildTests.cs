@@ -9,18 +9,13 @@ public class CommandParserBuildTests
     private static ParsedCommand Parse(string json) =>
         CommandParser.Parse(JsonSerializer.Deserialize<CommandBody>(json, JsonSerializerOptions.Web));
 
-    [Fact]
-    public void Build_mine_with_element()
+    [Theory]
+    [InlineData("Mine", ",\"element\":\"Iron\"", BuildingType.Mine, Element.Iron)]
+    [InlineData("Shipyard", "", BuildingType.Shipyard, null)]
+    public void Build_accepts_valid_combinations(string building, string element, BuildingType type, Element? expected)
     {
-        var parsed = Parse("""{"type":"buildBuilding","planet":"p1","buildingType":"Mine","element":"Iron"}""");
-        Assert.Equal(new BuildBuilding(new PlanetId("p1"), BuildingType.Mine, Element.Iron), parsed.Command);
-    }
-
-    [Fact]
-    public void Build_shipyard_without_element()
-    {
-        var parsed = Parse("""{"type":"buildBuilding","planet":"p1","buildingType":"Shipyard"}""");
-        Assert.Equal(new BuildBuilding(new PlanetId("p1"), BuildingType.Shipyard, null), parsed.Command);
+        var parsed = Parse($$"""{"type":"buildBuilding","planet":"p1","buildingType":"{{building}}"{{element}}}""");
+        Assert.Equal(new BuildBuilding(new PlanetId("p1"), type, expected), parsed.Command);
     }
 
     [Theory]

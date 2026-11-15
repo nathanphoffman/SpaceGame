@@ -31,7 +31,12 @@ internal static class QueueFixture
     internal static (GameState State, CommandResult Result) Do(GameState state, GameCommand command, long nowSeconds = 0) =>
         GameEngineFactory.Create().Apply(state, Me, command, nowSeconds);
 
-    internal static string? Error(GameState state, GameCommand command, long nowSeconds = 0) => Do(state, command, nowSeconds).Result.Error;
+    internal static string? Error(GameState state, GameCommand command, long nowSeconds = 0)
+    {
+        var (_, outcome) = Do(state, command, nowSeconds);
+
+        return outcome.Error;
+    }
 
     internal static Holding At(GameState state) => state.PlayerById(Me)!.HoldingAt(Earth)!;
 

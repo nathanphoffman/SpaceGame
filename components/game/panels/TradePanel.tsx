@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ELEMENTS, useGameCommand } from "@/lib/api/game/commands";
+import { ELEMENTS, HAULER, useGameCommand } from "@/lib/api/game/commands";
 import { type FleetDraft, sendFleetCommand, useQuote } from "@/lib/api/game/fleetOrders";
 import type { HoldingDto } from "@/lib/api/adapters/schemas";
 import { NumberField, QuoteText } from "@/components/game/commands/FleetSendDialog";
-
-const HAULER = "Hauler";
 
 type TradeProps = { gameId: string; holding: HoldingDto; destinations: { id: string; name: string }[]; gameTime: number };
 
@@ -17,6 +15,9 @@ export function TradePanel({ gameId, holding, destinations, gameTime }: TradePro
 	const quote = useQuote(gameId);
 	const send = useGameCommand(gameId);
 	const loaded = ELEMENTS.some((element) => (draft.cargo[element] ?? 0) > 0);
+
+	// returns a handler that edits one element's entry in the cargo draft
+	const cargoChange = (element: string) => (amount: number) => setDraft({ ...draft, cargo: { ...draft.cargo, [element]: amount } });
 
 	if (available <= 0) return null;
 
@@ -33,9 +34,8 @@ export function TradePanel({ gameId, holding, destinations, gameTime }: TradePro
 
 				</select>
 			</label>
-			{/* one number field per element; each edits that element's entry in the cargo draft */}
 			{ELEMENTS.map((element) => (
-				<NumberField key={element} label={`Load ${element}`} value={draft.cargo[element] ?? 0} onChange={(amount) => setDraft({ ...draft, cargo: { ...draft.cargo, [element]: amount } })} />
+				<NumberField key={element} label={`Load ${element}`} value={draft.cargo[element] ?? 0} onChange={cargoChange(element)} />
 			))}
 
 			<button disabled={!loaded || quote.isPending} onClick={() => quote.mutate(draft)}>Quote trade</button>

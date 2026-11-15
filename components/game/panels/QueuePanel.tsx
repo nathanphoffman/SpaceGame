@@ -1,6 +1,6 @@
 "use client";
 
-import { cancelQueueItemBody } from "@/lib/api/game/commands";
+import { cancelQueueItemBody, DEFENSE, SHIPYARD } from "@/lib/api/game/commands";
 import type { HoldingDto, QueueItemDto } from "@/lib/api/adapters/schemas";
 import { CommandButtons } from "@/components/game/commands/CommandButtons";
 
@@ -16,7 +16,7 @@ function buildingNames(holding: HoldingDto): string[] {
 	const mines = Object.entries(holding.mines).map(([element, level]) => `${element} mine L${level}`);
 
 	// Mines first, then the shipyard and defense when present.
-	return [...mines, ...(holding.hasShipyard ? ["Shipyard"] : []), ...(holding.hasDefense ? ["Defense"] : [])];
+	return [...mines, ...(holding.hasShipyard ? [SHIPYARD] : []), ...(holding.hasDefense ? [DEFENSE] : [])];
 }
 
 /** Owner, finished buildings and parked ships of the planet; a planet without a holding is not ours. */

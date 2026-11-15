@@ -9,29 +9,15 @@ public class TravelRulesTests
     private static IReadOnlyDictionary<ShipType, int> Ships(params (ShipType, int)[] ships) =>
         ships.ToDictionary(x => x.Item1, x => x.Item2);
 
-    [Fact]
-    public void FleetMovesAtItsSlowestShip()
-    {
-        var speed = TravelRules.FleetSpeed(C, Ships((ShipType.Scout, 3), (ShipType.Dreadnought, 1)), 0);
-        Assert.Equal(0.6, speed, 6);
-    }
-
-    [Fact]
-    public void ZeroCountShipsDoNotSlowTheFleet()
-    {
-        var speed = TravelRules.FleetSpeed(C, Ships((ShipType.Scout, 1), (ShipType.Dreadnought, 0)), 0);
-        Assert.Equal(3.0, speed, 6);
-    }
+    [Theory]
+    [InlineData(ShipType.Scout, 3, ShipType.Dreadnought, 1, 0, 0.6)] // slowest ship sets the pace
+    [InlineData(ShipType.Scout, 1, ShipType.Dreadnought, 0, 0, 3.0)] // zero-count ships do not slow the fleet
+    [InlineData(ShipType.Hauler, 1, ShipType.Scout, 0, 2, 1.5)] // engine upgrades raise speed
+    public void FleetSpeedFollowsSlowestShipAndEngines(ShipType a, int na, ShipType b, int nb, int engines, double expected) =>
+        Assert.Equal(expected, TravelRules.FleetSpeed(C, Ships((a, na), (b, nb)), engines), 6);
 
     [Fact]
     public void EmptyFleetHasNoSpeed() => Assert.Equal(0, TravelRules.FleetSpeed(C, Ships(), 0));
-
-    [Fact]
-    public void EnginesRaiseSpeed()
-    {
-        var speed = TravelRules.FleetSpeed(C, Ships((ShipType.Hauler, 1)), 2);
-        Assert.Equal(1.5, speed, 6);
-    }
 
     [Fact]
     public void SunToPlutoIsAboutOneHourPlusPrep()

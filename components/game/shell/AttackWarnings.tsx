@@ -1,5 +1,6 @@
 import type { FleetViewDto } from "@/lib/api/adapters/schemas";
 import type { FleetSpottedEvent } from "@/lib/api/game/gameEvents";
+import { ENEMY_SIDE } from "@/lib/api/game/commands";
 import { formatDuration } from "@/lib/api/game/fleetOrders";
 
 type Props = {
@@ -10,7 +11,7 @@ type Props = {
 
 /** Enemy fleets still on their way. The strength hint only arrives with the FleetSpotted event. */
 export function AttackWarnings({ fleets, gameTime, spotted }: Props) {
-	const incoming = fleets.filter((fleet) => fleet.side === "Enemy" && fleet.arriveAt > gameTime);
+	const incoming = fleets.filter((fleet) => fleet.side === ENEMY_SIDE && fleet.arriveAt > gameTime);
 
 	if (incoming.length === 0) return null;
 

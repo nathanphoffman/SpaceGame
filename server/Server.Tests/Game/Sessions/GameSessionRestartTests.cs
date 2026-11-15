@@ -19,7 +19,7 @@ public class GameSessionRestartTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var before = NewSession(stored.Repo, stored.Writer, clock, new FakeEngine { EventKind = "BattleResolved" });
-        clock.Advance(TimeSpan.FromSeconds(FirstAdvanceSeconds));
+        clock.MoveForward(TimeSpan.FromSeconds(FirstAdvanceSeconds));
         var saved = await before.AdvanceAsync(stored.GameId);
 
         // Restart: a new database context, writer, session and lock table. Nothing is cached.
@@ -27,7 +27,7 @@ public class GameSessionRestartTests
         var engine = new FakeEngine { EventKind = "BattleResolved" };
         var after = NewSession(new GameRepository(db), new GameWriter(db), clock, engine);
         var loaded = await new GameRepository(db).LoadAsync(stored.GameId);
-        clock.Advance(TimeSpan.FromSeconds(SecondAdvanceSeconds - FirstAdvanceSeconds));
+        clock.MoveForward(TimeSpan.FromSeconds(SecondAdvanceSeconds - FirstAdvanceSeconds));
         var resumed = await after.AdvanceAsync(stored.GameId);
 
         Assert.Equal(saved!.Game.Version, loaded!.Version);

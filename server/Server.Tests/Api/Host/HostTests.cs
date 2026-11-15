@@ -85,7 +85,7 @@ public class HostTests : IClassFixture<WebApplicationFactory<Program>>
 
         using var factory = _factory.WithWebHostBuilder(b =>
             b.ConfigureServices(s => s.Replace(ServiceDescriptor.Singleton<IClock>(fake))));
-        fake.Advance(TimeSpan.FromMinutes(5));
+        fake.MoveForward(TimeSpan.FromMinutes(5));
         Assert.Equal(start.AddMinutes(5), factory.Services.GetRequiredService<IClock>().UtcNow);
     }
 }

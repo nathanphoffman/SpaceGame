@@ -13,12 +13,12 @@ public class EnemyTests
     private static GameState NewGame(EnemyConfig? enemy = null) =>
         Engine.NewGame(new GameSetup(1, [new PlayerSetup(new PlayerId("p1"), "Ann")], new GameConfig { Enemy = enemy ?? new EnemyConfig() }));
 
-    private static GameState Advance(GameState state, long nowSeconds) => Engine.Advance(state, nowSeconds, Dice).State;
+    private static GameState AdvanceEnemyState(GameState state, long nowSeconds) => Engine.Advance(state, nowSeconds, Dice).State;
 
     [Fact]
     public void FirstTick_ParksTheHomeGarrisonAtTheEnemyHome()
     {
-        var state = Advance(NewGame(), Hour);
+        var state = AdvanceEnemyState(NewGame(), Hour);
 
         Assert.Equal(state.Config.Enemy.HomeGarrisonFighters, EnemyBrain.HomeFighters(state));
     }
@@ -27,7 +27,7 @@ public class EnemyTests
     public void Tick_AddsIncomePerOwnedPlanetToTheBudget()
     {
         var config = new EnemyConfig(HomeGarrisonFighters: 0, EscortFighters: 100);
-        var state = Advance(NewGame(config), Hour);
+        var state = AdvanceEnemyState(NewGame(config), Hour);
 
         Assert.Equal(config.IncomePerPlanetPerTick, state.EnemyBudget);
         Assert.Equal(Hour, state.EnemyLastTick);
@@ -37,17 +37,17 @@ public class EnemyTests
     public void Garrison_RegrowsFromTheBudgetAfterLosses()
     {
         var config = new EnemyConfig(EscortFighters: 100);
-        var state = Advance(NewGame(config), Hour);
+        var state = AdvanceEnemyState(NewGame(config), Hour);
         var home = state.Fleets.Single();
         var weakened = state with { Fleets = [home with { Ships = new Dictionary<ShipType, int> { [ShipType.Fighter] = 7 }, }] };
 
-        Assert.Equal(config.HomeGarrisonFighters, EnemyBrain.HomeFighters(Advance(weakened, 2 * Hour)));
+        Assert.Equal(config.HomeGarrisonFighters, EnemyBrain.HomeFighters(AdvanceEnemyState(weakened, 2 * Hour)));
     }
 
     [Fact]
     public void Garrison_NeverGrowsPastTheTarget()
     {
-        var state = Advance(NewGame(), 5 * Hour);
+        var state = AdvanceEnemyState(NewGame(), 5 * Hour);
 
         Assert.Equal(state.Config.Enemy.HomeGarrisonFighters, EnemyBrain.HomeFighters(state));
     }
@@ -55,7 +55,7 @@ public class EnemyTests
     [Fact]
     public void Expedition_LaunchesOnceTheBudgetCoversColonyAndEscort()
     {
-        var state = Advance(NewGame(Rich), 3 * Hour);
+        var state = AdvanceEnemyState(NewGame(Rich), 3 * Hour);
         var launched = state.Fleets.Single(f => !f.Parked);
 
         Assert.Equal(Side.Enemy, launched.Side);
@@ -79,9 +79,9 @@ public class EnemyTests
     [Fact]
     public void Colony_ClaimsThePlanetOnArrivalAndKeepsTheEscortThere()
     {
-        var launched = Advance(NewGame(Rich), 3 * Hour);
+        var launched = AdvanceEnemyState(NewGame(Rich), 3 * Hour);
         var fleet = launched.Fleets.Single(f => !f.Parked);
-        var state = Advance(launched, fleet.ArriveAt + Hour);
+        var state = AdvanceEnemyState(launched, fleet.ArriveAt + Hour);
 
         Assert.Contains(fleet.To, state.EnemyPlanets);
         Assert.Contains(state.Fleets, f => f.Parked && f.To == fleet.To && !f.Ships.ContainsKey(ShipType.Colony));
@@ -90,8 +90,8 @@ public class EnemyTests
     [Fact]
     public void Advance_IsDeterministicForTheSameSeed()
     {
-        var first = JsonSerializer.Serialize(Advance(NewGame(), 40 * Hour));
-        var second = JsonSerializer.Serialize(Advance(NewGame(), 40 * Hour));
+        var first = JsonSerializer.Serialize(AdvanceEnemyState(NewGame(), 40 * Hour));
+        var second = JsonSerializer.Serialize(AdvanceEnemyState(NewGame(), 40 * Hour));
 
         Assert.Equal(first, second);
     }
@@ -99,7 +99,7 @@ public class EnemyTests
     [Fact]
     public void EnemyState_RoundTripsThroughJson()
     {
-        var state = Advance(NewGame(Rich), 3 * Hour);
+        var state = AdvanceEnemyState(NewGame(Rich), 3 * Hour);
         var copy = JsonSerializer.Deserialize<GameState>(JsonSerializer.Serialize(state))!;
 
         Assert.Equal(state.EnemyBudget, copy.EnemyBudget);

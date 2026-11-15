@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ELEMENTS, useGameCommand } from "@/lib/api/game/commands";
+import { ELEMENTS, HAULER, useGameCommand } from "@/lib/api/game/commands";
 import { type FleetDraft, formatDuration, sendFleetCommand, useQuote } from "@/lib/api/game/fleetOrders";
 import type { HoldingDto } from "@/lib/api/adapters/schemas";
 
 type Destination = { id: string; name: string };
 type DialogProps = { gameId: string; holding: HoldingDto; destinations: Destination[]; gameTime: number };
-
-const HAULER = "Hauler";
 
 export function NumberField({ label, value, max, onChange }: { label: string; value: number; max?: number; onChange: (value: number) => void }) {
 	return (

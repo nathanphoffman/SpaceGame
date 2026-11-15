@@ -12,8 +12,15 @@ internal static partial class FleetBattles
             ShipDamage.Expand(StatsOf(state, player, side, s.Key), s.Value, damage.GetValueOrDefault(s.Key)))];
     }
 
-    private static int FullHp(GameState state, PlayerId owner, Side side, ShipType type) =>
-        StatsOf(state, state.PlayerById(owner), side, type).Hp;
+    // Reads the upgraded stats directly so battle code does not chain through StatsOf for one number.
+    private static int FullHp(GameState state, PlayerId owner, Side side, ShipType type)
+    {
+        var player = state.PlayerById(owner);
+
+        return side == Side.Team && player is not null
+            ? Upgrades.BattleShipFor(state.Config.Catalog, player, type).Hp
+            : state.Config.Catalog.Ship(type).Hp;
+    }
 
     private static BattleShip StatsOf(GameState state, PlayerState? player, Side side, ShipType type)
     {

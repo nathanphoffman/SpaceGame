@@ -9,7 +9,11 @@ export type CommandResult = z.infer<typeof commandResultSchema>;
 
 export const ELEMENTS = ["Iron", "Hydrogen", "Titanium", "Helium3"] as const;
 export type ElementName = (typeof ELEMENTS)[number];
-export type BuildingName = "Mine" | "Shipyard" | "Defense";
+export const SHIPYARD = "Shipyard";
+export const DEFENSE = "Defense";
+export const HAULER = "Hauler";
+export const ENEMY_SIDE = "Enemy";
+export type BuildingName = "Mine" | typeof SHIPYARD | typeof DEFENSE;
 
 /** A command body with every field the API requires, null unless the caller sets it. */
 export function commandBody(fields: Partial<CommandBody> & { type: string }): CommandBody {

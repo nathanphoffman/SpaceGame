@@ -6,26 +6,15 @@ public class StockpileTests
     private const int Hour = 3600;
     private static readonly Resources IronRate = MineOutput.RateFor(Element.Iron, MineOutput.MilliPerHour(C, 1, 100, 0));
 
-    [Fact]
-    public void LevelOneMineOnRichPlanetMakesTwentyPerHour() =>
-        Assert.Equal(20_000, MineOutput.MilliPerHour(C, 1, 100, 0));
-
-    [Fact]
-    public void RichnessScalesOutput() => Assert.Equal(10_000, MineOutput.MilliPerHour(C, 1, 50, 0));
-
-    [Fact]
-    public void MineLevelsGrowByThirtyPercent()
-    {
-        Assert.Equal(26_000, MineOutput.MilliPerHour(C, 2, 100, 0));
-        Assert.Equal(33_800, MineOutput.MilliPerHour(C, 3, 100, 0));
-    }
-
-    [Fact]
-    public void MiningUpgradeAddsThirtyPercentPerLevel()
-    {
-        Assert.Equal(26_000, MineOutput.MilliPerHour(C, 1, 100, 1));
-        Assert.Equal(38_000, MineOutput.MilliPerHour(C, 1, 100, 3));
-    }
+    [Theory]
+    [InlineData(1, 100, 0, 20_000)] // level 1 on a rich planet
+    [InlineData(1, 50, 0, 10_000)] // richness scales output
+    [InlineData(2, 100, 0, 26_000)] // +30% per mine level
+    [InlineData(3, 100, 0, 33_800)]
+    [InlineData(1, 100, 1, 26_000)] // +30% per mining upgrade level
+    [InlineData(1, 100, 3, 38_000)]
+    public void MineOutputScalesWithRichnessAndLevels(int level, int richness, int upgrade, long expected) =>
+        Assert.Equal(expected, MineOutput.MilliPerHour(C, level, richness, upgrade));
 
     [Fact]
     public void RateForFillsOnlyTheChosenElement()

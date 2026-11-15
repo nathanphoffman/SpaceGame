@@ -38,12 +38,12 @@ public class TestModeFullGameTests
 
         for (var i = 0; i < MaxSteps && notifier.GameEndedOutcomes.Count == 0; i++)
         {
-            clock.Advance(Step);
+            clock.MoveForward(Step);
             await gameClock.TickAsync();
         }
 
         // Extra ticks must not announce the end again.
-        clock.Advance(Step);
+        clock.MoveForward(Step);
         await gameClock.TickAsync();
 
         var response = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, url, host.PlayerToken));

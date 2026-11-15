@@ -16,7 +16,7 @@ public class GameSessionStorageTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine());
-        clock.Advance(TimeSpan.FromSeconds(10));
+        clock.MoveForward(TimeSpan.FromSeconds(10));
         await session.MutateAsync<int>(stored.GameId, (state, _) => (state with { Config = state.Config with { ScoreTarget = 7 } }, 1));
         Assert.Equal(7, (await stored.Repo.LoadAsync(stored.GameId))!.State.Config.ScoreTarget);
     }
@@ -27,7 +27,7 @@ public class GameSessionStorageTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine());
-        clock.Advance(TimeSpan.FromSeconds(10));
+        clock.MoveForward(TimeSpan.FromSeconds(10));
         var tasks = Enumerable.Range(0, 8).Select(_ => session.AdvanceAsync(stored.GameId)).ToArray();
         await Task.WhenAll(tasks);
         Assert.All(tasks, task => Assert.NotNull(task.Result));
@@ -39,7 +39,7 @@ public class GameSessionStorageTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine { EventKind = "BattleResolved" });
-        clock.Advance(TimeSpan.FromSeconds(30));
+        clock.MoveForward(TimeSpan.FromSeconds(30));
         await session.AdvanceAsync(stored.GameId);
         var reports = await stored.Repo.ReportsAsync(stored.GameId);
         Assert.Single(reports);
@@ -52,7 +52,7 @@ public class GameSessionStorageTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine());
-        clock.Advance(TimeSpan.FromSeconds(30));
+        clock.MoveForward(TimeSpan.FromSeconds(30));
         await session.AdvanceAsync(stored.GameId);
         Assert.Empty(await stored.Repo.ReportsAsync(stored.GameId));
     }
@@ -63,7 +63,7 @@ public class GameSessionStorageTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine { EventKind = EventNotifications.GameEndedKind });
-        clock.Advance(TimeSpan.FromSeconds(30));
+        clock.MoveForward(TimeSpan.FromSeconds(30));
         await session.AdvanceAsync(stored.GameId);
         Assert.Equal("finished", (await stored.Repo.LoadAsync(stored.GameId))!.Status);
     }
@@ -74,7 +74,7 @@ public class GameSessionStorageTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine { EventKind = EventNotifications.GameEndedKind });
-        clock.Advance(TimeSpan.FromSeconds(30));
+        clock.MoveForward(TimeSpan.FromSeconds(30));
         var snapshot = await session.MutateAsync<int>(stored.GameId, (state, _) => (state with { Config = state.Config with { ScoreTarget = 7 } }, 1));
         Assert.Equal("finished", snapshot!.Game.Status);
         Assert.NotEqual(7, (await stored.Repo.LoadAsync(stored.GameId))!.State.Config.ScoreTarget);
@@ -87,7 +87,7 @@ public class GameSessionStorageTests
         var clock = new FakeClock(StoredGame.StartTime);
         var engine = new FakeEngine();
         var session = NewSession(stored, clock, engine);
-        clock.Advance(TimeSpan.FromSeconds(30));
+        clock.MoveForward(TimeSpan.FromSeconds(30));
         await session.AdvanceAsync(stored.GameId);
         Assert.Equal(0, engine.AdvanceCalls);
     }

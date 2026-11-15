@@ -1,8 +1,7 @@
-# server tasks (round 7)
+# server tasks (round 8)
 
 Owns `server/Server/**`, `server/Server.Tests/**`, `server/openapi.json`, `lib/server/**`, `app/api/**`. Depend only on `IGameEngine` and the fake engine in `Server.Tests`.
 - [!] Delete the old TS server (`lib/server`, `app/api`) and anything else only they use (milestone i). Blocked: needs the user's OK to delete files; do not do it until this line is changed.
-- [ ] Quality: the score is 89.9. Call depth: the checker matches calls by name, so test helpers named like Core methods (`Build`, `Run`, `Advance`, `SetUpAsync`) join Core's deep chains. In `Server.Tests/Game/Discord/DiscordSessionTests.cs` (the three 13-deep tests) and other files in `RULE-01-CALL-DEPTH` findings, rename helpers to unique names and have the test call 2 or 3 helpers itself instead of chaining. Rerun `codequality . --full`.
-- [ ] Quality: `Server.Tests` folders and `Server/` folders over 6 items (see `RULE-01-FOLDER-ITEMS`): group files into subfolders of about 6. Replace short names (`id`, `now`, `row`) in `Server/**` with longer ones where it does not change the API JSON.
-- [ ] Quality: Server.Tests has more tests than needed. Merge near-duplicate tests into `[Theory]` cases (list what you merged in DECISIONS.md); keep coverage of auth, lobby rules, commands, clock, outcome.
-- [ ] Polish: a README line with the "1-hour test game" run order for the server side (migrate, start, create test-mode game), checked against `Program.cs`.
+- [ ] Quality: the score is 90.4. Run `codequality . --full` and fix the worst "No magic numbers" and "Simple beats clever" findings in `server/Server/**` (not `Persistence/Migrations`): named constants, a one-line comment above clever code. API JSON must not change; `server/openapi.json` stays in sync.
+- [ ] Quality: fix easy "Power of 6s" findings in `server/Server/**` and `server/Server.Tests/**` (long methods, folders over 6 items, deep call chains from clashing helper names). Tests stay green.
+- [ ] Polish (milestone j): add a test that runs a test-mode game through the clock service with the fake engine until `GameEnded`, and checks the outcome endpoint and the Discord alert are sent once.

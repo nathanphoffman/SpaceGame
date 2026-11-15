@@ -8,13 +8,11 @@ import NewRedirectPage from "@/app/new/page";
 describe("/new redirect", () => {
 	beforeEach(() => redirect.mockClear());
 
-	it("goes to / without a code", async () => {
-		await NewRedirectPage({ searchParams: Promise.resolve({}) });
-		expect(redirect).toHaveBeenCalledWith("/");
-	});
-
-	it("keeps the join code", async () => {
-		await NewRedirectPage({ searchParams: Promise.resolve({ code: "A B" }) });
-		expect(redirect).toHaveBeenCalledWith("/?code=A%20B");
+	it.each([
+		["goes to / without a code", {}, "/"],
+		["keeps the join code", { code: "A B" }, "/?code=A%20B"],
+	])("%s", async (_name, searchParams, expected) => {
+		await NewRedirectPage({ searchParams: Promise.resolve(searchParams) });
+		expect(redirect).toHaveBeenCalledWith(expected);
 	});
 });

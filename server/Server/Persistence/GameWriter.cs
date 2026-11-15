@@ -5,13 +5,13 @@ using SpaceGame.Core;
 namespace SpaceGame.Server.Persistence;
 
 /// <summary>Writes games, players and reports. Reads live in <see cref="GameRepository"/>.</summary>
-public sealed class GameWriter(GameDbContext db)
+public sealed class GameWriter(GameDbContext dbContext)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public async Task<GameRow> CreateAsync(string code, string mode, int seed, GameState state, string? webhook, DateTimeOffset now)
+    public async Task<GameRow> CreateAsync(string code, string mode, int seed, GameState state, string? webhook, DateTimeOffset timestamp)
     {
-        var row = new GameRow
+        var gameRow = new GameRow
         {
             Id = Guid.NewGuid(),
             Code = code,
@@ -20,46 +20,46 @@ public sealed class GameWriter(GameDbContext db)
             Status = "lobby",
             Json = new GameJson { Config = JsonSerializer.Serialize(state.Config, Json), State = JsonSerializer.Serialize(state, Json) },
             DiscordWebhook = webhook,
-            Times = new GameTimes { CreatedAt = now, UpdatedAt = now },
+            Times = new GameTimes { CreatedAt = timestamp, UpdatedAt = timestamp },
         };
 
-        db.Games.Add(row);
-        await db.SaveChangesAsync();
+        dbContext.Games.Add(gameRow);
+        await dbContext.SaveChangesAsync();
 
-        return row;
+        return gameRow;
     }
 
     /// <summary>Saves the state if the stored version still equals expectedVersion; returns the new version.</summary>
-    public async Task<long> SaveAsync(Guid id, GameState state, string status, long expectedVersion, DateTimeOffset now, DateTimeOffset? startedAt = null)
+    public async Task<long> SaveAsync(Guid gameId, GameState state, string status, long expectedVersion, DateTimeOffset timestamp, DateTimeOffset? startedAt = null)
     {
         // One UPDATE guarded by the version: if another request saved first, zero rows match and we report a conflict.
         // startedAt stays as stored when null, so only the lobby start changes it.
-        var rows = await db.Games.Where(g => g.Id == id && g.Version == expectedVersion)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(g => g.Times.StartedAt, g => startedAt ?? g.Times.StartedAt)
-                .SetProperty(g => g.Json.State, JsonSerializer.Serialize(state, Json))
-                .SetProperty(g => g.Status, status)
-                .SetProperty(g => g.Version, expectedVersion + 1)
-                .SetProperty(g => g.Times.UpdatedAt, now));
+        var updatedRows = await dbContext.Games.Where(game => game.Id == gameId && game.Version == expectedVersion)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(game => game.Times.StartedAt, game => startedAt ?? game.Times.StartedAt)
+                .SetProperty(game => game.Json.State, JsonSerializer.Serialize(state, Json))
+                .SetProperty(game => game.Status, status)
+                .SetProperty(game => game.Version, expectedVersion + 1)
+                .SetProperty(game => game.Times.UpdatedAt, timestamp));
 
-        return rows == 1 ? expectedVersion + 1 : throw new VersionConflictException(id);
+        return updatedRows == 1 ? expectedVersion + 1 : throw new VersionConflictException(gameId);
     }
 
     public async Task AddPlayerAsync(PlayerRow player)
     {
-        db.Players.Add(player);
-        await db.SaveChangesAsync();
+        dbContext.Players.Add(player);
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task AddReportAsync(ReportRow report)
     {
-        db.Reports.Add(report);
-        await db.SaveChangesAsync();
+        dbContext.Reports.Add(report);
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task AddReportsAsync(IReadOnlyList<ReportRow> reports)
     {
-        db.Reports.AddRange(reports);
-        await db.SaveChangesAsync();
+        dbContext.Reports.AddRange(reports);
+        await dbContext.SaveChangesAsync();
     }
 }

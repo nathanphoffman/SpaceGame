@@ -1,6 +1,6 @@
 "use client";
 
-import { type BuildingName, buildBuildingBody, ELEMENTS, type ElementName } from "@/lib/api/game/commands";
+import { type BuildingName, buildBuildingBody, DEFENSE, ELEMENTS, type ElementName, SHIPYARD } from "@/lib/api/game/commands";
 import { CommandButtons } from "@/components/game/commands/CommandButtons";
 import { ShipyardPanel, UpgradePanel } from "@/components/game/panels/ShipyardPanel";
 import { HoldingSummary, QueueList } from "@/components/game/panels/QueuePanel";
@@ -10,8 +10,8 @@ type BuildOption = { label: string; building: BuildingName; element?: ElementNam
 
 const BUILD_OPTIONS: BuildOption[] = [
 	...ELEMENTS.map((element): BuildOption => ({ label: `Mine ${element}`, building: "Mine", element })),
-	{ label: "Shipyard", building: "Shipyard" },
-	{ label: "Defense", building: "Defense" },
+	{ label: "Shipyard", building: SHIPYARD },
+	{ label: "Defense", building: DEFENSE },
 ];
 
 function RichnessList({ richness }: { richness: Record<string, number> }) {

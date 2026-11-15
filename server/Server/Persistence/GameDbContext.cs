@@ -12,44 +12,44 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
 
     protected override void OnModelCreating(ModelBuilder model)
     {
-        model.Entity<GameRow>(e =>
+        model.Entity<GameRow>(entity =>
         {
-            e.ToTable("games");
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => x.Code).IsUnique();
-            e.ComplexProperty(x => x.Json, j =>
+            entity.ToTable("games");
+            entity.HasKey(column => column.Id);
+            entity.HasIndex(column => column.Code).IsUnique();
+            entity.ComplexProperty(column => column.Json, json =>
             {
-                j.Property(x => x.Config).HasColumnName("Config").HasColumnType(JsonColumnType);
-                j.Property(x => x.State).HasColumnName("State").HasColumnType(JsonColumnType);
+                json.Property(column => column.Config).HasColumnName("Config").HasColumnType(JsonColumnType);
+                json.Property(column => column.State).HasColumnName("State").HasColumnType(JsonColumnType);
             });
 
-            e.ComplexProperty(x => x.Times, t =>
+            entity.ComplexProperty(column => column.Times, times =>
             {
-                t.Property(x => x.StartedAt).HasColumnName("StartedAt");
-                t.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
-                t.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+                times.Property(column => column.StartedAt).HasColumnName("StartedAt");
+                times.Property(column => column.CreatedAt).HasColumnName("CreatedAt");
+                times.Property(column => column.UpdatedAt).HasColumnName("UpdatedAt");
             });
 
             // Version is the optimistic concurrency token: a stale save updates 0 rows and throws.
-            e.Property(x => x.Version).IsConcurrencyToken();
+            entity.Property(column => column.Version).IsConcurrencyToken();
         });
 
-        model.Entity<PlayerRow>(e =>
+        model.Entity<PlayerRow>(entity =>
         {
-            e.ToTable("players");
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => x.GameId);
-            e.HasIndex(x => x.TokenHash).IsUnique();
-            e.HasOne<GameRow>().WithMany().HasForeignKey(x => x.GameId).OnDelete(DeleteBehavior.Cascade);
+            entity.ToTable("players");
+            entity.HasKey(column => column.Id);
+            entity.HasIndex(column => column.GameId);
+            entity.HasIndex(column => column.TokenHash).IsUnique();
+            entity.HasOne<GameRow>().WithMany().HasForeignKey(column => column.GameId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        model.Entity<ReportRow>(e =>
+        model.Entity<ReportRow>(entity =>
         {
-            e.ToTable("reports");
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => new { x.GameId, x.GameTime });
-            e.Property(x => x.Payload).HasColumnType(JsonColumnType);
-            e.HasOne<GameRow>().WithMany().HasForeignKey(x => x.GameId).OnDelete(DeleteBehavior.Cascade);
+            entity.ToTable("reports");
+            entity.HasKey(column => column.Id);
+            entity.HasIndex(column => new { column.GameId, column.GameTime });
+            entity.Property(column => column.Payload).HasColumnType(JsonColumnType);
+            entity.HasOne<GameRow>().WithMany().HasForeignKey(column => column.GameId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -9,10 +9,10 @@ public class BattleResolverTests
         public int Roll() => rolls[_next++];
     }
 
-    private static BattleShip Ship(ShipType type) =>
+    private static BattleShip BattleShipOf(ShipType type) =>
         Catalog.Default.Ship(type) is var s ? new BattleShip(type, s.HitsOn, s.Shots, s.Hp) : throw new InvalidOperationException();
 
-    private static BattleSide Side(params ShipType[] types) => new(types.Select(Ship).ToList());
+    private static BattleSide Side(params ShipType[] types) => new(types.Select(BattleShipOf).ToList());
 
     [Fact]
     public void OneOnOneFighters_BothHit_BothDie_AttackersDoNotWin()

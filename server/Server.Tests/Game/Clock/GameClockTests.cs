@@ -31,7 +31,7 @@ public class GameClockTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var time = new FakeClock(StoredGame.StartTime);
         var clock = NewClock(stored, time, new FakeEngine());
-        time.Advance(TimeSpan.FromSeconds(60));
+        time.MoveForward(TimeSpan.FromSeconds(60));
         await clock.TickAsync();
         Assert.Equal(60, (await stored.Repo.LoadAsync(stored.GameId))!.State.Time);
     }
@@ -43,7 +43,7 @@ public class GameClockTests
         var time = new FakeClock(StoredGame.StartTime);
         var engine = new FakeEngine();
         var clock = NewClock(stored, time, engine);
-        time.Advance(TimeSpan.FromSeconds(60));
+        time.MoveForward(TimeSpan.FromSeconds(60));
         await clock.TickAsync();
         Assert.Equal(0, engine.AdvanceCalls);
     }
@@ -55,7 +55,7 @@ public class GameClockTests
         var time = new FakeClock(StoredGame.StartTime);
         var engine = new FakeEngine { EventKind = EventNotifications.GameEndedKind };
         var clock = NewClock(stored, time, engine);
-        time.Advance(TimeSpan.FromSeconds(60));
+        time.MoveForward(TimeSpan.FromSeconds(60));
         await clock.TickAsync();
         await clock.TickAsync();
         Assert.Equal(1, engine.AdvanceCalls);

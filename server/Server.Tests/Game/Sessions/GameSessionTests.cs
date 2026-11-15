@@ -17,7 +17,7 @@ public class GameSessionTests
         var stored = await StoredGame.CreateAsync(status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine());
-        clock.Advance(TimeSpan.FromSeconds(120));
+        clock.MoveForward(TimeSpan.FromSeconds(120));
         var snapshot = await session.AdvanceAsync(stored.GameId);
         Assert.Equal(120, snapshot!.GameTime);
         Assert.Single(snapshot.Events);
@@ -31,7 +31,7 @@ public class GameSessionTests
         var stored = await StoredGame.CreateAsync(mode: "test", status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine());
-        clock.Advance(TimeSpan.FromMinutes(30));
+        clock.MoveForward(TimeSpan.FromMinutes(30));
         Assert.Equal(302_400, (await session.AdvanceAsync(stored.GameId))!.GameTime);
     }
 
@@ -41,9 +41,9 @@ public class GameSessionTests
         var stored = await StoredGame.CreateAsync(mode: "test", status: "running");
         var clock = new FakeClock(StoredGame.StartTime);
         var session = NewSession(stored, clock, new FakeEngine());
-        clock.Advance(TimeSpan.FromHours(1));
+        clock.MoveForward(TimeSpan.FromHours(1));
         Assert.Equal(StoredGame.EmptyState.Config.WeekSeconds, (await session.AdvanceAsync(stored.GameId))!.GameTime);
-        clock.Advance(TimeSpan.FromHours(1));
+        clock.MoveForward(TimeSpan.FromHours(1));
         Assert.Equal(StoredGame.EmptyState.Config.WeekSeconds, (await session.AdvanceAsync(stored.GameId))!.GameTime);
     }
 
@@ -54,7 +54,7 @@ public class GameSessionTests
         var clock = new FakeClock(StoredGame.StartTime);
         var engine = new FakeEngine();
         var session = NewSession(stored, clock, engine);
-        clock.Advance(TimeSpan.FromHours(1));
+        clock.MoveForward(TimeSpan.FromHours(1));
         var snapshot = await session.AdvanceAsync(stored.GameId);
         Assert.Equal(0, snapshot!.GameTime);
         Assert.Equal(0, engine.AdvanceCalls);

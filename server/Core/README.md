@@ -44,3 +44,25 @@ Example:
 ```
 dotnet run --project server/Sim -- fight "1 dreadnought" "1 battleship" --runs 2000 --defense --weapons --seed 7
 ```
+
+## Final balance numbers
+
+Ship, building and upgrade numbers are in `Catalog.Default`. Game and enemy numbers (defaults):
+week 604,800 s, 500 points to win, 5 min launch prep, heal 1 h, defense bonus 1; enemy tick 1 h,
+40 income per planet per tick, home garrison 10 fighters, 4 escort fighters, attack at 1.5x strength,
+sight 2 hops, first Earth attack at hour 36 with 6 fighters, every 18 h, x1.35 each time, +25% per extra player.
+
+## What a test-mode game looks like
+
+Test mode runs at `TimeScale` 168 (one real hour is one game week, one game hour is about 21 real seconds).
+Run from the engine with seed 1, one player who does nothing:
+
+- Hour 1: enemy buys its home garrison. Hour 6: it sends a Colony ship plus escort to the nearest free system.
+- Hour 33 and 54: the enemy claims two planets (`PlanetCaptured`, `FleetArrived`).
+- Hour 36: first Earth attack launches (`LaunchEarthAttack`, 6 fighters) and is seen as `FleetSpotted`.
+  Hour 54: second attack launches (8 fighters, 6 x 1.35).
+- Hour 56.6: the first attack lands (`BattleResolved`) and, with no defense, Earth falls (`GameEnded`, enemy wins, `earthLost`).
+- Event counts over the run: EnemyOrder 8, FleetSpotted 5, FleetArrived 3, PlanetCaptured 2, BattleResolved 1, GameEnded 1.
+
+So the first Earth attack is at hour 36 (about 13 real minutes in) and a player who ignores Earth loses at hour 56.6
+(about 20 real minutes in). An active player needs Earth defenses and fighters by then.

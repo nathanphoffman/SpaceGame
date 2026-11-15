@@ -8,19 +8,11 @@ public class TimeScaleTests
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
-    [Fact]
-    public void Week_mode_is_real_time() =>
-        Assert.Equal(90, TimeScale.GameTime(Start, Start.AddSeconds(90), "week", 604_800));
-
-    [Fact]
-    public void Test_mode_runs_a_week_in_one_hour() =>
-        Assert.Equal(604_800, TimeScale.GameTime(Start, Start.AddHours(1), "test", 604_800));
-
-    [Fact]
-    public void Game_time_stops_at_the_end_of_the_game() =>
-        Assert.Equal(604_800, TimeScale.GameTime(Start, Start.AddDays(9), "week", 604_800));
-
-    [Fact]
-    public void Game_time_is_never_negative() =>
-        Assert.Equal(0, TimeScale.GameTime(Start, Start.AddSeconds(-5), "week", 604_800));
+    [Theory]
+    [InlineData("week", 90, 90)]
+    [InlineData("test", 3_600, 604_800)]
+    [InlineData("week", 9 * 86_400, 604_800)]
+    [InlineData("week", -5, 0)]
+    public void Game_time_follows_mode_and_is_clamped(string mode, int realSeconds, long expected) =>
+        Assert.Equal(expected, TimeScale.GameTime(Start, Start.AddSeconds(realSeconds), mode, 604_800));
 }
