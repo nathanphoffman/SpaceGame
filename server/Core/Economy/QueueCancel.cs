@@ -16,6 +16,7 @@ public static class QueueCancel
         var item = holding.Queue[index];
 
         if (item.Building == BuildingType.Mine && holding.Queue.Skip(index + 1).Any(i => i.Element == item.Element))
+
             return Fail(state, "Cancel the later levels of this mine first.");
 
         var stock = player.Stock.AdvanceTo(nowSeconds, Economy.RatePerHourMilli(state, player)).Add(item.Cost);

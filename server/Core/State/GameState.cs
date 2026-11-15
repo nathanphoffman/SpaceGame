@@ -16,11 +16,20 @@ public sealed record GameState(GameConfig Config, long Time)
     /// <summary>Planets the enemy owns.</summary>
     public IReadOnlyList<PlanetId> EnemyPlanets { get; init; } = [];
 
+    /// <summary>Points the enemy has saved up; part of its memory.</summary>
+    public int EnemyBudget { get; init; }
+
+    /// <summary>Game second of the enemy's last tick.</summary>
+    public long EnemyLastTick { get; init; }
+
     /// <summary>The objective planets that score points.</summary>
     public IReadOnlyList<PlanetId> Objectives { get; init; } = [];
 
     /// <summary>Fleets in flight, or parked where their owner has no base.</summary>
     public IReadOnlyList<Fleet> Fleets { get; init; } = [];
+
+    /// <summary>Enemy fleets already announced with a FleetSpotted event, so each is announced once.</summary>
+    public IReadOnlyList<FleetId> SpottedFleets { get; init; } = [];
 
     /// <summary>Counter for fleet ids.</summary>
     public int NextFleetNumber { get; init; } = 1;

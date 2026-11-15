@@ -13,12 +13,13 @@ public sealed record TravelConfig(
     private const double DefaultSecondsPerLySquared = 750;
 }
 
-/// <summary>Pure travel-time rules.</summary>
+/// <summary>Pure travel-time rules, kept free of state so the server and the simulator quote the same trips.</summary>
 public static class TravelRules
 {
     /// <summary>Speed of a fleet: its slowest ship, times the Engines upgrade bonus.</summary>
     public static double FleetSpeed(Catalog catalog, IReadOnlyDictionary<ShipType, int> ships, int enginesLevel)
     {
+        // Speeds of the ship types actually sent, used to find the slowest.
         var counted = ships.Where(ship => ship.Value > 0).Select(ship => catalog.Ship(ship.Key).Speed).ToList();
 
         if (counted.Count == 0) return 0;
@@ -31,7 +32,7 @@ public static class TravelRules
     public static long FlightSecondsInSystem(TravelConfig config, double au, double speed) =>
         Seconds(config, config.SecondsPerAu * au, speed);
 
-    /// <summary>Flight seconds between two systems; grows with the square of the distance.</summary>
+    /// <summary>Interstellar legs scale with distance squared so long jumps stay costly.</summary>
     public static long FlightSecondsBetweenSystems(TravelConfig config, double lightYears, double speed) =>
         Seconds(config, config.SecondsPerLySquared * lightYears * lightYears, speed);
 

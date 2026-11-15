@@ -5,7 +5,7 @@ namespace SpaceGame.Core.Tests;
 public class QueueCompletionTests
 {
     [Fact]
-    public void AdvanceCompletesItemsInTimeOrderAndLeavesLaterOnes()
+    public void AdvanceCompletesDueItemsInTimeOrder()
     {
         var state = Do(Game(holding: WithYard()), new QueueShip(Earth, ShipType.Fighter, 2)).State;
         state = Do(state, new BuildBuilding(Earth, BuildingType.Defense, null)).State;
@@ -29,7 +29,7 @@ public class QueueCompletionTests
     }
 
     [Fact]
-    public void ShipyardAndDefenseFlagsAreSetWhenDone()
+    public void BuildingFlagsAreSetWhenDone()
     {
         var state = Do(Game(), new BuildBuilding(Earth, BuildingType.Shipyard, null)).State;
         state = Do(state, new BuildBuilding(Earth, BuildingType.Defense, null)).State;

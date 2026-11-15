@@ -3,6 +3,7 @@ namespace SpaceGame.Core;
 /// <summary>What a world is made of, in the game's four elements. Each value is a percentage of the body.</summary>
 public sealed record Richness(int Iron, int Hydrogen, int Titanium, int Helium3)
 {
+    // Looks up the richness of one element.
     public int Of(Element element) => element switch
     {
         Element.Iron => Iron,

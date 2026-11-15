@@ -45,7 +45,7 @@ public class BuildingRulesTests
     }
 
     [Fact]
-    public void NotEnoughResourcesIsRejectedAndNothingIsTaken()
+    public void NotEnoughResourcesIsRejected()
     {
         var state = Game(new Resources(10, 0, 0, 0));
         var (after, result) = Do(state, new BuildBuilding(Earth, BuildingType.Shipyard, null));

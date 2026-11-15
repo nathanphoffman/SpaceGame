@@ -5,4 +5,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type Side = number;
+export type Side = typeof Side[keyof typeof Side];
+
+
+export const Side = {
+  Team: 'Team',
+  Enemy: 'Enemy',
+} as const;

@@ -9,6 +9,7 @@ public static class EventNotifications
     public const string FleetSpottedKind = "FleetSpotted";
     public const string GameEndedKind = "GameEnded";
 
+    // Sends one state-changed message, then one message per report and per spotted/ended event.
     public static async Task PublishAsync(IGameNotifier notifier, Guid gameId, long version, IReadOnlyList<GameEvent> events, IReadOnlyList<ReportRow> reports)
     {
         await notifier.StateChangedAsync(gameId, version);

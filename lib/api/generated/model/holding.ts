@@ -4,6 +4,7 @@
  * SpaceGame.Server | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { HoldingDamage } from './holdingDamage';
 import type { HoldingMines } from './holdingMines';
 import type { HoldingShips } from './holdingShips';
 import type { PlanetId } from './planetId';
@@ -15,5 +16,8 @@ export interface Holding {
   hasShipyard?: boolean;
   hasDefense?: boolean;
   ships?: HoldingShips;
+  damage?: HoldingDamage;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  damagedAt?: number | string;
   queue?: QueueItem[];
 }

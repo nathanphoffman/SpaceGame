@@ -29,6 +29,12 @@ public sealed record Holding(PlanetId Planet)
     /// <summary>Ships waiting at the planet.</summary>
     public IReadOnlyDictionary<ShipType, int> Ships { get; init; } = new Dictionary<ShipType, int>();
 
+    /// <summary>Hit points lost per ship type among the parked ships; a shipyard heals them over time.</summary>
+    public IReadOnlyDictionary<ShipType, int> Damage { get; init; } = new Dictionary<ShipType, int>();
+
+    /// <summary>Game second the <see cref="Damage"/> was last brought up to date (healing counts from here).</summary>
+    public long DamagedAt { get; init; }
+
     /// <summary>Items being built, in order.</summary>
     public IReadOnlyList<QueueItem> Queue { get; init; } = [];
 

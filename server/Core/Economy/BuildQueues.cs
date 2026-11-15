@@ -11,7 +11,7 @@ public static class BuildQueues
     private sealed record Context(PlayerState Player, Holding Holding);
 
     /// <summary>Queues a building (or the next level of a mine).</summary>
-    public static (GameState State, CommandResult Result) Build(GameState state, PlayerId playerId, BuildBuilding cmd, long nowSeconds)
+    public static (GameState State, CommandResult Result) QueueBuilding(GameState state, PlayerId playerId, BuildBuilding cmd, long nowSeconds)
     {
         var (context, error) = Lookup(state, playerId, cmd.Planet, nowSeconds);
 
@@ -68,6 +68,7 @@ public static class BuildQueues
         return (new Context(player with { Stock = stock }, holding), null);
     }
 
+    // Returns why the building cannot be queued, or null when it can.
     private static string? BuildingProblem(GameState state, Holding holding, BuildBuilding cmd, BuildingSpec spec, int level)
     {
         if (cmd.Type != BuildingType.Mine)
@@ -81,6 +82,7 @@ public static class BuildQueues
         return level > spec.MaxLevel ? $"The {element} mine is already at its top level." : null;
     }
 
+    // Returns why the ships cannot be queued here, or null when they can.
     private static string? ShipProblem(Holding holding, int count)
     {
         if (count < 1 || count > MaxShipsPerOrder) return $"Order between 1 and {MaxShipsPerOrder} ships.";

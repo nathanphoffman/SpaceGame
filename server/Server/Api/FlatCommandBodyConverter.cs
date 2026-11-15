@@ -9,6 +9,7 @@ public sealed class FlatCommandBodyConverter : JsonConverter<CommandBody>
 {
     public override CommandBody Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        // The wire format is one flat object; each part below reads only the fields it knows from the same object.
         var root = JsonElement.ParseValue(ref reader);
 
         if (root.ValueKind != JsonValueKind.Object)

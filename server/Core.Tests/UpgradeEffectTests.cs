@@ -13,7 +13,7 @@ public class UpgradeEffectTests
     }
 
     [Fact]
-    public void WeaponsLowerHitNumberButNotBelowTwoAndSkipUnarmed()
+    public void WeaponsLowerHitNumberButNotBelowTwo()
     {
         var p = Me_(Finish(Start(Game(), UpgradeType.Weapons).State, 5 * Hour));
         Assert.Equal(4, Upgrades.BattleShipFor(Cat, p, ShipType.Fighter).HitsOn);
@@ -22,7 +22,7 @@ public class UpgradeEffectTests
     }
 
     [Fact]
-    public void ArmorAddsHpToFightersAndBattleshipsOnly()
+    public void ArmorAddsHpToArmedShipsOnly()
     {
         var p = Me_(Finish(Start(Game(), UpgradeType.Armor).State, 4 * Hour));
         Assert.Equal(2, Upgrades.BattleShipFor(Cat, p, ShipType.Fighter).Hp);

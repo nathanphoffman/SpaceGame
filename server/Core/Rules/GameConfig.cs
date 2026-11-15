@@ -16,6 +16,15 @@ public sealed record GameConfig(
     /// <summary>Every ship, building and upgrade.</summary>
     public Catalog Catalog { get; init; } = Catalog.Default;
 
+    /// <summary>How much a Defense building lowers the roll the team's defenders need to hit.</summary>
+    public int DefenseBonus { get; init; } = 1;
+
+    /// <summary>Seconds a shipyard needs to repair a stack of damaged ships completely.</summary>
+    public long HealSeconds { get; init; } = 3600;
+
+    /// <summary>The enemy's income, garrison and expedition numbers.</summary>
+    public EnemyConfig Enemy { get; init; } = new();
+
     /// <summary>Flight time constants.</summary>
     public TravelConfig Travel { get; init; } = new();
 }

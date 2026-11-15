@@ -18,9 +18,7 @@ export const listReportsResponseRoundsRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)
 export const ListReportsResponseItem = zod.object({
   "id": zod.string(),
   "time": zod.union([zod.int(),zod.stringFormat('int64', listReportsResponseTimeRegExpTwo)]),
-  "planet": zod.object({
-  "value": zod.string().optional()
-}),
+  "planet": zod.string(),
   "attackersWon": zod.boolean(),
   "rounds": zod.union([zod.int(),zod.stringFormat('int32', listReportsResponseRoundsRegExpTwo)])
 })
@@ -38,9 +36,7 @@ export const getReportResponseRoundsRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$'
 export const GetReportResponse = zod.object({
   "id": zod.string(),
   "time": zod.union([zod.int(),zod.stringFormat('int64', getReportResponseTimeRegExpTwo)]),
-  "planet": zod.object({
-  "value": zod.string().optional()
-}),
+  "planet": zod.string(),
   "attackersWon": zod.boolean(),
   "rounds": zod.union([zod.int(),zod.stringFormat('int32', getReportResponseRoundsRegExpTwo)])
 })

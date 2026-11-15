@@ -36,11 +36,12 @@ public static class BuildCompletion
         foreach (var player in state.Players)
             result = result.WithPlayer(CompletePlayer(result, player, nowSeconds, events));
 
-        events.Sort((a, b) => a.Time.CompareTo(b.Time));
+        events.Sort((first, second) => first.Time.CompareTo(second.Time));
 
         return (result with { Time = Math.Max(result.Time, nowSeconds) }, events);
     }
 
+    // Finishes every queue item that is due, oldest first, until none are left.
     private static PlayerState CompletePlayer(GameState state, PlayerState start, long nowSeconds, List<GameEvent> events)
     {
         var player = start;
@@ -52,7 +53,7 @@ public static class BuildCompletion
 
             if (research is { } job && job.FinishAt <= nowSeconds && (due is null || job.FinishAt <= due.Value.Item.FinishAt))
             {
-                player = Upgrades.Finish(player, state, job, events);
+                player = Upgrades.FinishResearch(player, state, job, events);
 
                 continue;
             }
@@ -67,14 +68,18 @@ public static class BuildCompletion
         return player with { Stock = player.Stock.AdvanceTo(nowSeconds, Economy.RatePerHourMilli(state, player)) };
     }
 
+    // Finds the earliest finished queue item across all holdings.
     private static (Holding Holding, QueueItem Item)? NextDue(PlayerState player, long nowSeconds) =>
         player.Holdings
+            // Flatten every holding queue into (holding, item) pairs.
             .SelectMany(h => h.Queue.Select(i => (Holding: h, Item: i)))
             .Where(x => x.Item.FinishAt <= nowSeconds)
+            // Earliest first; ties broken by id so the order is deterministic.
             .OrderBy(x => x.Item.FinishAt).ThenBy(x => x.Item.Id, StringComparer.Ordinal)
             .Select(x => ((Holding, QueueItem)?)x)
             .FirstOrDefault();
 
+    // Applies a finished queue item to the player and removes it from the queue.
     private static PlayerState Finish(PlayerState player, Holding holding, QueueItem item)
     {
         var rest = holding with { Queue = [.. holding.Queue.Where(i => i.Id != item.Id)] };

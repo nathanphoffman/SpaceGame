@@ -5,7 +5,7 @@ namespace SpaceGame.Core.Tests;
 public class BuildingCostTests
 {
     [Fact]
-    public void BuildingTakesCostUpFrontAndQueuesWithItsTime()
+    public void BuildingTakesCostUpFront()
     {
         var (state, r) = Do(Game(), new BuildBuilding(Earth, BuildingType.Shipyard, null), 100);
         Assert.True(r.Ok);
@@ -15,7 +15,7 @@ public class BuildingCostTests
     }
 
     [Fact]
-    public void LaterMineLevelsCostAndTakeMore()
+    public void LaterMineLevelsCostMore()
     {
         var state = Do(Game(), new BuildBuilding(Earth, BuildingType.Mine, Element.Iron)).State;
         state = Do(state, new BuildBuilding(Earth, BuildingType.Mine, Element.Iron)).State;

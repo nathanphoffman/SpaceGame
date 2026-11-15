@@ -4,16 +4,19 @@ namespace SpaceGame.Core;
 public static class FleetArrivals
 {
     /// <summary>Lands every fleet whose arrival is due by <paramref name="nowSeconds"/>.</summary>
-    public static GameState Resolve(GameState state, long nowSeconds, List<GameEvent> events)
+    public static GameState Resolve(GameState state, long nowSeconds, List<GameEvent> events, IDice dice)
     {
         var result = state;
 
+        // Always take the earliest due fleet next, because earlier battles change what later arrivals meet.
         while (result.Fleets.Where(f => !f.Parked && f.ArriveAt <= nowSeconds)
                    .OrderBy(f => f.ArriveAt).ThenBy(f => f.Id.Value, StringComparer.Ordinal)
                    .FirstOrDefault() is { } due)
         {
             var others = result with { Fleets = [.. result.Fleets.Where(f => f.Id != due.Id)] };
-            result = Land(others, due, due.To, due.ArriveAt, events);
+            result = FleetBattles.HasDefenders(others, due)
+                ? FleetBattles.Fight(others, due, events, dice)
+                : Land(others, due, due.To, due.ArriveAt, events);
         }
 
         return result;
@@ -36,6 +39,7 @@ public static class FleetArrivals
         }));
 
         if (player is null || holding is null)
+
             return state with { Fleets = [.. state.Fleets, fleet with { To = planet, Parked = true }] };
 
         var stock = player.Stock.AdvanceTo(atSeconds, Economy.RatePerHourMilli(state, player)).Add(fleet.Cargo);
@@ -43,6 +47,10 @@ public static class FleetArrivals
 
         foreach (var (type, count) in fleet.Ships) ships[type] = ships.GetValueOrDefault(type) + count;
 
-        return state.WithPlayer((player with { Stock = stock }).WithHolding(holding with { Ships = ships }));
+        var healed = ShipDamage.Healed(
+            state.Config, holding, type => Upgrades.BattleShipFor(state.Config.Catalog, player, type).Hp, atSeconds);
+        var damage = ShipDamage.Merge(healed, fleet.Damage);
+
+        return state.WithPlayer((player with { Stock = stock }).WithHolding(holding with { Ships = ships, Damage = damage, DamagedAt = atSeconds }));
     }
 }

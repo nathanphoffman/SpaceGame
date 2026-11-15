@@ -15,6 +15,7 @@ internal static class FleetQuote
         return TravelRules.Quote(nowSeconds, state.Config.PrepSeconds, flight);
     }
 
+    // Returns why the fleet cannot be sent, or null when it can.
     internal static string? Problem(GameState state, PlayerId playerId, SendFleet send)
     {
         var holding = state.PlayerById(playerId)?.HoldingAt(send.From);

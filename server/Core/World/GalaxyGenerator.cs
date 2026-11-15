@@ -6,16 +6,19 @@ public sealed record Galaxy(
     WorldPlanet EnemyHome,
     IReadOnlyList<WorldPlanet> Objectives)
 {
-    public bool IsObjective(PlanetId id) => Objectives.Any(o => o.Id == id);
+    // True when the planet is one of the chosen objectives.
+    public bool IsObjective(PlanetId planetId) => Objectives.Any(objective => objective.Id == planetId);
 
     public GalaxyMap ToMap() => new(
         Systems.Select(ToInfo).ToList(),
         EnemyHome.Id);
 
+    // Converts a star and its planets into the client-facing shape.
     private SystemInfo ToInfo(WorldStar star) => new(
         star.Id, star.Name, star.X, star.Y, 0,
         star.Planets.Select(p => new PlanetInfo(p.Id, p.Name, IsObjective(p.Id), RichnessOf(p))).ToList());
 
+    // Richness of every element on the planet.
     private static Dictionary<Element, int> RichnessOf(WorldPlanet planet) =>
         Enum.GetValues<Element>().ToDictionary(e => e, planet.Richness.Of);
 }
@@ -47,17 +50,21 @@ public static class GalaxyGenerator
         return fraction is >= NearFraction and <= FarFraction;
     }
 
-    public static double Distance(WorldStar a, WorldStar b) => Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
+    public static double Distance(WorldStar from, WorldStar to) => Math.Sqrt(Math.Pow(from.X - to.X, 2) + Math.Pow(from.Y - to.Y, 2));
 
     private static List<WorldPlanet> PickObjectives(IReadOnlyList<WorldStar> systems, WorldStar enemyStar, Random random)
     {
+        // Shuffle systems and each system's planets so objectives are picked randomly but reproducibly from the seed.
         var pools = systems
+            // Only stars with planets inside the objective distance band qualify.
             .Where(s => s.Planets.Count > 0 && InObjectiveBand(s, enemyStar))
+            // Shuffle the stars.
             .OrderBy(_ => random.Next())
             .Select(s => new Queue<WorldPlanet>(s.Planets.OrderBy(_ => random.Next())))
             .ToList();
 
         var picked = new List<WorldPlanet>();
+
         while (picked.Count < ObjectiveCount && pools.Any(p => p.Count > 0))
         {
             foreach (var pool in pools.Where(p => p.Count > 0).Take(ObjectiveCount - picked.Count))

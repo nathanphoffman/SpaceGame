@@ -8,43 +8,40 @@ namespace SpaceGame.Server.Tests;
 [Trait("Category", "Postgres")]
 public class GameClockTests
 {
-    private static readonly DateTimeOffset Start = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-
-    private static async Task<(GameClock Clock, FakeClock Time, FakeEngine Engine, GameRepository Repo, Guid Id)> SetupAsync(string status)
+    private static GameClock NewClock(StoredGame stored, FakeClock time, FakeEngine engine)
     {
-        var schema = await TestDatabase.MigratedSchemaAsync();
-        var time = new FakeClock(Start);
-        var engine = new FakeEngine();
         var services = new ServiceCollection();
-        services.AddScoped(_ => TestDatabase.NewContext(schema));
+        services.AddScoped(_ => TestDatabase.NewContext(stored.Schema));
         services.AddScoped<GameRepository>();
+        services.AddScoped<GameWriter>();
         services.AddScoped<GameSession>();
         services.AddSingleton<IGameEngine>(engine);
         services.AddSingleton<IClock>(time);
         services.AddSingleton<GameLocks>();
         services.AddSingleton<IGameNotifier, NullGameNotifier>();
         services.AddSingleton<SpaceGame.Server.Discord.IDiscordNotifier, NoDiscord>();
-        var provider = services.BuildServiceProvider();
-        var repo = provider.GetRequiredService<GameRepository>();
-        var row = await repo.CreateAsync("ABCD", "week", 1, new GameState(new GameConfig(), 0), null, Start);
-        await repo.SaveAsync(row.Id, new GameState(new GameConfig(), 0), status, 0, Start, Start);
 
-        return (new GameClock(provider.GetRequiredService<IServiceScopeFactory>()), time, engine, repo, row.Id);
+        return new GameClock(services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>());
     }
 
     [PostgresFact]
     public async Task A_tick_advances_a_running_game()
     {
-        var (clock, time, _, repo, id) = await SetupAsync("running");
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var time = new FakeClock(StoredGame.StartTime);
+        var clock = NewClock(stored, time, new FakeEngine());
         time.Advance(TimeSpan.FromSeconds(60));
         await clock.TickAsync();
-        Assert.Equal(60, (await repo.LoadAsync(id))!.State.Time);
+        Assert.Equal(60, (await stored.Repo.LoadAsync(stored.GameId))!.State.Time);
     }
 
     [PostgresFact]
     public async Task A_game_in_the_lobby_is_left_alone()
     {
-        var (clock, time, engine, _, _) = await SetupAsync("lobby");
+        var stored = await StoredGame.CreateAsync();
+        var time = new FakeClock(StoredGame.StartTime);
+        var engine = new FakeEngine();
+        var clock = NewClock(stored, time, engine);
         time.Advance(TimeSpan.FromSeconds(60));
         await clock.TickAsync();
         Assert.Equal(0, engine.AdvanceCalls);
@@ -53,8 +50,10 @@ public class GameClockTests
     [PostgresFact]
     public async Task An_ended_game_is_not_advanced_again()
     {
-        var (clock, time, engine, _, _) = await SetupAsync("running");
-        engine.EventKind = GameClock.GameEndedKind;
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var time = new FakeClock(StoredGame.StartTime);
+        var engine = new FakeEngine { EventKind = EventNotifications.GameEndedKind };
+        var clock = NewClock(stored, time, engine);
         time.Advance(TimeSpan.FromSeconds(60));
         await clock.TickAsync();
         await clock.TickAsync();

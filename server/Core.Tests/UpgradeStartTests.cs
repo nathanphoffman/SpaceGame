@@ -5,7 +5,7 @@ namespace SpaceGame.Core.Tests;
 public class UpgradeStartTests
 {
     [Fact]
-    public void StartTakesCostAndSetsResearch()
+    public void StartTakesCost()
     {
         var (state, r) = Start(Game(), UpgradeType.Engines);
         Assert.True(r.Ok);
@@ -30,7 +30,7 @@ public class UpgradeStartTests
     }
 
     [Fact]
-    public void CompletionRaisesLevelAndRespectsCap()
+    public void CompletionRaisesLevel()
     {
         var state = Game();
 

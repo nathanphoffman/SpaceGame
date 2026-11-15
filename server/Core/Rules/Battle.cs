@@ -43,6 +43,7 @@ public static class BattleResolver
 
     private static bool IsArmed(BattleShip ship) => ship.HitsOn > 0 && ship.Shots > 0;
 
+    // Rolls each armed ship's shots and counts how many hit.
     private static int CountHits(List<BattleShip> ships, int bonus, IDice dice)
     {
         var hits = 0;
@@ -62,6 +63,7 @@ public static class BattleResolver
     /// <summary>Unarmed ships soak hits first, then Fighters, Battleships, Dreadnoughts.</summary>
     private static List<BattleShip> ApplyHits(List<BattleShip> ships, int hits)
     {
+        // Unarmed ships come first so they absorb hits before the fighters; ties are ordered by type.
         var ordered = ships.OrderBy(ship => IsArmed(ship) ? 1 : 0).ThenBy(ship => ship.Type).ToList();
         var survivors = new List<BattleShip>();
 

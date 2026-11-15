@@ -21,6 +21,9 @@ public sealed record PlayerView(
 
     /// <summary>The player's bases: buildings, parked ships and queues.</summary>
     public IReadOnlyList<Holding> Holdings { get; init; } = [];
+
+    /// <summary>The player's upgrade levels; a type with no level yet is 0.</summary>
+    public IReadOnlyDictionary<UpgradeType, int> Upgrades { get; init; } = new Dictionary<UpgradeType, int>();
 }
 
 /// <summary>Public map data: systems, planets and richness.</summary>

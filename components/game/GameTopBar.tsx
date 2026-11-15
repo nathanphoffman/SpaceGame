@@ -36,6 +36,7 @@ export function GameTopBar({ view }: { view: PlayerViewDto }) {
 					<b>{element}</b> <span>{Math.floor(amount)}</span>
 				</div>
 			))}
+
 		</div>
 	);
 }

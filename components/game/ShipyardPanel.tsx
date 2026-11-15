@@ -15,9 +15,12 @@ export function ShipyardPanel({ gameId, planetId }: { gameId: string; planetId: 
 	);
 }
 
-/** Buttons to start each of the four team upgrades. */
-export function UpgradePanel({ gameId }: { gameId: string }) {
-	const options: CommandOption[] = UPGRADE_TYPES.map((upgrade) => ({ label: `Upgrade ${upgrade}`, body: startUpgradeBody(upgrade) }));
+/** Buttons to start each of the four team upgrades, with the current level when the server sends it. */
+export function UpgradePanel({ gameId, levels = {} }: { gameId: string; levels?: Record<string, number> }) {
+	const options: CommandOption[] = UPGRADE_TYPES.map((upgrade) => ({
+		label: `Upgrade ${upgrade} (level ${levels[upgrade] ?? 0})`,
+		body: startUpgradeBody(upgrade),
+	}));
 
 	return (
 		<section className="panel" aria-label="Upgrades">

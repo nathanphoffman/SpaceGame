@@ -353,6 +353,36 @@
           }
         }
       }
+    },
+    "/api/games/{gameId}/outcome": {
+      "get": {
+        "tags": [
+          "OutcomeEndpoints"
+        ],
+        "operationId": "GetOutcome",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameOutcome"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -595,12 +625,7 @@
         "type": "integer"
       },
       "FleetId": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string"
-          }
-        }
+        "type": "string"
       },
       "FleetView": {
         "required": [
@@ -728,14 +753,47 @@
             }
           },
           "enemyHome": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/PlanetId"
-              }
-            ]
+            "type": "string"
+          }
+        }
+      },
+      "GameOutcome": {
+        "required": [
+          "winner",
+          "reason",
+          "teamScore",
+          "enemyScore",
+          "contributions"
+        ],
+        "type": "object",
+        "properties": {
+          "winner": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "teamScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "enemyScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "contributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayerContribution"
+            }
           }
         }
       },
@@ -775,6 +833,25 @@
               ],
               "format": "int32"
             }
+          },
+          "damage": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "damagedAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
           },
           "queue": {
             "type": "array",
@@ -873,12 +950,7 @@
         }
       },
       "PlanetId": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string"
-          }
-        }
+        "type": "string"
       },
       "PlanetInfo": {
         "required": [
@@ -911,13 +983,28 @@
           }
         }
       },
-      "PlayerId": {
+      "PlayerContribution": {
+        "required": [
+          "player",
+          "points"
+        ],
         "type": "object",
         "properties": {
-          "value": {
+          "player": {
             "type": "string"
+          },
+          "points": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
+      },
+      "PlayerId": {
+        "type": "string"
       },
       "PlayerView": {
         "required": [
@@ -988,15 +1075,23 @@
             }
           },
           "ownPlanets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PlanetId"
-            }
+            "type": "array"
           },
           "holdings": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Holding"
+            }
+          },
+          "upgrades": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
             }
           }
         }
@@ -1181,15 +1276,13 @@
         "type": "integer"
       },
       "Side": {
-        "type": "integer"
+        "enum": [
+          "Team",
+          "Enemy"
+        ]
       },
       "SystemId": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string"
-          }
-        }
+        "type": "string"
       },
       "SystemInfo": {
         "required": [
@@ -1254,6 +1347,9 @@
     },
     {
       "name": "ReportEndpoints"
+    },
+    {
+      "name": "OutcomeEndpoints"
     }
   ]
 }

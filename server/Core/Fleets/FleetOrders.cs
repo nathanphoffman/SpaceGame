@@ -15,6 +15,8 @@ public static class FleetOrders
         var ships = send.Ships.Where(s => s.Value > 0).ToDictionary(s => s.Key, s => s.Value);
         var cargo = send.Cargo ?? Resources.Zero;
         var stock = player.Stock.AdvanceTo(nowSeconds, Economy.RatePerHourMilli(state, player)).Spend(cargo);
+
+        // Ships staying behind are what the holding has minus what is being sent.
         var left = holding.Ships.ToDictionary(s => s.Key, s => s.Value - ships.GetValueOrDefault(s.Key));
         var fleet = new Fleet(new FleetId($"f{state.NextFleetNumber}"), playerId, send.From, send.To,
             nowSeconds, quote.DepartAt, quote.ArriveAt, ships, cargo);
@@ -43,6 +45,7 @@ public static class FleetOrders
         var rest = state with { Fleets = [.. state.Fleets.Where(f => f.Id != fleet.Id)] };
 
         if (nowSeconds < fleet.DepartAt)
+
             return (FleetArrivals.Land(rest, fleet, fleet.From, nowSeconds, []), new CommandResult(true, null));
 
         var flown = nowSeconds - fleet.DepartAt;
@@ -59,6 +62,7 @@ public static class FleetOrders
         return (rest with { Fleets = [.. rest.Fleets, back] }, new CommandResult(true, null));
     }
 
+    // Returns why the cargo cannot be carried, or null when it is fine.
     private static string? CargoProblem(GameState state, PlayerId playerId, SendFleet send, long nowSeconds)
     {
         var cargo = send.Cargo;

@@ -31,6 +31,7 @@ import type {
   CreateGameResponse,
   FlightQuote,
   GalaxyMap,
+  GameOutcome,
   JoinGameRequest,
   JoinGameResponse,
   LobbyResponse,
@@ -1114,6 +1115,112 @@ export function useGetReport<TData = Awaited<ReturnType<typeof getReport>>, TErr
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetReportQueryOptions(gameId,id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getOutcomeResponse200 = {
+  data: GameOutcome
+  status: 200
+}
+
+export type getOutcomeResponseSuccess = (getOutcomeResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getOutcomeResponse = (getOutcomeResponseSuccess)
+
+export const getGetOutcomeUrl = (gameId: string,) => {
+
+
+
+
+  return `/api/games/${gameId}/outcome`
+}
+
+export const getOutcome = async (gameId: string, options?: Parameters<typeof apiFetch>[1]): Promise<getOutcomeResponse> => {
+
+  return apiFetch<getOutcomeResponse>(getGetOutcomeUrl(gameId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOutcomeQueryKey = (gameId: string,) => {
+    return [
+    `/api/games/${gameId}/outcome`
+    ] as const;
+    }
+
+
+export const getGetOutcomeQueryOptions = <TData = Awaited<ReturnType<typeof getOutcome>>, TError = unknown>(gameId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOutcome>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOutcomeQueryKey(gameId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOutcome>>> = ({ signal }) => getOutcome(gameId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: gameId !== null && gameId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOutcome>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOutcomeQueryResult = NonNullable<Awaited<ReturnType<typeof getOutcome>>>
+export type GetOutcomeQueryError = unknown
+
+
+export function useGetOutcome<TData = Awaited<ReturnType<typeof getOutcome>>, TError = unknown>(
+ gameId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOutcome>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOutcome>>,
+          TError,
+          Awaited<ReturnType<typeof getOutcome>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOutcome<TData = Awaited<ReturnType<typeof getOutcome>>, TError = unknown>(
+ gameId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOutcome>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOutcome>>,
+          TError,
+          Awaited<ReturnType<typeof getOutcome>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOutcome<TData = Awaited<ReturnType<typeof getOutcome>>, TError = unknown>(
+ gameId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOutcome>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOutcome<TData = Awaited<ReturnType<typeof getOutcome>>, TError = unknown>(
+ gameId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOutcome>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOutcomeQueryOptions(gameId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

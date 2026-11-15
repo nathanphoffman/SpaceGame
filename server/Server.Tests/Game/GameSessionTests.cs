@@ -1,91 +1,103 @@
 using SpaceGame.Core;
 using SpaceGame.Server.Game;
-using SpaceGame.Server.Persistence;
 
 namespace SpaceGame.Server.Tests;
 
 [Trait("Category", "Postgres")]
 public class GameSessionTests
 {
-    private static readonly DateTimeOffset Start = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-
-    private static async Task<(GameSession Session, GameRepository Repo, FakeClock Clock, FakeEngine Engine, Guid Id)> SetupAsync(
-        string mode, string status = "running")
-    {
-        var schema = await TestDatabase.MigratedSchemaAsync();
-        var repo = new GameRepository(TestDatabase.NewContext(schema));
-        var clock = new FakeClock(Start);
-        var engine = new FakeEngine();
-        var row = await repo.CreateAsync("ABCD", mode, 1, new GameState(new GameConfig(), 0), null, Start);
-        await repo.SaveAsync(row.Id, new GameState(new GameConfig(), 0), status, 0, Start, Start);
-
-        return (new GameSession(repo, engine, clock, new GameLocks(), new NullGameNotifier(), new NoDiscord()), repo, clock, engine, row.Id);
-    }
+    private static GameSession NewSession(StoredGame stored, FakeClock clock, FakeEngine engine) =>
+        new(stored.Repo, stored.Writer, engine, clock, new GameLocks(), new NullGameNotifier(), new NoDiscord());
 
     [PostgresFact]
     public async Task Advances_to_the_game_time_and_saves()
     {
-        var (session, repo, clock, _, id) = await SetupAsync("week");
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine());
         clock.Advance(TimeSpan.FromSeconds(120));
-        var snap = await session.AdvanceAsync(id);
-        Assert.Equal(120, snap!.GameTime);
-        Assert.Single(snap.Events);
-        Assert.Equal(120, (await repo.LoadAsync(id))!.State.Time);
-        Assert.Equal(2, snap.Game.Version);
+        var snapshot = await session.AdvanceAsync(stored.GameId);
+        Assert.Equal(120, snapshot!.GameTime);
+        Assert.Single(snapshot.Events);
+        Assert.Equal(120, (await stored.Repo.LoadAsync(stored.GameId))!.State.Time);
+        Assert.Equal(2, snapshot.Game.Version);
     }
 
     [PostgresFact]
     public async Task Test_mode_runs_168_times_faster()
     {
-        var (session, _, clock, _, id) = await SetupAsync("test");
+        var stored = await StoredGame.CreateAsync(mode: "test", status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine());
         clock.Advance(TimeSpan.FromMinutes(30));
-        Assert.Equal(302_400, (await session.AdvanceAsync(id))!.GameTime);
+        Assert.Equal(302_400, (await session.AdvanceAsync(stored.GameId))!.GameTime);
+    }
+
+    [PostgresFact]
+    public async Task Test_mode_game_reaches_week_end_after_one_hour_and_stays_there()
+    {
+        var stored = await StoredGame.CreateAsync(mode: "test", status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine());
+        clock.Advance(TimeSpan.FromHours(1));
+        Assert.Equal(StoredGame.EmptyState.Config.WeekSeconds, (await session.AdvanceAsync(stored.GameId))!.GameTime);
+        clock.Advance(TimeSpan.FromHours(1));
+        Assert.Equal(StoredGame.EmptyState.Config.WeekSeconds, (await session.AdvanceAsync(stored.GameId))!.GameTime);
     }
 
     [PostgresFact]
     public async Task A_game_in_the_lobby_is_not_advanced()
     {
-        var (session, _, clock, engine, id) = await SetupAsync("week", "lobby");
+        var stored = await StoredGame.CreateAsync();
+        var clock = new FakeClock(StoredGame.StartTime);
+        var engine = new FakeEngine();
+        var session = NewSession(stored, clock, engine);
         clock.Advance(TimeSpan.FromHours(1));
-        var snap = await session.AdvanceAsync(id);
-        Assert.Equal(0, snap!.GameTime);
+        var snapshot = await session.AdvanceAsync(stored.GameId);
+        Assert.Equal(0, snapshot!.GameTime);
         Assert.Equal(0, engine.AdvanceCalls);
     }
 
     [PostgresFact]
     public async Task Unknown_game_gives_null()
     {
-        var (session, _, _, _, _) = await SetupAsync("week");
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var session = NewSession(stored, new FakeClock(StoredGame.StartTime), new FakeEngine());
         Assert.Null(await session.AdvanceAsync(Guid.NewGuid()));
     }
 
     [PostgresFact]
     public async Task Mutate_saves_the_changed_state()
     {
-        var (session, repo, clock, _, id) = await SetupAsync("week");
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine());
         clock.Advance(TimeSpan.FromSeconds(10));
-        await session.MutateAsync<int>(id, (s, _) => (s with { Config = s.Config with { ScoreTarget = 7 } }, 1));
-        Assert.Equal(7, (await repo.LoadAsync(id))!.State.Config.ScoreTarget);
+        await session.MutateAsync<int>(stored.GameId, (state, _) => (state with { Config = state.Config with { ScoreTarget = 7 } }, 1));
+        Assert.Equal(7, (await stored.Repo.LoadAsync(stored.GameId))!.State.Config.ScoreTarget);
     }
 
     [PostgresFact]
     public async Task Parallel_requests_do_not_conflict()
     {
-        var (session, _, clock, _, id) = await SetupAsync("week");
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine());
         clock.Advance(TimeSpan.FromSeconds(10));
-        var tasks = Enumerable.Range(0, 8).Select(_ => session.AdvanceAsync(id)).ToArray();
+        var tasks = Enumerable.Range(0, 8).Select(_ => session.AdvanceAsync(stored.GameId)).ToArray();
         await Task.WhenAll(tasks);
-        Assert.All(tasks, t => Assert.NotNull(t.Result));
+        Assert.All(tasks, task => Assert.NotNull(task.Result));
     }
 
     [PostgresFact]
     public async Task Battle_events_are_stored_as_reports()
     {
-        var (session, repo, clock, engine, id) = await SetupAsync("week");
-        engine.EventKind = "BattleResolved";
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine { EventKind = "BattleResolved" });
         clock.Advance(TimeSpan.FromSeconds(30));
-        await session.AdvanceAsync(id);
-        var reports = await repo.ReportsAsync(id);
+        await session.AdvanceAsync(stored.GameId);
+        var reports = await stored.Repo.ReportsAsync(stored.GameId);
         Assert.Single(reports);
         Assert.Equal(30, reports[0].GameTime);
     }
@@ -93,9 +105,46 @@ public class GameSessionTests
     [PostgresFact]
     public async Task Other_events_store_no_report()
     {
-        var (session, repo, clock, _, id) = await SetupAsync("week");
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine());
         clock.Advance(TimeSpan.FromSeconds(30));
-        await session.AdvanceAsync(id);
-        Assert.Empty(await repo.ReportsAsync(id));
+        await session.AdvanceAsync(stored.GameId);
+        Assert.Empty(await stored.Repo.ReportsAsync(stored.GameId));
+    }
+
+    [PostgresFact]
+    public async Task A_game_end_event_saves_the_game_as_finished()
+    {
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine { EventKind = EventNotifications.GameEndedKind });
+        clock.Advance(TimeSpan.FromSeconds(30));
+        await session.AdvanceAsync(stored.GameId);
+        Assert.Equal("finished", (await stored.Repo.LoadAsync(stored.GameId))!.Status);
+    }
+
+    [PostgresFact]
+    public async Task A_command_in_the_tick_that_ends_the_game_is_not_applied()
+    {
+        var stored = await StoredGame.CreateAsync(status: "running");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var session = NewSession(stored, clock, new FakeEngine { EventKind = EventNotifications.GameEndedKind });
+        clock.Advance(TimeSpan.FromSeconds(30));
+        var snapshot = await session.MutateAsync<int>(stored.GameId, (state, _) => (state with { Config = state.Config with { ScoreTarget = 7 } }, 1));
+        Assert.Equal("finished", snapshot!.Game.Status);
+        Assert.NotEqual(7, (await stored.Repo.LoadAsync(stored.GameId))!.State.Config.ScoreTarget);
+    }
+
+    [PostgresFact]
+    public async Task A_finished_game_is_not_advanced_or_changed()
+    {
+        var stored = await StoredGame.CreateAsync(status: "finished");
+        var clock = new FakeClock(StoredGame.StartTime);
+        var engine = new FakeEngine();
+        var session = NewSession(stored, clock, engine);
+        clock.Advance(TimeSpan.FromSeconds(30));
+        await session.AdvanceAsync(stored.GameId);
+        Assert.Equal(0, engine.AdvanceCalls);
     }
 }

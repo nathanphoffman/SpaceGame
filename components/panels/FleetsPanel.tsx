@@ -15,6 +15,9 @@ import {
 	type ShipType,
 } from "@/lib/defs";
 
+import Image from "next/image";
+import { ICON_BOX_PX } from "@/components/iconBox";
+
 type Props = {
 	planet: PlanetDTO; // the planet whose hangar is shown
 	showHangar: boolean;
@@ -39,7 +42,7 @@ function HangarRow({ type, count }: { type: ShipType; count: number }) {
 			</div>
 			<div className="hangar-ships">
 				{Array.from({ length: shown }, (_, index) => (
-					<img
+					<Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX}
 						key={`${type}-${index}`}
 						src={ship.icon}
 						style={{
@@ -85,6 +88,7 @@ function statusText(fleet: FleetDTO, planetName: (id: number) => string) {
 	return `Returning to ${planetName(fleet.originId)}`;
 }
 
+// One fleet's row. The arrival time depends on direction: outbound fleets arrive, returning ones come home.
 function FleetRow({
 	fleet,
 	planetName,
@@ -103,7 +107,7 @@ function FleetRow({
 	return (
 		<div className="row">
 			<span className="icon">
-				<img src={fleetIcon(fleet)} alt="" />
+				<Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX} src={fleetIcon(fleet)} alt="" />
 			</span>
 			<div className="grow">
 				{statusText(fleet, planetName)}

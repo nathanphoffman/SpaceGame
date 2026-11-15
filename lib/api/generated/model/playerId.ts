@@ -5,6 +5,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface PlayerId {
-  value?: string;
-}
+export type PlayerId = string;

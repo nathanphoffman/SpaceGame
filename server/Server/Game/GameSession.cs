@@ -42,7 +42,7 @@ public sealed class SeededDice(int seed, long gameTime) : IDice
 }
 
 /// <summary>Loads a game, advances it to the current game time, saves it and hands it to the caller, all under the game's lock.</summary>
-public sealed class GameSession(GameRepository repo, IGameEngine engine, IClock clock, GameLocks locks, IGameNotifier notifier, IDiscordNotifier discord)
+public sealed class GameSession(GameRepository repo, GameWriter writer, IGameEngine engine, IClock clock, GameLocks locks, IGameNotifier notifier, IDiscordNotifier discord)
 {
     /// <summary>Returns null when the game does not exist.</summary>
     public Task<GameSnapshot?> AdvanceAsync(Guid gameId) =>
@@ -76,6 +76,11 @@ public sealed class GameSession(GameRepository repo, IGameEngine engine, IClock 
             return null;
         }
 
+        if (game.Status == LobbyService.FinishedStatus)
+        {
+            return new GameSnapshot(game, game.State.Time, []);
+        }
+
         if (game.Status != LobbyService.RunningStatus || game.StartedAt is null)
         {
             return new GameSnapshot(game, 0, []);
@@ -83,29 +88,38 @@ public sealed class GameSession(GameRepository repo, IGameEngine engine, IClock 
 
         var now = TimeScale.GameTime(game.StartedAt.Value, clock.UtcNow, game.Mode, game.State.Config.WeekSeconds);
         var (state, events) = engine.Advance(game.State, now, new SeededDice(game.Seed, now));
-        var changed = change(state, now);
+        var ended = events.Any(e => e.Kind == EventNotifications.GameEndedKind);
+        var status = ended ? LobbyService.FinishedStatus : game.Status;
+
+        // A command that arrives in the same tick the game ends is not applied: the game is over.
+        var changed = ended ? null : change(state, now);
         state = changed?.State ?? state;
 
-        if (state == game.State)
+        if (state == game.State && !ended)
         {
             return new GameSnapshot(game, now, events);
         }
 
-        var version = await repo.SaveAsync(game.Id, state, game.Status, game.Version, clock.UtcNow);
+        var version = await writer.SaveAsync(game.Id, state, status, game.Version, clock.UtcNow);
         var reports = await SaveReportsAsync(game.Id, events);
         await EventNotifications.PublishAsync(notifier, game.Id, version, events, reports);
         await DiscordAlerts.SendAsync(discord, game.DiscordWebhook, events);
 
-        return new GameSnapshot(game with { State = state, Version = version }, now, events);
+        return new GameSnapshot(game with { State = state, Version = version, Status = status }, now, events);
     }
 
     private async Task<IReadOnlyList<ReportRow>> SaveReportsAsync(Guid gameId, IReadOnlyList<GameEvent> events)
     {
         var rows = ReportRecorder.RowsFor(gameId, events);
 
+        if (OutcomeRecorder.RowFor(gameId, events) is { } outcome)
+        {
+            await writer.AddReportsAsync([outcome]);
+        }
+
         if (rows.Count > 0)
         {
-            await repo.AddReportsAsync(rows);
+            await writer.AddReportsAsync(rows);
         }
 
         return rows;

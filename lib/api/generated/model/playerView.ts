@@ -7,7 +7,7 @@
 import type { BattleReport } from './battleReport';
 import type { FleetView } from './fleetView';
 import type { Holding } from './holding';
-import type { PlanetId } from './planetId';
+import type { PlayerViewUpgrades } from './playerViewUpgrades';
 import type { Resources } from './resources';
 
 export interface PlayerView {
@@ -24,6 +24,7 @@ export interface PlayerView {
   stockpile: Resources;
   fleets: FleetView[];
   reports: BattleReport[];
-  ownPlanets?: PlanetId[];
+  ownPlanets?: unknown[];
   holdings?: Holding[];
+  upgrades?: PlayerViewUpgrades;
 }

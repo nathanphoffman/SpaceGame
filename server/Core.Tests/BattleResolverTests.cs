@@ -25,7 +25,7 @@ public class BattleResolverTests
     }
 
     [Fact]
-    public void RollOfOneAlwaysMisses_AndFightContinues()
+    public void RollOfOneAlwaysMisses()
     {
         // Round 1: both miss (1 and 4). Round 2: attacker hits (5), defender misses (2).
         var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 0, new ScriptedDice(1, 4, 5, 2));

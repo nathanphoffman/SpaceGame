@@ -41,7 +41,7 @@ public class PlayReadEndpointTests
     }
 
     [PostgresFact]
-    public async Task State_and_quote_need_a_token()
+    public async Task State_plus_quote_need_a_token()
     {
         var (factory, client, game) = await PlayApi.StartedAsync();
         await using var _ = factory;

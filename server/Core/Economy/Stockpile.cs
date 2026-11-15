@@ -35,7 +35,7 @@ public sealed record Stockpile(Resources Amount, long Time, Resources Carry)
     private const long CarryPerUnit = (long)MineOutput.MilliPerUnit * SecondsPerHour;
 
     /// <summary>A stockpile with a starting amount at a time.</summary>
-    public static Stockpile Start(Resources amount, long time) => new(amount, time, Resources.Zero);
+    public static Stockpile Open(Resources amount, long time) => new(amount, time, Resources.Zero);
 
     /// <summary>Brings the stockpile up to <paramref name="nowSeconds"/> at a constant rate (milli-units per hour per element).</summary>
     public Stockpile AdvanceTo(long nowSeconds, Resources ratePerHourMilli)

@@ -5,6 +5,7 @@ namespace SpaceGame.Server.Api;
 /// <summary>Turns a <see cref="CommandBody"/> into a Core command, refusing anything incomplete or unknown.</summary>
 public static class CommandParser
 {
+    // Checks the type first, then hands each command to its own parser so every error names the missing or bad field.
     public static ParsedCommand Parse(CommandBody? body)
     {
         if (body is null || string.IsNullOrWhiteSpace(body.Type))
@@ -25,6 +26,7 @@ public static class CommandParser
         };
     }
 
+    // A mine must name an element and every other building must not; anything else is rejected.
     private static ParsedCommand BuildBuilding(CommandBody b)
     {
         if (!Enum<BuildingType>(b.Choice.BuildingType, "buildingType", out var type, out var error) || Missing(b.Target.Planet, "planet", out error))
@@ -49,6 +51,7 @@ public static class CommandParser
             : Fail(error!);
     }
 
+    // Needs a known ship type, a planet and a count of at least 1.
     private static ParsedCommand QueueShip(CommandBody b)
     {
         if (!Enum<ShipType>(b.Choice.ShipType, "shipType", out var ship, out var error) || Missing(b.Target.Planet, "planet", out error))
@@ -69,6 +72,7 @@ public static class CommandParser
             ? Fail(error!)
             : Ok(new CancelQueueItem(new PlanetId(b.Target.Planet!), b.Target.ItemId!));
 
+    // Needs both planets and a non-empty, valid ship list; cargo is passed through as given.
     private static ParsedCommand SendFleet(CommandBody b)
     {
         if (Missing(b.Target.From, "from", out var error) || Missing(b.Target.To, "to", out error))
@@ -84,6 +88,7 @@ public static class CommandParser
         return Ok(new SendFleet(new PlanetId(b.Target.From!), ships, new PlanetId(b.Target.To!), b.Payload.Cargo));
     }
 
+    // Converts ship names to types, stops at the first bad entry and reports why through the out error.
     private static bool ParseShips(Dictionary<string, int>? input, out Dictionary<ShipType, int> ships, out string? error)
     {
         ships = [];

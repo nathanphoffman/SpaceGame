@@ -10,6 +10,9 @@ import {
 	type ShipType,
 } from "@/lib/defs";
 
+import Image from "next/image";
+import { ICON_BOX_PX } from "@/components/iconBox";
+
 type Props = {
 	game: GameState;
 	planet: PlanetDTO; // where the ships leave from
@@ -45,7 +48,7 @@ function ShipRow({
 	return (
 		<div className="row">
 			<span className="icon">
-				<img src={SHIPS[type].icon} alt="" />
+				<Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX} src={SHIPS[type].icon} alt="" />
 			</span>
 			<span className="grow">
 				{SHIPS[type].name} <span className="sub">({available} available)</span>

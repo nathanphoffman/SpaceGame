@@ -22,6 +22,7 @@ public static class Composition
     public static Richness Parse(string composition)
     {
         var totals = new Dictionary<Element, int>();
+
         foreach (var part in composition.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
             var (symbol, percent) = SplitPart(part);
@@ -39,6 +40,7 @@ public static class Composition
     private static (string Symbol, int Percent) SplitPart(string part)
     {
         var digitsAt = part.IndexOfAny("0123456789".ToCharArray());
+
         return (part[..digitsAt], int.Parse(part[digitsAt..]));
     }
 

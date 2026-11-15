@@ -4,7 +4,7 @@ using SpaceGame.Server.Persistence;
 
 namespace SpaceGame.Server.Lobby;
 
-public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock clock)
+public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEngine engine, IClock clock, ILogger<LobbyService> log)
 {
     public const int MaxPlayers = 8;
     public const int MaxNameLength = 30;
@@ -12,6 +12,7 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
     public const string TestMode = "test";
     public const string LobbyStatus = "lobby";
     public const string RunningStatus = "running";
+    public const string FinishedStatus = "finished";
     public const string GameNotFound = "Game not found.";
 
     public async Task<ServiceResult<CreateGameResponse>> CreateAsync(CreateGameRequest req)
@@ -26,12 +27,13 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
         var seed = req.Seed ?? Random.Shared.Next();
         var playerId = Guid.NewGuid();
         var state = engine.NewGame(SetupFor(seed, [new PlayerSetup(new PlayerId(playerId.ToString()), req.Name!.Trim())]));
-        var game = await repo.CreateAsync(await FreeCodeAsync(), req.Mode!, seed, state, req.DiscordWebhookUrl, clock.UtcNow);
+        var game = await writer.CreateAsync(await FreeCodeAsync(), req.Mode!, seed, state, req.DiscordWebhookUrl, clock.UtcNow);
         var token = await AddHostAsync(game.Id, playerId, req.Name!.Trim());
 
         return ServiceResult<CreateGameResponse>.Success(new(game.Id, game.Code, playerId, token));
     }
 
+    // Validates the name, finds the lobby by code, checks it is open and not full, then adds the player.
     public async Task<ServiceResult<JoinGameResponse>> JoinAsync(JoinGameRequest req)
     {
         var name = req.PlayerName?.Trim() ?? "";
@@ -78,6 +80,7 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
         return ServiceResult<LobbyResponse>.Success(new(game.Code, game.Mode, game.Status != LobbyStatus, players));
     }
 
+    // Only the host can start; the game is saved with a version check so a parallel change gives a 409.
     public async Task<ServiceResult<bool>> StartAsync(Guid gameId, PlayerIdentity caller)
     {
         if (!caller.IsHost)
@@ -107,17 +110,20 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
     {
         try
         {
-            await repo.SaveAsync(game.Id, state, RunningStatus, game.Version, clock.UtcNow, startedAt: clock.UtcNow);
+            await writer.SaveAsync(game.Id, state, RunningStatus, game.Version, clock.UtcNow, startedAt: clock.UtcNow);
 
             return ServiceResult<bool>.Success(true);
         }
-        catch (VersionConflictException)
+        catch (VersionConflictException ex)
         {
-            // Expected when two requests race: the loser gets a 409 and retries, so there is nothing to log.
+            // Expected when two requests race: the loser gets a 409 and retries, so we log only the type.
+            log.LogInformation("Start lost a race for game {GameId}: {ExceptionType}.", game.Id, ex.GetType().Name);
+
             return ServiceResult<bool>.Fail(StatusCodes.Status409Conflict, "The game was changed at the same time. Try again.");
         }
     }
 
+    // Returns the first problem found with the create request, or null when it is valid.
     private static string? ValidateCreate(CreateGameRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.Name) || req.Name.Trim().Length > MaxNameLength)
@@ -165,7 +171,7 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
     {
         var token = PlayerTokens.NewToken();
         player.TokenHash = PlayerTokens.Hash(token);
-        await repo.AddPlayerAsync(player);
+        await writer.AddPlayerAsync(player);
 
         return token;
     }

@@ -31,6 +31,7 @@ public sealed class PlayerTokenAuthHandler(
     private string? HubQueryToken() =>
         Request.Path.StartsWithSegments(PlayerAuth.HubPath) ? Request.Query["access_token"].ToString() : null;
 
+    // No token means anonymous (NoResult); an unknown token fails; a known token becomes a player identity with claims.
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var token = PlayerAuth.ReadBearer(Request.Headers.Authorization.ToString()) ?? HubQueryToken();

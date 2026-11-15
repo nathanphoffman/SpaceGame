@@ -12,7 +12,7 @@ public sealed record BuildingSpec(
     /// <summary>Cost to build the given level (1-based).</summary>
     public Resources CostAtLevel(int level) => Cost.Scale(Math.Pow(CostGrowth, level - 1));
 
-    /// <summary>Build time in seconds for the given level (1-based).</summary>
+    /// <summary>Grows by TimeGrowth each level, so later levels take longer (level is 1-based).</summary>
     public long SecondsAtLevel(int level) => (long)Math.Round(BuildSeconds * Math.Pow(TimeGrowth, level - 1));
 }
 
@@ -32,7 +32,7 @@ public sealed record MineRules(double BaseOutputPerHour, double OutputGrowth, in
         BaseOutputPerHour * richness / MaxRichness * Math.Pow(OutputGrowth, level - 1);
 }
 
-/// <summary>Every ship, building and upgrade of the game, as data.</summary>
+/// <summary>Every ship, building and upgrade of the game, as data, so balance changes never touch the rules code.</summary>
 public sealed record Catalog(
     IReadOnlyList<ShipSpec> Ships,
     IReadOnlyList<BuildingSpec> Buildings,
@@ -69,7 +69,7 @@ public sealed record Catalog(
     public ShipSpec Ship(ShipType type) => Ships.Single(spec => spec.Type == type);
 
     /// <summary>The building stats for a type.</summary>
-    public BuildingSpec Building(BuildingType type) => Buildings.Single(b => b.Type == type);
+    public BuildingSpec Building(BuildingType type) => Buildings.Single(building => building.Type == type);
 
     /// <summary>The upgrade stats for a type.</summary>
     public UpgradeSpec Upgrade(UpgradeType type) => Upgrades.Single(u => u.Type == type);

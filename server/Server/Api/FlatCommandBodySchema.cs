@@ -15,6 +15,7 @@ public static class FlatCommandBodySchema
             return;
         }
 
+        // Merge the three parts into one flat object so the generated client sees the same shape as the JSON on the wire.
         schema.Type = JsonSchemaType.Object;
         schema.Properties = new Dictionary<string, IOpenApiSchema>
         {

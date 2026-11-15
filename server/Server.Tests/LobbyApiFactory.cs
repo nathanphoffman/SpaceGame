@@ -17,6 +17,7 @@ public static class LobbyApiFactory
         var schema = await TestDatabase.MigratedSchemaAsync();
         var connection = $"{TestDatabase.ConnectionString};Search Path={schema}";
 
+        // Swap the app's database for this test's own schema so tests can run in parallel.
         return new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.ConfigureServices(s =>
         {
             s.RemoveAll<DbContextOptions<GameDbContext>>();

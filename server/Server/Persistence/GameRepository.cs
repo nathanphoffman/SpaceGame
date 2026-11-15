@@ -11,80 +11,37 @@ public sealed class VersionConflictException(Guid gameId) : Exception($"Game {ga
 /// <summary>A game's state with the version it was loaded at.</summary>
 public sealed record LoadedGame(Guid Id, string Code, string Mode, int Seed, string Status, GameState State, long Version, DateTimeOffset? StartedAt, string? DiscordWebhook = null);
 
+/// <summary>Reads games, players and reports. Writes live in <see cref="GameWriter"/>.</summary>
 public sealed class GameRepository(GameDbContext db)
 {
+    private const string BattleKind = "BattleResolved";
+    private const string OutcomeKind = "GameEnded";
+
+    private const string RunningStatus = "running";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public async Task<GameRow> CreateAsync(string code, string mode, int seed, GameState state, string? webhook, DateTimeOffset now)
-    {
-        var row = new GameRow
-        {
-            Id = Guid.NewGuid(),
-            Code = code,
-            Mode = mode,
-            Seed = seed,
-            Status = "lobby",
-            Json = new GameJson { Config = JsonSerializer.Serialize(state.Config, Json), State = JsonSerializer.Serialize(state, Json) },
-            DiscordWebhook = webhook,
-            Times = new GameTimes { CreatedAt = now, UpdatedAt = now },
-        };
-
-        db.Games.Add(row);
-        await db.SaveChangesAsync();
-
-        return row;
-    }
-
+    // The lambdas below only say which column to match; LoadWhereAsync does the actual query.
     public Task<LoadedGame?> LoadAsync(Guid id) => LoadWhereAsync(g => g.Id == id);
 
     public Task<LoadedGame?> LoadByCodeAsync(string code) => LoadWhereAsync(g => g.Code == code);
 
-    /// <summary>Saves the state if the stored version still equals expectedVersion; returns the new version.</summary>
-    public async Task<long> SaveAsync(Guid id, GameState state, string status, long expectedVersion, DateTimeOffset now, DateTimeOffset? startedAt = null)
-    {
-        var rows = await db.Games.Where(g => g.Id == id && g.Version == expectedVersion)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(g => g.Times.StartedAt, g => startedAt ?? g.Times.StartedAt)
-                .SetProperty(g => g.Json.State, JsonSerializer.Serialize(state, Json))
-                .SetProperty(g => g.Status, status)
-                .SetProperty(g => g.Version, expectedVersion + 1)
-                .SetProperty(g => g.Times.UpdatedAt, now));
-
-        return rows == 1 ? expectedVersion + 1 : throw new VersionConflictException(id);
-    }
-
     public Task<List<Guid>> RunningGameIdsAsync() =>
-        db.Games.AsNoTracking().Where(g => g.Status == "running").Select(g => g.Id).ToListAsync();
+        db.Games.AsNoTracking().Where(g => g.Status == RunningStatus).Select(g => g.Id).ToListAsync();
 
     public Task<PlayerRow?> PlayerByTokenHashAsync(string hash) =>
         db.Players.AsNoTracking().FirstOrDefaultAsync(p => p.TokenHash == hash);
 
-    public async Task AddPlayerAsync(PlayerRow player)
-    {
-        db.Players.Add(player);
-        await db.SaveChangesAsync();
-    }
-
     public Task<List<PlayerRow>> PlayersAsync(Guid gameId) =>
         db.Players.AsNoTracking().Where(p => p.GameId == gameId).ToListAsync();
 
-    public async Task AddReportAsync(ReportRow report)
-    {
-        db.Reports.Add(report);
-        await db.SaveChangesAsync();
-    }
-
-    public async Task AddReportsAsync(IReadOnlyList<ReportRow> reports)
-    {
-        db.Reports.AddRange(reports);
-        await db.SaveChangesAsync();
-    }
-
     public Task<ReportRow?> ReportAsync(Guid gameId, Guid reportId) =>
-        db.Reports.AsNoTracking().FirstOrDefaultAsync(r => r.GameId == gameId && r.Id == reportId);
+        db.Reports.AsNoTracking().FirstOrDefaultAsync(r => r.GameId == gameId && r.Id == reportId && r.Kind == BattleKind);
 
     public Task<List<ReportRow>> ReportsAsync(Guid gameId) =>
-        db.Reports.AsNoTracking().Where(r => r.GameId == gameId).OrderBy(r => r.GameTime).ToListAsync();
+        db.Reports.AsNoTracking().Where(r => r.GameId == gameId && r.Kind == BattleKind).OrderBy(r => r.GameTime).ToListAsync();
+
+    public Task<ReportRow?> OutcomeAsync(Guid gameId) =>
+        db.Reports.AsNoTracking().FirstOrDefaultAsync(r => r.GameId == gameId && r.Kind == OutcomeKind);
 
     private async Task<LoadedGame?> LoadWhereAsync(Expression<Func<GameRow, bool>> match)
     {

@@ -5,6 +5,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface FleetId {
-  value?: string;
-}
+export type FleetId = string;

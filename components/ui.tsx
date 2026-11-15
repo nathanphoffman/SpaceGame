@@ -10,6 +10,9 @@ import {
 	type ShipType,
 } from "@/lib/defs";
 
+import Image from "next/image";
+import { ICON_BOX_PX } from "@/components/iconBox";
+
 export const fmtTime = (milliseconds: number) => {
 	const seconds = Math.max(0, Math.ceil(milliseconds / MS_PER_SECOND));
 
@@ -39,7 +42,7 @@ export const fleetIcon = (fleet: FleetDTO) =>
 		: SHIPS.fighter.icon;
 
 export const Icon = ({ src, big }: { src: string; big?: boolean }) => (
-	<img src={src} alt="" className={big ? "ico big" : "ico"} />
+	<Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX} src={src} alt="" className={big ? "ico big" : "ico"} />
 );
 
 /** a bundle of resources as coloured element symbols, e.g. "Fe 60  Si 15" */

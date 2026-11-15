@@ -7,12 +7,12 @@ public sealed record Resources(int Iron, int Hydrogen, int Titanium, int Helium3
     public static readonly Resources Zero = new(0, 0, 0, 0);
 
     /// <summary>Adds two amounts.</summary>
-    public static Resources operator +(Resources a, Resources b) =>
-        new(a.Iron + b.Iron, a.Hydrogen + b.Hydrogen, a.Titanium + b.Titanium, a.Helium3 + b.Helium3);
+    public static Resources operator +(Resources left, Resources right) =>
+        new(left.Iron + right.Iron, left.Hydrogen + right.Hydrogen, left.Titanium + right.Titanium, left.Helium3 + right.Helium3);
 
-    /// <summary>Subtracts two amounts (a component may go negative; check <see cref="Covers"/> first).</summary>
-    public static Resources operator -(Resources a, Resources b) =>
-        new(a.Iron - b.Iron, a.Hydrogen - b.Hydrogen, a.Titanium - b.Titanium, a.Helium3 - b.Helium3);
+    /// <summary>Subtracts two amounts (left component may go negative; check <see cref="Covers"/> first).</summary>
+    public static Resources operator -(Resources left, Resources right) =>
+        new(left.Iron - right.Iron, left.Hydrogen - right.Hydrogen, left.Titanium - right.Titanium, left.Helium3 - right.Helium3);
 
     /// <summary>True when every component is at least the matching component of <paramref name="cost"/>.</summary>
     public bool Covers(Resources cost) =>
@@ -29,8 +29,8 @@ public sealed record Resources(int Iron, int Hydrogen, int Titanium, int Helium3
         (int)Math.Round(Iron * factor), (int)Math.Round(Hydrogen * factor),
         (int)Math.Round(Titanium * factor), (int)Math.Round(Helium3 * factor));
 
-    /// <summary>Multiplies every component by a whole number.</summary>
-    public static Resources operator *(Resources a, int n) => new(a.Iron * n, a.Hydrogen * n, a.Titanium * n, a.Helium3 * n);
+    /// <summary>Multiplies every component by left whole number.</summary>
+    public static Resources operator *(Resources left, int n) => new(left.Iron * n, left.Hydrogen * n, left.Titanium * n, left.Helium3 * n);
 
     /// <summary>The amount of one element.</summary>
     public int Get(Element element) => element switch

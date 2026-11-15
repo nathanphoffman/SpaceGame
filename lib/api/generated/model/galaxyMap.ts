@@ -4,10 +4,9 @@
  * SpaceGame.Server | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { PlanetId } from './planetId';
 import type { SystemInfo } from './systemInfo';
 
 export interface GalaxyMap {
   systems: SystemInfo[];
-  enemyHome?: null | PlanetId;
+  enemyHome?: string;
 }

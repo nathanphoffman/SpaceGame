@@ -16,12 +16,14 @@ export function CommandButtons({ gameId, options }: { gameId: string; options: C
 				<button
 					key={option.label}
 					disabled={command.isPending}
-					// Each button sends its own order, so the handler closes over its option.
+
+					// How it works: map runs once per option, and the arrow function below remembers that option, so each click sends its own order.
 					onClick={() => command.mutate(option.body)}
 				>
 					{option.label}
 				</button>
 			))}
+
 			{refusal && <p role="alert">{refusal}</p>}
 			{command.error && <p role="alert">{command.error.message}</p>}
 		</div>

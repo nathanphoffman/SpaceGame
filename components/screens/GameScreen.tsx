@@ -176,6 +176,7 @@ function LeftColumn({
 	);
 }
 
+// Side column: planet panels, plus the fleets that are still flying (finished ones are hidden).
 function RightColumn({
 	game,
 	error,

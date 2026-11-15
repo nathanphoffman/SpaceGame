@@ -37,10 +37,12 @@ public static class Simulation
         return new SimSummary(args.Runs, wins, attSurvivors / runCount, defSurvivors / runCount, attLost / runCount, defLost / runCount);
     }
 
+    private const double PercentScale = 100.0;
+
     /// <summary>The text printed by the console app.</summary>
     public static string Format(SimSummary summary) => string.Join(Environment.NewLine,
         $"Runs: {summary.Runs}",
-        $"Attacker win rate: {100.0 * summary.AttackerWins / summary.Runs:F1}%",
+        $"Attacker win rate: {PercentScale * summary.AttackerWins / summary.Runs:F1}%",
         $"Average survivors: attackers {summary.AttackerSurvivors:F2}, defenders {summary.DefenderSurvivors:F2}",
         $"Efficiency (average resource cost lost): attackers {summary.AttackerCostLost:F1}, defenders {summary.DefenderCostLost:F1}");
 
@@ -59,6 +61,7 @@ public static class Simulation
 
     private static int CostOfLosses(BattleSide before, BattleSide after)
     {
+        // Per ship type: ships present before minus ships still alive after, priced at that type's cost.
         var lost = before.Ships.GroupBy(ship => ship.Type).Sum(g =>
             (g.Count() - after.Ships.Count(ship => ship.Type == g.Key)) * Catalog.Default.Ship(g.Key).Cost.Total);
 

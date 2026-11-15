@@ -17,6 +17,8 @@ export type HubConnectionLike = {
 
 type Handlers = {
 	onFleetSpotted: (event: FleetSpottedEvent) => void;
+	onBattleResolved?: (reportId: string) => void;
+	onGameEnded?: (outcome: string) => void;
 };
 
 function invalidateGame(client: QueryClient, gameId: string): void {
@@ -40,7 +42,16 @@ export function attachGameEvents(
 
 	const refresh = () => invalidateGame(client, gameId);
 	connection.on("StateChanged", refresh);
-	connection.on("BattleResolved", refresh);
+	connection.on("BattleResolved", (reportId: string) => {
+		handlers.onBattleResolved?.(reportId);
+		refresh();
+	});
+
+	connection.on("GameEnded", (outcome: string) => {
+		handlers.onGameEnded?.(outcome);
+		refresh();
+	});
+
 	connection.on(
 		"FleetSpotted",
 		(fleetId: string, targetPlanetId: string, arrivesAtGameTime: number, strengthHint: string) => {

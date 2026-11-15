@@ -11,6 +11,9 @@ import {
 	shipSeconds,
 } from "@/lib/defs";
 
+import Image from "next/image";
+import { ICON_BOX_PX } from "@/components/iconBox";
+
 type Props = {
 	show: boolean; // hidden (but still mounted, so quantities are remembered) when viewing a planet that isn't yours
 	planet: PlanetDTO;
@@ -31,7 +34,7 @@ function ShipInfo({ ship, onClose }: { ship: Ship; onClose: () => void }) {
 	return (
 		<div className="ship-info">
 			<span className="icon-box">
-				<img
+				<Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX}
 					src={ship.icon}
 					style={{ width: ICON_PX * ship.size, height: ICON_PX * ship.size }}
 					alt=""
@@ -85,6 +88,7 @@ type TileProps = {
 	onInfo: () => void;
 };
 
+// One ship's tile: shows its cost and queue, and disables the button with the reason when it can't be built.
 function ShipTile({
 	type,
 	props,
@@ -101,7 +105,7 @@ function ShipTile({
 		<div className="tile">
 			<button className="ship-link" title="Click for details" onClick={onInfo}>
 				<span className="tile-icon-box">
-					<img
+					<Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX}
 						className="tile-icon"
 						style={{ width: ICON_PX * ship.size, height: ICON_PX * ship.size }}
 						src={ship.icon}
@@ -155,6 +159,7 @@ function ShipTile({
 	);
 }
 
+// The ship-building panel. It renders nothing unless shown, and asks for a shipyard first when the planet has none.
 export default function Shipyard(props: Props) {
 	const [quantities, setQuantities] = useState<Record<string, number>>({});
 	const [infoShip, setInfoShip] = useState<ShipType | null>(null); // ship whose description is open

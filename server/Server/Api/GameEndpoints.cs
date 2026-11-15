@@ -14,5 +14,6 @@ public static class GameEndpoints
         var game = games.MapGroup("/{gameId}");
         game.MapPlayEndpoints();
         game.MapReportEndpoints();
+        game.MapOutcomeEndpoints();
     }
 }

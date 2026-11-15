@@ -38,7 +38,7 @@ public class StockpileTests
     [Fact]
     public void SeveralHoursGiveWholeUnits()
     {
-        var stock = Stockpile.Start(new Resources(300, 0, 0, 0), 0).AdvanceTo(5 * Hour, IronRate);
+        var stock = Stockpile.Open(new Resources(300, 0, 0, 0), 0).AdvanceTo(5 * Hour, IronRate);
         Assert.Equal(400, stock.Amount.Iron);
         Assert.Equal(5 * Hour, stock.Time);
     }
@@ -46,7 +46,7 @@ public class StockpileTests
     [Fact]
     public void ManySmallStepsEqualOneBigStep()
     {
-        var start = Stockpile.Start(Resources.Zero, 0);
+        var start = Stockpile.Open(Resources.Zero, 0);
         var stepped = start;
 
         for (var t = 7; t <= 6 * Hour; t += 7) stepped = stepped.AdvanceTo(t, IronRate);
@@ -58,7 +58,7 @@ public class StockpileTests
     public void FractionsAreCarriedNotLost()
     {
         var rate = MineOutput.RateFor(Element.Iron, MineOutput.MilliPerHour(C, 1, 10, 0)); // 2 per hour
-        var stock = Stockpile.Start(Resources.Zero, 0);
+        var stock = Stockpile.Open(Resources.Zero, 0);
 
         for (var t = 1; t <= 3 * Hour; t++) stock = stock.AdvanceTo(t, rate);
         Assert.Equal(6, stock.Amount.Iron);
@@ -69,7 +69,7 @@ public class StockpileTests
     public void AcrossLevelChangesEachStretchUsesItsOwnRate()
     {
         var level2 = MineOutput.RateFor(Element.Iron, MineOutput.MilliPerHour(C, 2, 100, 0));
-        var stock = Stockpile.Start(Resources.Zero, 0).AdvanceTo(2 * Hour, IronRate); // 40
+        var stock = Stockpile.Open(Resources.Zero, 0).AdvanceTo(2 * Hour, IronRate); // 40
         stock = stock.AdvanceTo(4 * Hour, level2); // +52
         Assert.Equal(92, stock.Amount.Iron);
     }
@@ -77,15 +77,15 @@ public class StockpileTests
     [Fact]
     public void AdvancingBackwardsOrToTheSameTimeChangesNothing()
     {
-        var stock = Stockpile.Start(new Resources(5, 5, 5, 5), 100);
+        var stock = Stockpile.Open(new Resources(5, 5, 5, 5), 100);
         Assert.Same(stock, stock.AdvanceTo(100, IronRate));
         Assert.Same(stock, stock.AdvanceTo(50, IronRate));
     }
 
     [Fact]
-    public void SpendAndAddChangeOnlyTheAmount()
+    public void SpendChangesOnlyTheAmount()
     {
-        var stock = Stockpile.Start(new Resources(100, 50, 0, 0), 10).Spend(new Resources(40, 0, 0, 0)).Add(new Resources(0, 5, 1, 1));
+        var stock = Stockpile.Open(new Resources(100, 50, 0, 0), 10).Spend(new Resources(40, 0, 0, 0)).Add(new Resources(0, 5, 1, 1));
         Assert.Equal(new Resources(60, 55, 1, 1), stock.Amount);
         Assert.Equal(10, stock.Time);
     }
@@ -94,7 +94,7 @@ public class StockpileTests
     public void AllFourElementsAccrueTogether()
     {
         var rate = new Resources(1000, 2000, 3000, 4000);
-        var stock = Stockpile.Start(Resources.Zero, 0).AdvanceTo(Hour, rate);
+        var stock = Stockpile.Open(Resources.Zero, 0).AdvanceTo(Hour, rate);
         Assert.Equal(new Resources(1, 2, 3, 4), stock.Amount);
     }
 }

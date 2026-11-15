@@ -5,7 +5,7 @@ namespace SpaceGame.Core.Tests;
 public class ResourcesTests
 {
     [Fact]
-    public void AddAndCover()
+    public void AddSumsEachElement()
     {
         var sum = new Resources(1, 2, 3, 4) + new Resources(1, 1, 1, 1);
         Assert.Equal(new Resources(2, 3, 4, 5), sum);
@@ -17,7 +17,7 @@ public class ResourcesTests
 public class ResourcesHelperTests
 {
     [Fact]
-    public void SubtractTotalScaleAndGet()
+    public void SubtractRemovesEachElement()
     {
         var r = new Resources(10, 20, 30, 40);
         Assert.Equal(100, r.Total);

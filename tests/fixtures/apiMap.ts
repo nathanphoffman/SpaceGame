@@ -31,6 +31,8 @@ export const playerViewFixture: PlayerViewDto = {
 	teamScore: 0,
 	enemyScore: 0,
 	stockpile: { Iron: 10 },
+	holdings: [],
+	upgrades: {},
 	fleets: [
 		{
 			id: "f1",

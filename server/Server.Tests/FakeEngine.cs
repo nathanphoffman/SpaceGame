@@ -16,7 +16,7 @@ public sealed class FakeEngine : IGameEngine
     {
         AdvanceCalls++;
 
-        return (state with { Time = now }, [new GameEvent(now, EventKind, new Dictionary<string, string> { ["planet"] = "p1", ["attackersWon"] = "true", ["rounds"] = "3" })]);
+        return (state with { Time = now }, [new GameEvent(now, EventKind, new Dictionary<string, string> { ["planet"] = "p1", ["attackersWon"] = "true", ["rounds"] = "3", ["winner"] = "team", ["reason"] = "score", ["teamScore"] = "12", ["enemyScore"] = "4", ["contributions"] = """[{"player":"Ann","points":7},{"player":"Bo","points":5}]""" })]);
     }
 
     public (GameState State, CommandResult Result) Apply(GameState state, PlayerId player, GameCommand command, long now) =>

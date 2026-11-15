@@ -35,4 +35,13 @@ public static class PlayApi
 
     public static Task<HttpResponseMessage> PostCommandWithoutTokenAsync(HttpClient client, CreateGameResponse game, object body) =>
         client.PostAsJsonAsync($"/api/games/{game.GameId}/commands", body);
+
+    /// <summary>Marks the game finished directly in the database, as the clock does when the engine reports GameEnded.</summary>
+    public static async Task FinishAsync(WebApplicationFactory<Program> factory, CreateGameResponse game)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var stored = await scope.ServiceProvider.GetRequiredService<SpaceGame.Server.Persistence.GameRepository>().LoadAsync(game.GameId);
+        await scope.ServiceProvider.GetRequiredService<SpaceGame.Server.Persistence.GameWriter>()
+            .SaveAsync(game.GameId, stored!.State, LobbyService.FinishedStatus, stored.Version, DateTimeOffset.UtcNow);
+    }
 }

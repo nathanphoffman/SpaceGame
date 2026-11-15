@@ -20,10 +20,10 @@ public class JoinCodeTests
     [Fact]
     public void TokensAreRandomWithStableHashes()
     {
-        var a = PlayerTokens.NewToken();
-        Assert.NotEqual(a, PlayerTokens.NewToken());
-        Assert.Equal(PlayerTokens.Hash(a), PlayerTokens.Hash(a));
-        Assert.NotEqual(a, PlayerTokens.Hash(a));
+        var first = PlayerTokens.NewToken();
+        Assert.NotEqual(first, PlayerTokens.NewToken());
+        Assert.Equal(PlayerTokens.Hash(first), PlayerTokens.Hash(first));
+        Assert.NotEqual(first, PlayerTokens.Hash(first));
     }
 
     [Fact]

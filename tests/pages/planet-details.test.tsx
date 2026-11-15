@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildBuildingBody, commandBody, queueShipBody, sendCommand, startUpgradeBody } from "@/lib/api/commands";
+import { buildBuildingBody, cancelQueueItemBody, commandBody, queueShipBody, sendCommand, startUpgradeBody } from "@/lib/api/commands";
 import { PlanetDetails } from "@/components/game/PlanetDetails";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -43,6 +43,7 @@ describe("PlanetDetails", () => {
 				<PlanetDetails gameId="g1" planet={planet} />
 			</QueryClientProvider>,
 		);
+
 		expect(html).toContain("Build Dreadnought");
 		expect(html).toContain("Upgrade Engines");
 	});
@@ -62,5 +63,41 @@ describe("sending a command", () => {
 		const result = await sendCommand("g1", buildBuildingBody("a1", "Defense"));
 		expect(result).toEqual({ ok: false, error: "Not enough iron." });
 		expect(fetchMock.mock.calls[0][0]).toContain("/api/games/g1/commands");
+	});
+});
+
+describe("queue and holding", () => {
+	const holding = {
+		planet: "a2", mines: { Iron: 2 }, hasShipyard: true, hasDefense: false, ships: { Scout: 3 },
+		queue: [{ id: "q1", building: null, element: null, ship: "Fighter", level: 1, startAt: 0, finishAt: 90, cost: { Iron: 50 } }],
+	};
+
+	it("shows owner, buildings, ships and the queue with a cancel button", () => {
+		const planet = galaxyMapFixture.systems[0].planets[1];
+		const html = renderToString(
+			<QueryClientProvider client={new QueryClient()}>
+				<PlanetDetails gameId="g1" planet={planet} holding={holding} gameTime={30} />
+			</QueryClientProvider>,
+		);
+
+		expect(html).toContain("Owner: you");
+		expect(html).toContain("Iron mine L2, Shipyard");
+		expect(html).toContain("Scout 3");
+		expect(html).toContain("Fighter ship (cost Iron 50, 60s left)");
+		expect(html).toContain("Cancel");
+	});
+
+	it("builds the cancel command from the queue item id", () => {
+		expect(cancelQueueItemBody("a2", "q1")).toMatchObject({ type: "cancelQueueItem", planet: "a2", itemId: "q1" });
+	});
+
+	it("says when nothing is queued", () => {
+		const html = renderToString(
+			<QueryClientProvider client={new QueryClient()}>
+				<PlanetDetails gameId="g1" planet={galaxyMapFixture.systems[0].planets[0]} />
+			</QueryClientProvider>,
+		);
+
+		expect(html).toContain("Nothing queued.");
 	});
 });

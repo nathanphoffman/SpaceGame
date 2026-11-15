@@ -13,4 +13,5 @@ public enum BuildingType { Mine, Shipyard, Defense }
 public enum UpgradeType { Engines, Weapons, Armor, Mining }
 
 /// <summary>The two sides of the game: all players together, and the enemy AI.</summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
 public enum Side { Team, Enemy }

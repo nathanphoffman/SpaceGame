@@ -36,6 +36,42 @@ export const fleetViewSchema = z.object({
 	cargo: countsSchema,
 });
 
+export const queueItemSchema = z.object({
+	id: z.string(),
+	building: z.string().nullable().optional(),
+	element: z.string().nullable().optional(),
+	ship: z.string().nullable().optional(),
+	level: z.number(),
+	startAt: z.number(),
+	finishAt: z.number(),
+	cost: countsSchema,
+});
+
+export const holdingSchema = z.object({
+	planet: idSchema,
+	mines: countsSchema.default({}),
+	hasShipyard: z.boolean().default(false),
+	hasDefense: z.boolean().default(false),
+	ships: countsSchema.default({}),
+	queue: z.array(queueItemSchema).default([]),
+});
+
+export const contributionSchema = z.object({
+	player: z.string(),
+	points: z.number().default(0),
+	battlesWon: z.number().default(0),
+	planetsCaptured: z.number().default(0),
+});
+
+/** Set once the game is over. The contract does not fix the shape yet, so every field is forgiving. */
+export const outcomeSchema = z.object({
+	winner: z.string(),
+	reason: z.string().default(""),
+	teamScore: z.number().optional(),
+	enemyScore: z.number().optional(),
+	contributions: z.array(contributionSchema).default([]),
+});
+
 export const playerViewSchema = z.object({
 	version: z.number(),
 	gameTime: z.number(),
@@ -43,10 +79,17 @@ export const playerViewSchema = z.object({
 	teamScore: z.number(),
 	enemyScore: z.number(),
 	stockpile: countsSchema,
+	/** Upgrade levels by name; the server may not send them yet. */
+	upgrades: countsSchema.default({}),
 	fleets: z.array(fleetViewSchema),
+	holdings: z.array(holdingSchema).default([]),
+	outcome: outcomeSchema.nullable().optional(),
 });
 
 export type GalaxyMapDto = z.infer<typeof galaxyMapSchema>;
 export type FleetViewDto = z.infer<typeof fleetViewSchema>;
 export type PlayerViewDto = z.infer<typeof playerViewSchema>;
 export type PlanetInfoDto = z.infer<typeof planetInfoSchema>;
+export type HoldingDto = z.infer<typeof holdingSchema>;
+export type QueueItemDto = z.infer<typeof queueItemSchema>;
+export type OutcomeDto = z.infer<typeof outcomeSchema>;

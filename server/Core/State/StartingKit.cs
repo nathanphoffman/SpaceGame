@@ -28,5 +28,5 @@ public static class StartingKit
     };
 
     /// <summary>A new player's state at time 0.</summary>
-    public static PlayerState Player(PlayerId playerId) => new(playerId, Stockpile.Start(Stock, 0), [EarthHolding()]);
+    public static PlayerState Player(PlayerId playerId) => new(playerId, Stockpile.Open(Stock, 0), [EarthHolding()]);
 }

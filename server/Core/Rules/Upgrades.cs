@@ -6,7 +6,7 @@ public static class Upgrades
     private static readonly CommandResult Ok = new(true, null);
 
     /// <summary>Starts researching the next level of an upgrade; the cost is taken up front.</summary>
-    public static (GameState State, CommandResult Result) Start(GameState state, PlayerId playerId, StartUpgrade cmd, long nowSeconds)
+    public static (GameState State, CommandResult Result) BeginResearch(GameState state, PlayerId playerId, StartUpgrade cmd, long nowSeconds)
     {
         var player = state.PlayerById(playerId);
 
@@ -24,7 +24,7 @@ public static class Upgrades
     }
 
     /// <summary>Records a finished research job and clears it.</summary>
-    public static PlayerState Finish(PlayerState player, GameState state, ResearchJob job, List<GameEvent> events)
+    public static PlayerState FinishResearch(PlayerState player, GameState state, ResearchJob job, List<GameEvent> events)
     {
         var stock = player.Stock.AdvanceTo(job.FinishAt, Economy.RatePerHourMilli(state, player));
         var levels = player.Upgrades.ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -57,6 +57,7 @@ public static class Upgrades
     public static double FleetSpeed(Catalog catalog, PlayerState player, IReadOnlyDictionary<ShipType, int> ships) =>
         TravelRules.FleetSpeed(catalog, ships, player.UpgradeLevel(UpgradeType.Engines));
 
+    // Returns why the upgrade cannot start, or null when it can.
     private static string? Problem(PlayerState player, UpgradeSpec spec, int level, Stockpile stock, Resources cost)
     {
         if (player.Research is not null) return "Another upgrade is already being researched.";

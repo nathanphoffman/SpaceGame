@@ -25,7 +25,9 @@ public class HostTests : IClassFixture<WebApplicationFactory<Program>>
 
     private readonly WebApplicationFactory<Program> _factory;
 
-    public HostTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    // These tests have no database, so the app must not try to migrate at start.
+    public HostTests(WebApplicationFactory<Program> factory) =>
+        _factory = factory.WithWebHostBuilder(b => b.UseSetting("Database:MigrateOnStart", "false"));
 
     [Fact]
     public async Task HealthReturnsOk()

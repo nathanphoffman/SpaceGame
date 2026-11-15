@@ -31,7 +31,7 @@ public class GalaxyGeneratorTests
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(99)]
-    public void ObjectivesLieBetweenThirtyAndSeventyPercent(int seed)
+    public void ObjectivesStayWithinThirtyToSeventyPercent(int seed)
     {
         var galaxy = GalaxyGenerator.Generate(seed);
         var enemyStar = StarOf(galaxy, galaxy.EnemyHome);
@@ -55,7 +55,7 @@ public class GalaxyGeneratorTests
             GalaxyGenerator.Generate(7).Objectives.Select(o => o.Id));
 
     [Fact]
-    public void MapFlagsObjectivesAndRichness()
+    public void MapFlagsObjectives()
     {
         var galaxy = GalaxyGenerator.Generate(3);
         var map = galaxy.ToMap();

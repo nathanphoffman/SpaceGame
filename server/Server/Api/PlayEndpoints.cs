@@ -17,6 +17,8 @@ public sealed record SendFleetBody(string? From, Dictionary<ShipType, int>? Ship
 /// <summary>Map, state and quote: read-only calls on top of the game session.</summary>
 public static class PlayEndpoints
 {
+    public const string GameOverMessage = "The game has ended, so no more commands are accepted.";
+
     public static void MapPlayEndpoints(this RouteGroupBuilder game)
     {
         game.MapGet("/map", GetMap).WithName("GetMap").Produces<GalaxyMap>();
@@ -51,6 +53,7 @@ public static class PlayEndpoints
             : Results.Ok(engine.ViewFor(snap.Game.State, PlayerOf(caller!), snap.GameTime) with { Version = snap.Game.Version });
     }
 
+    // A quote is read-only, but we still advance the game first so the quote uses the current game time.
     private static async Task<IResult> PostQuote(string gameId, SendFleetBody? body, HttpContext http, GameSession session, IGameEngine engine)
     {
         var denied = LobbyEndpoints.Authorize(gameId, http, out var id, out var caller);
@@ -72,6 +75,7 @@ public static class PlayEndpoints
         return snap is null ? NotFound() : Results.Ok(engine.Quote(snap.Game.State, PlayerOf(caller!), send, snap.GameTime));
     }
 
+    // Validate the body first, then apply the command inside the game lock (MutateAsync) so two requests cannot both spend the same resources.
     private static async Task<IResult> PostCommand(string gameId, CommandBody? body, HttpContext http, GameSession session, IGameEngine engine)
     {
         var denied = LobbyEndpoints.Authorize(gameId, http, out var id, out var caller);
@@ -88,6 +92,7 @@ public static class PlayEndpoints
             return Results.Problem(statusCode: StatusCodes.Status400BadRequest, detail: parsed.Error);
         }
 
+        // The callback runs only if the game exists; this default is what we return when it does not (snap is null then).
         var result = new CommandResult(false, Lobby.LobbyService.GameNotFound);
         var snap = await session.MutateAsync<CommandResult>(id, (state, now) =>
         {
@@ -96,6 +101,11 @@ public static class PlayEndpoints
 
             return (newState, outcome);
         });
+
+        if (snap?.Game.Status == Lobby.LobbyService.FinishedStatus)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status409Conflict, detail: GameOverMessage);
+        }
 
         return snap is null ? NotFound() : Results.Ok(result);
     }

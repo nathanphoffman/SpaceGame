@@ -25,10 +25,32 @@ public class TimeScaleTests
         Assert.Equal(0, TimeScale.GameTime(Start, Start.AddSeconds(-5), "week", 604_800));
 
     [Fact]
-    public void Same_seed_and_time_give_the_same_dice()
+    public void Same_seed_with_same_time_give_the_same_dice()
     {
-        var a = new SeededDice(5, 100);
-        var b = new SeededDice(5, 100);
-        Assert.Equal(Enumerable.Range(0, 20).Select(_ => a.Roll()), Enumerable.Range(0, 20).Select(_ => b.Roll()));
+        var first = new SeededDice(5, 100);
+        var second = new SeededDice(5, 100);
+        Assert.Equal(Enumerable.Range(0, 20).Select(_ => first.Roll()), Enumerable.Range(0, 20).Select(_ => second.Roll()));
+    }
+}
+
+public class GameClockOptionsTests
+{
+    [Fact]
+    public void Tick_defaults_to_five_seconds()
+    {
+        Assert.Equal(TimeSpan.FromSeconds(5), new SpaceGame.Server.Game.GameClockOptions().Interval);
+    }
+
+    [Fact]
+    public void Tick_is_never_shorter_than_one_second()
+    {
+        Assert.Equal(TimeSpan.FromSeconds(1), new SpaceGame.Server.Game.GameClockOptions { TickSeconds = 0 }.Interval);
+    }
+
+    [Fact]
+    public void Scale_is_1_in_week_mode_and_168_in_test_mode()
+    {
+        Assert.Equal(1, SpaceGame.Server.Game.TimeScale.For("week"));
+        Assert.Equal(168, SpaceGame.Server.Game.TimeScale.For("test"));
     }
 }

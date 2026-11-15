@@ -14,6 +14,9 @@ import {
 	toRoman,
 } from "@/lib/defs";
 
+import Image from "next/image";
+import { ICON_BOX_PX } from "@/components/iconBox";
+
 const PERCENT = 100;
 
 type Props = {
@@ -44,7 +47,7 @@ function TileIcon({
 	info: BuildingInfo;
 	element: string | null;
 }) {
-	if (!element) return <img className="tile-icon" src={info.icon} alt="" />;
+	if (!element) return <Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX} className="tile-icon" src={info.icon} alt="" />;
 
 	return (
 		<span
@@ -56,7 +59,7 @@ function TileIcon({
 			}}
 
 		>
-			<img src={info.icon} alt="" />
+			<Image unoptimized width={ICON_BOX_PX} height={ICON_BOX_PX} src={info.icon} alt="" />
 		</span>
 	);
 }
@@ -168,6 +171,7 @@ function buttonLabel(tile: TileState) {
 	return tile.built === 0 ? "Build" : "Upgrade";
 }
 
+// Gathers everything one tile needs, so the tile itself only draws. Queued upgrades count towards the level so a second click targets the next one.
 function tileState(type: string, props: Props): TileState {
 	const queued = props.queue.filter((item) => item.type === type);
 	const built = props.planet.buildings[type] ?? 0;
@@ -186,6 +190,7 @@ function tileState(type: string, props: Props): TileState {
 	};
 }
 
+// One building's tile. A maxed building gets a fixed blocker message instead of a cost shortfall.
 function BuildingTile({ type, props }: { type: string; props: Props }) {
 	const tile = tileState(type, props);
 	const cost = buildCost(type, tile.level);

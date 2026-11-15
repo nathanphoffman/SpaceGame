@@ -7,7 +7,7 @@ public class QueueCancelTests
     private static GameState ThreeShips() => Do(Game(holding: WithYard()), new QueueShip(Earth, ShipType.Fighter, 3)).State;
 
     [Fact]
-    public void CancelRefundsTheFullCostAndRemovesTheItem()
+    public void CancelRefundsTheFullCost()
     {
         var state = ThreeShips();
         var (after, r) = Do(state, new CancelQueueItem(Earth, "q2"));
@@ -32,7 +32,7 @@ public class QueueCancelTests
     }
 
     [Fact]
-    public void UnknownItemAndUnknownPlanetFail()
+    public void UnknownItemFails()
     {
         Assert.Equal("That item is not in the queue.", Error(ThreeShips(), new CancelQueueItem(Earth, "nope")));
         Assert.Equal("You have no base on that planet.", Error(ThreeShips(), new CancelQueueItem(Moon, "q1")));

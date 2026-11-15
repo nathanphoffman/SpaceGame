@@ -20,9 +20,9 @@ public class ReportRecorderTests
     [Fact]
     public void The_payload_parses_back_to_a_report_with_the_row_id()
     {
-        var row = ReportRecorder.RowsFor(Guid.NewGuid(), [Battle(50)])[0];
-        var report = ReportRecorder.Parse(row)!;
-        Assert.Equal(row.Id.ToString(), report.Id);
+        var reportRow = ReportRecorder.RowsFor(Guid.NewGuid(), [Battle(50)])[0];
+        var report = ReportRecorder.Parse(reportRow)!;
+        Assert.Equal(reportRow.Id.ToString(), report.Id);
         Assert.Equal(new PlanetId("p9"), report.Planet);
         Assert.True(report.AttackersWon);
         Assert.Equal(4, report.Rounds);
@@ -31,8 +31,8 @@ public class ReportRecorderTests
     [Fact]
     public void Missing_data_gives_defaults()
     {
-        var row = ReportRecorder.RowsFor(Guid.NewGuid(), [new GameEvent(5, "BattleResolved", new Dictionary<string, string>())])[0];
-        var report = ReportRecorder.Parse(row)!;
+        var reportRow = ReportRecorder.RowsFor(Guid.NewGuid(), [new GameEvent(5, "BattleResolved", new Dictionary<string, string>())])[0];
+        var report = ReportRecorder.Parse(reportRow)!;
         Assert.False(report.AttackersWon);
         Assert.Equal(0, report.Rounds);
     }

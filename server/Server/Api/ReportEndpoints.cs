@@ -36,6 +36,7 @@ public static class ReportEndpoints
             return denied;
         }
 
+        // A malformed id is treated like a missing report (404), not a 400, so ids cannot be probed.
         var row = Guid.TryParse(id, out var reportId) ? await repo.ReportAsync(gameGuid, reportId) : null;
 
         return row is null

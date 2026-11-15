@@ -14,11 +14,11 @@ public class ReportEndpointTests
     private static async Task<Guid> AddBattleAsync(IServiceProvider services, Guid gameId)
     {
         using var scope = services.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<GameRepository>();
-        var row = ReportRecorder.RowsFor(gameId, [new GameEvent(9, "BattleResolved", new Dictionary<string, string> { ["planet"] = "p1" })])[0];
-        await repo.AddReportAsync(row);
+        var writer = scope.ServiceProvider.GetRequiredService<GameWriter>();
+        var reportRow = ReportRecorder.RowsFor(gameId, [new GameEvent(9, "BattleResolved", new Dictionary<string, string> { ["planet"] = "p1" })])[0];
+        await writer.AddReportAsync(reportRow);
 
-        return row.Id;
+        return reportRow.Id;
     }
 
     private static HttpRequestMessage Get(CreateGameResponse game, string path) =>
@@ -40,9 +40,9 @@ public class ReportEndpointTests
     {
         var (factory, client, game) = await PlayApi.StartedAsync();
         await using var _ = factory;
-        var id = await AddBattleAsync(factory.Services, game.GameId);
-        var report = await (await client.SendAsync(Get(game, $"reports/{id}"))).Content.ReadFromJsonAsync<BattleReport>();
-        Assert.Equal(id.ToString(), report!.Id);
+        var reportId = await AddBattleAsync(factory.Services, game.GameId);
+        var report = await (await client.SendAsync(Get(game, $"reports/{reportId}"))).Content.ReadFromJsonAsync<BattleReport>();
+        Assert.Equal(reportId.ToString(), report!.Id);
     }
 
     [PostgresFact]
