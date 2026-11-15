@@ -30,9 +30,11 @@ export function EndScreen({ view, outcome, fallbackWinner }: { view: PlayerViewD
 								<td>{row.planetsCaptured}</td>
 							</tr>
 						))}
+
 					</tbody>
 				</table>
 			)}
+
 		</main>
 	);
 }

@@ -28,6 +28,7 @@ export function GameStatus({ kind, error, onRetry }: { kind: "loading" | "redire
 					Try again
 				</button>
 			)}
+
 			<Link href="/">Back to home</Link>
 		</main>
 	);

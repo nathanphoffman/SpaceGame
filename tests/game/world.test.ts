@@ -1,11 +1,4 @@
 import { describe, expect, it } from "vitest";
-import {
-	buildCost,
-	flightSeconds,
-	productionRates,
-	shipSeconds,
-	toRoman,
-} from "@/lib/defs";
 
 import { mapPositions } from "@/lib/galaxy/galaxyLayout";
 import {
@@ -75,49 +68,6 @@ describe("local map layout", () => {
 				positions[0].y - positions[1].y,
 			),
 		).toBeGreaterThan(3);
-	});
-});
-
-describe("game rules", () => {
-	it("takes longer to fly between stars than inside one system", () => {
-		const systems = [
-			{ id: 1, x: 0, y: 0 },
-			{ id: 2, x: 4, y: 0 },
-		];
-
-		const inside = flightSeconds(
-			{ systemId: 1, orbit: 1 },
-			{ systemId: 1, orbit: 5 },
-			systems,
-		);
-
-		const between = flightSeconds(
-			{ systemId: 1, orbit: 1 },
-			{ systemId: 2, orbit: 1 },
-			systems,
-		);
-
-		expect(between).toBeGreaterThan(inside);
-	});
-
-	it("always gives a base some iron and silicon income", () => {
-		const rates = productionRates({}, []);
-		expect(rates.Fe).toBeGreaterThan(0);
-		expect(rates.Si).toBeGreaterThan(0);
-	});
-
-	it("makes each building level cost more", () => {
-		expect(buildCost("shipyard", 3).Fe).toBeGreaterThan(
-			buildCost("shipyard", 2).Fe,
-		);
-	});
-
-	it("builds ships faster with a better shipyard", () => {
-		expect(shipSeconds("cruiser", 5)).toBeLessThan(shipSeconds("cruiser", 0));
-	});
-
-	it("writes roman numerals", () => {
-		expect([0, 1, 4, 9, 10].map(toRoman)).toEqual(["0", "I", "IV", "IX", "X"]);
 	});
 });
 

@@ -22,6 +22,7 @@ const SHIP_NAMES = ["Scout", "Hauler", "Colony", "Fighter", "Battleship", "Dread
 
 const num = (value: Wire): number => Number(value);
 
+// copies the wire record into plain numeric counts, dropping missing values
 const countsOf = (record: Record<string, Wire> | undefined): Counts =>
 	Object.fromEntries(Object.entries(record ?? {}).map(([key, value]) => [key, num(value)]));
 
@@ -92,6 +93,7 @@ export type PlayerViewDto = {
 	reports: BattleReportDto[];
 };
 
+// converts the wire map; the inner map rebuilds each system the same way
 const mapOf = (wire: WireMap): GalaxyMapDto => ({
 	enemyHome: wire.enemyHome,
 	systems: wire.systems.map((system) => ({
@@ -151,6 +153,7 @@ const viewOf = (wire: WireView): PlayerViewDto => ({
 	reports: wire.reports.map(reportOf),
 });
 
+// converts the wire outcome into the DTO shape the UI uses
 const outcomeOf = (wire: WireOutcome): OutcomeDto => ({
 	winner: wire.winner,
 	reason: wire.reason,

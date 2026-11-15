@@ -41,7 +41,9 @@ export function FleetSendDialog({ gameId, holding, destinations, gameTime }: Dia
 	const send = useGameCommand(gameId);
 	const shipTypes = Object.entries(holding.ships).filter(([, count]) => count > 0);
 	const hasHauler = (draft.ships[HAULER] ?? 0) > 0;
+
 	const setShipCount = (ship: string, count: number) => setDraft({ ...draft, ships: { ...draft.ships, [ship]: count } });
+
 	const setCargoAmount = (element: string, amount: number) => setDraft({ ...draft, cargo: { ...draft.cargo, [element]: amount } });
 	const canAsk = draft.to !== "" && Object.values(draft.ships).some((count) => count > 0);
 
@@ -49,6 +51,7 @@ export function FleetSendDialog({ gameId, holding, destinations, gameTime }: Dia
 		<section className="panel" aria-label="Send fleet">
 			<h3>Send fleet</h3>
 			{shipTypes.length === 0 && <p className="dim">No ships here.</p>}
+			{/* one count input per ship type; the closure binds that ship to its setter */}
 			{shipTypes.map(([ship, available]) => (
 				<NumberField key={ship} label={ship} max={available} value={draft.ships[ship] ?? 0} onChange={(count) => setShipCount(ship, count)} />
 			))}
@@ -56,12 +59,14 @@ export function FleetSendDialog({ gameId, holding, destinations, gameTime }: Dia
 			<label>
 				Destination
 				<select value={draft.to} onChange={(event) => setDraft({ ...draft, to: event.target.value })}>
+					{/* one option per reachable planet */}
 					{destinations.map((planet) => (
 						<option key={planet.id} value={planet.id}>{planet.name}</option>
 					))}
 
 				</select>
 			</label>
+			{/* cargo inputs only show when the fleet has a hauler to carry them */}
 			{hasHauler && ELEMENTS.map((element) => (
 				<NumberField key={element} label={`Cargo ${element}`} value={draft.cargo[element] ?? 0} onChange={(amount) => setCargoAmount(element, amount)} />
 			))}

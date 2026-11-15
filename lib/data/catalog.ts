@@ -125,7 +125,3 @@ export const BODY_BY_SEED = new Map(
 );
 
 export const STAR_BY_SEED = new Map(SYSTEMS.map((system) => [system.seed, system]));
-
-/** one line for the planet panel: where this world's data comes from */
-export const bodyNote = (seed: number) =>
-	BODY_BY_SEED.get(seed)?.note ?? "Undiscovered: generated to fill the gaps";

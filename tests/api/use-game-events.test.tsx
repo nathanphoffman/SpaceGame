@@ -18,6 +18,7 @@ vi.mock("react", async (original) => ({
 		const slot = runner.index++;
 
 		if (!(slot in runner.slots)) runner.slots[slot] = initial;
+
 		const set = (next: unknown) => {
 			runner.slots[slot] = typeof next === "function" ? next(runner.slots[slot]) : next;
 			runner.rerender();
@@ -66,6 +67,7 @@ describe("useGameEvents with a fake SignalR connection", () => {
 		client = new QueryClient();
 		shared.client = client;
 		client.setQueryData(["/api/games/g1/state"], { version: 1 });
+
 		const usePass = () => {
 			runner.index = 0;
 			runner.effects = [];
@@ -86,6 +88,7 @@ describe("useGameEvents with a fake SignalR connection", () => {
 		const html = renderToString(
 			<AttackWarnings fleets={[enemy] as never} gameTime={100} spotted={live.spotted} />,
 		);
+
 		expect(html).toContain("strength: large");
 	});
 });

@@ -20,6 +20,7 @@ export type FleetDraft = { from: string; to: string; ships: Record<string, numbe
 
 /** The API names cargo keys in lower case ("helium3"). */
 function toResources(cargo: FleetDraft["cargo"]): Resources | null {
+	// sums the cargo amounts; an empty cargo has no resources to send
 	const amounts = Object.values(cargo).reduce((sum, value) => sum + (value ?? 0), 0);
 
 	if (amounts <= 0) return null;

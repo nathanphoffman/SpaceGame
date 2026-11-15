@@ -16,15 +16,12 @@ export const ELEMENTS = {
 
 export type Element = keyof typeof ELEMENTS;
 
-/** display order: common first, then rare */
-export const ELEMENT_ORDER = Object.keys(ELEMENTS) as Element[];
-
 /** A bundle of resources, keyed by element symbol. */
 export type Resources = Record<string, number>;
 
 // ---- buildings ----
 // A planet can build a mine for each element it is made of, plus a shipyard.
-export const MINE_PREFIX = "mine_";
+const MINE_PREFIX = "mine_";
 
 export const mineType = (element: string) => `${MINE_PREFIX}${element}`;
 
@@ -119,29 +116,6 @@ export function buildingInfo(type: string): BuildingInfo | null {
 }
 
 export const MAX_BUILDING_LEVEL = 10;
-
-const ROMAN: [number, string][] = [
-	[10, "X"],
-	[9, "IX"],
-	[5, "V"],
-	[4, "IV"],
-	[1, "I"],
-];
-
-/** 1 -> "I", 9 -> "IX", 10 -> "X" (0 has no roman numeral, so it shows as "0") */
-export const toRoman = (n: number) => {
-	if (n <= 0) return "0";
-	let result = "";
-
-	for (const [v, sym] of ROMAN)
-
-		while (n >= v) {
-			result += sym;
-			n -= v;
-		}
-
-	return result;
-};
 
 // total cost of building one level of a building, scaled by its current level
 export const buildCost = (type: string, level: number): Resources => {
@@ -392,10 +366,10 @@ export const shipSeconds = (t: ShipType, shipyardLevel: number) =>
 
 // ---- production ----
 /** every base trickles a little iron and silicon so nothing can soft-lock */
-export const BASE_INCOME: Resources = { Fe: 0.2, Si: 0.1 };
+const BASE_INCOME: Resources = { Fe: 0.2, Si: 0.1 };
 
 /** richer deposits (bigger share of the planet) produce more per level */
-export const mineRate = (level: number, sharePct: number) =>
+const mineRate = (level: number, sharePct: number) =>
 	MINE_OUTPUT_PER_LEVEL *
 	level *
 	MINE_LEVEL_GROWTH ** level *

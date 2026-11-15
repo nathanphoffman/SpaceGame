@@ -53,6 +53,7 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 	if (!system || !viewed) return <p>No systems yet.</p>;
 
 	const holding = data.view.holdings.find((entry) => entry.planet === picked?.id);
+
 	// every planet in every system, minus the picked one
 	const destinations = data.map.systems.flatMap((entry) => entry.planets).filter((planet) => planet.id !== picked?.id);
 

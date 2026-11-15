@@ -58,7 +58,7 @@ export function ReportDetailPage({ gameId, reportId }: { gameId: string; reportI
 
 	if (error) return <p role="alert">{(error as Error).message}</p>;
 
-	// the list of all reports
+	// back-link target so players can return to the report list
 	const listHref = `/game/${gameId}/reports`;
 
 	return (

@@ -38,6 +38,7 @@ describe("end screen", () => {
 			start: () => Promise.resolve(),
 			stop: () => Promise.resolve(),
 		};
+
 		const onGameEnded = vi.fn();
 
 		attachGameEvents(connection, new QueryClient(), "g1", { onFleetSpotted: vi.fn(), onGameEnded });

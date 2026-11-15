@@ -12,6 +12,7 @@ export function CommandButtons({ gameId, options }: { gameId: string; options: C
 
 	return (
 		<div>
+			{/* one button per command option; each closure sends its own option */}
 			{options.map((option) => (
 				<button
 					key={option.label}

@@ -81,14 +81,14 @@ Code-quality score (`codequality . --quick`): **90.3** (down 0.1 from 90.4, floo
 - Full checks were not run: milestone i is open, so the game is not complete (COMPLETE not created).
 
 ## Round 9
-Code-quality score (`codequality . --quick`): **90.4** (unchanged from round 8, floor met). Weakest: "Minimize dependencies" (old TS server deps), "Test what matters" 81.4% (too many tests, not too few).
+Code-quality score (`codequality . --quick`): **89.1** (down 1.3 from 90.4; under the 90 floor, round 10 starts with quality items in every area). Drivers: "Minimize dependencies" 62% (unused `pg`/`@types/pg` still in package.json), call depth in tests (241 of 437 entry points over 6, mostly the Core chain `Advance -> Run -> Resolve -> Fight -> Defenders -> BaseGarrison -> FullHp -> BattleShipFor -> Ship`), "Test what matters" 63% (352 tests vs 114 expected), unused exports in `lib/defs.ts`, repeated strings 73%, magic numbers 89%.
 
-- **core**: merged a few overlapping tests, 4-player and 8-player wave check recorded in the Core README. No config change.
-- **server**: removed `EngineFactoryTests`, merged tests into Theories. API JSON and `openapi.json` unchanged.
-- **web**: checked the "Test what matters" finding; no code change needed.
-- **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests still needs the user's OK. Milestone i and the "old server gone" Done item stay open.
+- **core**: merged overlapping tests, 4- and 8-player wave check in the Core README. No config change.
+- **server**: the old TS server (`lib/server`, `app/api`) and its combat test are deleted (the user approved it), `EngineFactoryTests` removed, tests merged into Theories. API JSON unchanged.
+- **web**: legacy UI (`app/legacy`, `components/screens|panels|hooks`), `lib/economy.ts` and old tests deleted. `lib/defs.ts` kept (the renderer still imports it). Dead `PlanetView`/`SystemView`/`GalaxyView` kept: deleting them lowered the score. `pg` still listed in package.json although nothing imports it.
+- **blocked**: none. The user's deletion approval has landed.
 - **failed to merge**: nothing.
-- Full checks were not run: milestone i is open, so the game is not complete (COMPLETE not created). No new work items are planned for round 10; only the blocked deletion remains.
+- Full checks were not run: the quality score is under 90, so COMPLETE is not created.
 
 ## Milestones
 - [x] a. Rules in C# (Core): done; Sim used for the balance pass.
@@ -99,5 +99,5 @@ Code-quality score (`codequality . --quick`): **90.4** (unchanged from round 8, 
 - [x] f. Server: done; real-engine end-to-end test passes.
 - [x] g. Client plumbing (web): done, generated Zod in use.
 - [x] h. Game UI (web): all panels done; scout range shown as text hint; live wiring tested with a fake connection.
-- [~] i. Cleanup: README and `npm run play` done; old TS server (`lib/server`, `app/api`) and legacy UI still in the repo, blocked on the user's OK to delete.
-- [~] j. Balance and polish: balance run done; server test-mode full game test done; Core README, server and web docs done; test-mode play-through checklist is in the web README. Done apart from the final tuning from a real play-through.
+- [~] i. Cleanup: old TS server and legacy UI are gone; `pg` dependency and unused exports in `lib/defs.ts` remain.
+- [~] j. Balance and polish: balance run, test-mode full game test, READMEs done; only the quality score (89.1, needs 90) and final tuning from a real play-through remain.
