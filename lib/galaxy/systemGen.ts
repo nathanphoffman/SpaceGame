@@ -138,7 +138,7 @@ function makePlanet(
 				? `${system.name} ${String.fromCharCode(FIRST_LETTER_CODE + number)}`
 				: planetName(seed),
 		orbit,
-		kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty,
+		kind: hostile ? PLANET_KIND.npc : PLANET_KIND.empty, // see the name
 		resources: owns.resources,
 		buildings: owns.buildings,
 		defense: hostile

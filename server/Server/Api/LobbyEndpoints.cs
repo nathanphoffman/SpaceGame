@@ -9,10 +9,10 @@ public static class LobbyEndpoints
     public static void MapLobbyEndpoints(this RouteGroupBuilder games)
     {
         games.MapPost("/", async (CreateGameRequest req, LobbyService lobby) =>
-            ToResult(await lobby.CreateAsync(req))).WithName("CreateGame");
+            ToResult(await lobby.CreateAsync(req))).WithName("CreateGame").Produces<CreateGameResponse>();
         games.MapPost("/join", async (JoinGameRequest req, LobbyService lobby) =>
-            ToResult(await lobby.JoinAsync(req))).WithName("JoinGame");
-        games.MapGet("/{gameId}/lobby", GetLobby).RequireAuthorization().WithName("GetLobby");
+            ToResult(await lobby.JoinAsync(req))).WithName("JoinGame").Produces<JoinGameResponse>();
+        games.MapGet("/{gameId}/lobby", GetLobby).RequireAuthorization().WithName("GetLobby").Produces<LobbyResponse>();
         games.MapPost("/{gameId}/start", Start).RequireAuthorization().WithName("StartGame");
     }
 

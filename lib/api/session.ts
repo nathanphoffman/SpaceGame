@@ -11,21 +11,20 @@ function storage(): Storage | null {
 		return typeof localStorage === "undefined" ? null : localStorage;
 	} catch (error) {
 		console.warn("localStorage unavailable", error);
+
 		// Accessing localStorage can throw (blocked cookies); behave as if there is no storage.
 		return null;
 	}
 }
 
+const isText = (field: unknown) => typeof field === "string";
+
 /** Narrows parsed JSON to a Session; anything with a missing or non-string field is rejected. */
 function isSession(value: unknown): value is Session {
 	if (typeof value !== "object" || value === null) return false;
-	const v = value as Record<string, unknown>;
+	const candidate = value as Record<string, unknown>;
 
-	return (
-		typeof v.gameId === "string" &&
-		typeof v.playerId === "string" &&
-		typeof v.token === "string"
-	);
+	return [candidate.gameId, candidate.playerId, candidate.token].every(isText);
 }
 
 export function loadSession(): Session | null {
@@ -38,6 +37,7 @@ export function loadSession(): Session | null {
 		return isSession(parsed) ? parsed : null;
 	} catch (error) {
 		console.warn("Could not load the saved session", error);
+
 		// Corrupt JSON or blocked storage: treat as signed out rather than crash.
 		return null;
 	}
@@ -48,6 +48,7 @@ export function saveSession(session: Session): void {
 		storage()?.setItem(SESSION_KEY, JSON.stringify(session));
 	} catch (error) {
 		console.warn("Could not save the session", error);
+
 		// Storage can be full or blocked; the player just has to join again.
 	}
 }
@@ -57,6 +58,7 @@ export function clearSession(): void {
 		storage()?.removeItem(SESSION_KEY);
 	} catch (error) {
 		console.warn("Could not clear the session", error);
+
 		// Nothing to clear if storage is blocked.
 	}
 }

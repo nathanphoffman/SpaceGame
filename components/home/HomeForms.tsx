@@ -18,11 +18,11 @@ type Errors = Record<string, string>;
 
 const MODE_LABELS = { week: "One week", test: "1-hour test" } as const;
 
-function Field(props: { label: string; name: string; error?: string; placeholder?: string }) {
+function Field(props: { label: string; name: string; error?: string; placeholder?: string; defaultValue?: string }) {
 	return (
 		<label style={{ display: "block", marginBottom: 8 }}>
 			{props.label}
-			<input name={props.name} placeholder={props.placeholder} style={{ display: "block", width: "100%" }} />
+			<input name={props.name} placeholder={props.placeholder} defaultValue={props.defaultValue} style={{ display: "block", width: "100%" }} />
 			{props.error && <span role="alert">{props.error}</span>}
 		</label>
 	);
@@ -77,13 +77,14 @@ export function CreateGameForm() {
 	);
 }
 
-export function JoinGameForm() {
+/** `defaultCode` comes from the `?code=` in the invite link. */
+export function JoinGameForm({ defaultCode }: { defaultCode?: string }) {
 	const form = useSchemaForm(joinGameSchema, joinGame);
 
 	return (
 		<form onSubmit={form.submit} aria-label="Join a game">
 			<h2>Join a game</h2>
-			<Field label="Game code" name="code" error={form.errors.code} />
+			<Field label="Game code" name="code" error={form.errors.code} defaultValue={defaultCode} />
 			<Field label="Your name" name="playerName" error={form.errors.playerName} />
 			<button type="submit" disabled={form.pending}>Join</button>
 			{form.apiError && <p role="alert">{form.apiError}</p>}

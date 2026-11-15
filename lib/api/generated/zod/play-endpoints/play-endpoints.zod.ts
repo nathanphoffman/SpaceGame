@@ -11,13 +11,152 @@ export const GetMapParams = zod.object({
   "gameId": zod.string()
 })
 
-export const GetMapResponse = zod.unknown()
+export const getMapResponseSystemsItemXRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$');
+export const getMapResponseSystemsItemYRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$');
+export const getMapResponseSystemsItemZRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$');
+export const getMapResponseSystemsItemPlanetsItemRichnessRegExpThree = new RegExp('^-?(?:0|[1-9]\\d*)$');
+
+
+export const GetMapResponse = zod.object({
+  "systems": zod.array(zod.object({
+  "id": zod.object({
+  "value": zod.string().optional()
+}),
+  "name": zod.string(),
+  "x": zod.union([zod.number(),zod.stringFormat('double', getMapResponseSystemsItemXRegExpTwo)]),
+  "y": zod.union([zod.number(),zod.stringFormat('double', getMapResponseSystemsItemYRegExpTwo)]),
+  "z": zod.union([zod.number(),zod.stringFormat('double', getMapResponseSystemsItemZRegExpTwo)]),
+  "planets": zod.array(zod.object({
+  "id": zod.object({
+  "value": zod.string().optional()
+}),
+  "name": zod.string(),
+  "isObjective": zod.boolean(),
+  "richness": zod.record(zod.string(), zod.union([zod.int(),zod.stringFormat('int32', getMapResponseSystemsItemPlanetsItemRichnessRegExpThree)]))
+}))
+})),
+  "enemyHome": zod.union([zod.null(),zod.object({
+  "value": zod.string().optional()
+})]).optional()
+})
 
 export const GetStateParams = zod.object({
   "gameId": zod.string()
 })
 
-export const GetStateResponse = zod.unknown()
+export const getStateResponseVersionRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseGameTimeRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseTimeLeftSecondsRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseTeamScoreRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseEnemyScoreRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseStockpileIronRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseStockpileHydrogenRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseStockpileTitaniumRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseStockpileHelium3RegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseStockpileTotalRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemLaunchAtRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemDepartAtRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemArriveAtRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemShipsRegExpThree = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemCargoIronRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemCargoHydrogenRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemCargoTitaniumRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemCargoHelium3RegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseFleetsItemCargoTotalRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseReportsItemTimeRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseReportsItemRoundsRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemMinesRegExpThree = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemShipsRegExpThree = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemLevelRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemStartAtRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemFinishAtRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemCostIronRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemCostHydrogenRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemCostTitaniumRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemCostHelium3RegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const getStateResponseHoldingsItemQueueItemCostTotalRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+
+
+export const GetStateResponse = zod.object({
+  "version": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseVersionRegExpTwo)]),
+  "gameTime": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseGameTimeRegExpTwo)]),
+  "timeLeftSeconds": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseTimeLeftSecondsRegExpTwo)]),
+  "teamScore": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseTeamScoreRegExpTwo)]),
+  "enemyScore": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseEnemyScoreRegExpTwo)]),
+  "stockpile": zod.object({
+  "iron": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseStockpileIronRegExpTwo)]),
+  "hydrogen": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseStockpileHydrogenRegExpTwo)]),
+  "titanium": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseStockpileTitaniumRegExpTwo)]),
+  "helium3": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseStockpileHelium3RegExpTwo)]),
+  "total": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseStockpileTotalRegExpTwo)]).optional(),
+  "hasNegative": zod.boolean().optional()
+}),
+  "fleets": zod.array(zod.object({
+  "id": zod.object({
+  "value": zod.string().optional()
+}),
+  "owner": zod.union([zod.null(),zod.object({
+  "value": zod.string().optional()
+})]),
+  "side": zod.int(),
+  "from": zod.object({
+  "value": zod.string().optional()
+}),
+  "to": zod.object({
+  "value": zod.string().optional()
+}),
+  "launchAt": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseFleetsItemLaunchAtRegExpTwo)]),
+  "departAt": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseFleetsItemDepartAtRegExpTwo)]),
+  "arriveAt": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseFleetsItemArriveAtRegExpTwo)]),
+  "ships": zod.record(zod.string(), zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemShipsRegExpThree)])),
+  "cargo": zod.object({
+  "iron": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemCargoIronRegExpTwo)]),
+  "hydrogen": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemCargoHydrogenRegExpTwo)]),
+  "titanium": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemCargoTitaniumRegExpTwo)]),
+  "helium3": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemCargoHelium3RegExpTwo)]),
+  "total": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseFleetsItemCargoTotalRegExpTwo)]).optional(),
+  "hasNegative": zod.boolean().optional()
+})
+})),
+  "reports": zod.array(zod.object({
+  "id": zod.string(),
+  "time": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseReportsItemTimeRegExpTwo)]),
+  "planet": zod.object({
+  "value": zod.string().optional()
+}),
+  "attackersWon": zod.boolean(),
+  "rounds": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseReportsItemRoundsRegExpTwo)])
+})),
+  "ownPlanets": zod.array(zod.object({
+  "value": zod.string().optional()
+})).optional(),
+  "holdings": zod.array(zod.object({
+  "planet": zod.object({
+  "value": zod.string().optional()
+}),
+  "mines": zod.record(zod.string(), zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemMinesRegExpThree)])).optional(),
+  "hasShipyard": zod.boolean().optional(),
+  "hasDefense": zod.boolean().optional(),
+  "ships": zod.record(zod.string(), zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemShipsRegExpThree)])).optional(),
+  "queue": zod.array(zod.object({
+  "id": zod.string(),
+  "building": zod.union([zod.null(),zod.int()]),
+  "element": zod.union([zod.null(),zod.int()]),
+  "ship": zod.union([zod.null(),zod.int()]),
+  "level": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemQueueItemLevelRegExpTwo)]),
+  "startAt": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseHoldingsItemQueueItemStartAtRegExpTwo)]),
+  "finishAt": zod.union([zod.int(),zod.stringFormat('int64', getStateResponseHoldingsItemQueueItemFinishAtRegExpTwo)]),
+  "cost": zod.object({
+  "iron": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemQueueItemCostIronRegExpTwo)]),
+  "hydrogen": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemQueueItemCostHydrogenRegExpTwo)]),
+  "titanium": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemQueueItemCostTitaniumRegExpTwo)]),
+  "helium3": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemQueueItemCostHelium3RegExpTwo)]),
+  "total": zod.union([zod.int(),zod.stringFormat('int32', getStateResponseHoldingsItemQueueItemCostTotalRegExpTwo)]).optional(),
+  "hasNegative": zod.boolean().optional()
+})
+})).optional()
+})).optional()
+})
 
 export const PostCommandParams = zod.object({
   "gameId": zod.string()
@@ -35,13 +174,15 @@ export const postCommandBodyTwoCargoTwoTotalRegExpTwo = new RegExp('^-?(?:0|[1-9
 export const PostCommandBody = zod.union([zod.null(),zod.object({
   "type": zod.string().nullable(),
   "planet": zod.string().nullable(),
+  "from": zod.string().nullable(),
+  "to": zod.string().nullable(),
+  "fleet": zod.string().nullable(),
+  "itemId": zod.string().nullable(),
   "buildingType": zod.string().nullable(),
   "element": zod.string().nullable(),
   "shipType": zod.string().nullable(),
   "count": zod.union([zod.int(),zod.stringFormat('int32', postCommandBodyTwoCountRegExpTwo)]).nullable(),
   "upgradeType": zod.string().nullable(),
-  "from": zod.string().nullable(),
-  "to": zod.string().nullable(),
   "ships": zod.record(zod.string(), zod.union([zod.int(),zod.stringFormat('int32', postCommandBodyTwoShipsRegExpThree)])).nullable(),
   "cargo": zod.union([zod.null(),zod.object({
   "iron": zod.union([zod.int(),zod.stringFormat('int32', postCommandBodyTwoCargoTwoIronRegExpTwo)]),
@@ -50,12 +191,13 @@ export const PostCommandBody = zod.union([zod.null(),zod.object({
   "helium3": zod.union([zod.int(),zod.stringFormat('int32', postCommandBodyTwoCargoTwoHelium3RegExpTwo)]),
   "total": zod.union([zod.int(),zod.stringFormat('int32', postCommandBodyTwoCargoTwoTotalRegExpTwo)]).optional(),
   "hasNegative": zod.boolean().optional()
-})]),
-  "fleet": zod.string().nullable(),
-  "itemId": zod.string().nullable()
+})])
 })])
 
-export const PostCommandResponse = zod.unknown()
+export const PostCommandResponse = zod.object({
+  "ok": zod.boolean(),
+  "error": zod.string().nullable()
+})
 
 export const PostQuoteParams = zod.object({
   "gameId": zod.string()
@@ -83,5 +225,14 @@ export const PostQuoteBody = zod.union([zod.null(),zod.object({
 })])
 })])
 
-export const PostQuoteResponse = zod.unknown()
+export const postQuoteResponseDepartAtRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+export const postQuoteResponseArriveAtRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
+
+
+export const PostQuoteResponse = zod.object({
+  "ok": zod.boolean(),
+  "error": zod.string().nullable(),
+  "departAt": zod.union([zod.int(),zod.stringFormat('int64', postQuoteResponseDepartAtRegExpTwo)]),
+  "arriveAt": zod.union([zod.int(),zod.stringFormat('int64', postQuoteResponseArriveAtRegExpTwo)])
+})
 

@@ -161,14 +161,14 @@ export class SystemEngine {
 		this.clock.serverOffset = serverNow - performance.now();
 		this.clock.game = game;
 		const planets = game.planets
-			.filter((p) => p.systemId === system.id)
+			.filter((planet) => planet.systemId === system.id)
 			.sort((first, second) => first.orbit - second.orbit);
 		const isNewSystem = system.id !== this.world.systemId;
 
-		if (isNewSystem || planets.map((p) => p.id).join() !== this.world.planetKey)
+		if (isNewSystem || planets.map((planet) => planet.id).join() !== this.world.planetKey)
 			this.build(system, planets);
 
-		for (const p of planets) this.refreshOwner(p);
+		for (const planet of planets) this.refreshOwner(planet);
 		this.syncShips(game, system);
 
 		if (isNewSystem)
@@ -206,7 +206,7 @@ export class SystemEngine {
 	private span() {
 		return (
 			Math.max(
-				systemRadius([...this.world.planets.values()].map((n) => n.dto)),
+				systemRadius([...this.world.planets.values()].map((entry) => entry.dto)),
 				MIN_SPAN,
 			) * SPAN_MARGIN
 		);
@@ -232,7 +232,7 @@ export class SystemEngine {
 		const isNewSystem = system.id !== this.world.systemId;
 		this.clearContent();
 		this.world.systemId = system.id;
-		this.world.planetKey = planets.map((p) => p.id).join();
+		this.world.planetKey = planets.map((planet) => planet.id).join();
 		this.view.follow = null;
 
 		const { star, lights } = createStar(system);
@@ -319,20 +319,20 @@ export class SystemEngine {
 	}
 
 	/** only fleets flying between two planets of this system are drawn */
-	private syncShips(game: GameState, system: SystemDTO) {
-		const local = game.fleets.filter((f) => {
+	private syncShips(game: GameState, system: SystemDTO) { // keep only fleets visible in this system
+		const local = game.fleets.filter((fleet) => {
 			if (
-				f.status !== FLEET_STATUS.outbound &&
-				f.status !== FLEET_STATUS.returning
+				fleet.status !== FLEET_STATUS.outbound &&
+				fleet.status !== FLEET_STATUS.returning
 			)
 
 				return false;
-			const { from, to } = flightOf(game, f, this.nowMs());
+			const { from, to } = flightOf(game, fleet, this.nowMs());
 
 			return from.systemId === system.id && to.systemId === system.id;
 		});
 
-		const planetIds = new Set(local.map((f) => f.id));
+		const planetIds = new Set(local.map((fleet) => fleet.id));
 
 		for (const [id, ship] of this.world.ships) {
 			if (planetIds.has(id)) continue;

@@ -5,6 +5,7 @@ namespace SpaceGame.Core.Tests;
 public class GameEngineTests
 {
     private static readonly PlayerId Me = new("p1");
+    private static readonly PlanetId Mars = StarCatalog.Systems[0].Planets.Single(p => p.Name == "Mars").Id;
     private static readonly IGameEngine Engine = GameEngineFactory.Create();
 
     private static GameState New() =>
@@ -41,9 +42,27 @@ public class GameEngineTests
     }
 
     [Fact]
+    public void ViewListsOwnPlanetsAndHoldings()
+    {
+        var view = Engine.ViewFor(New(), Me, 0);
+        Assert.Equal([StartingKit.EarthId], view.OwnPlanets);
+        Assert.Equal(4, view.Holdings.Single().Ships[ShipType.Fighter]);
+    }
+
+    [Fact]
+    public void ViewRoundTripsThroughJson()
+    {
+        var view = Engine.ViewFor(New(), Me, 0);
+        var json = JsonSerializer.Serialize(view);
+        var back = JsonSerializer.Deserialize<PlayerView>(json)!;
+        Assert.Equal(json, JsonSerializer.Serialize(back));
+        Assert.Equal(view.OwnPlanets, back.OwnPlanets);
+    }
+
+    [Fact]
     public void QuoteAddsPrepToFlight()
     {
-        var send = new SendFleet(StartingKit.EarthId, new Dictionary<ShipType, int> { [ShipType.Scout] = 1 }, new PlanetId("moon"), null);
+        var send = new SendFleet(StartingKit.EarthId, new Dictionary<ShipType, int> { [ShipType.Scout] = 1 }, Mars, null);
         var q = Engine.Quote(New(), Me, send, 1000);
         Assert.True(q.Ok);
         Assert.Equal(1300, q.DepartAt);
@@ -53,7 +72,7 @@ public class GameEngineTests
     [Fact]
     public void QuoteRejectsMissingShips()
     {
-        var send = new SendFleet(StartingKit.EarthId, new Dictionary<ShipType, int> { [ShipType.Dreadnought] = 1 }, new PlanetId("moon"), null);
+        var send = new SendFleet(StartingKit.EarthId, new Dictionary<ShipType, int> { [ShipType.Dreadnought] = 1 }, Mars, null);
         Assert.Equal("You do not have those ships there.", Engine.Quote(New(), Me, send, 0).Error);
     }
 

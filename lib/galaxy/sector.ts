@@ -70,7 +70,7 @@ export type SectorStar = {
 	y: number;
 };
 
-/** the same stars every time for a given sector; positions are in light-years */
+/** Seeded so the map is stable between visits; positions are in light-years. */
 export function sectorStars(sectorX: number, sectorY: number): SectorStar[] {
 	const random = sectorRng(sectorX, sectorY);
 	const count = countFrom(random);

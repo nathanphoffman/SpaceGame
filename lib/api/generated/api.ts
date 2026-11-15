@@ -24,9 +24,17 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BattleReport,
   CommandBody,
+  CommandResult,
   CreateGameRequest,
+  CreateGameResponse,
+  FlightQuote,
+  GalaxyMap,
   JoinGameRequest,
+  JoinGameResponse,
+  LobbyResponse,
+  PlayerView,
   SendFleetBody
 } from './model';
 
@@ -179,7 +187,7 @@ export function useHealth<TData = Awaited<ReturnType<typeof health>>, TError = u
 
 
 export type createGameResponse200 = {
-  data: void
+  data: CreateGameResponse
   status: 200
 }
 
@@ -259,7 +267,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
 
 export type joinGameResponse200 = {
-  data: void
+  data: JoinGameResponse
   status: 200
 }
 
@@ -339,7 +347,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
 
 export type getLobbyResponse200 = {
-  data: void
+  data: LobbyResponse
   status: 200
 }
 
@@ -525,7 +533,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
 
 export type getMapResponse200 = {
-  data: void
+  data: GalaxyMap
   status: 200
 }
 
@@ -631,7 +639,7 @@ export function useGetMap<TData = Awaited<ReturnType<typeof getMap>>, TError = u
 
 
 export type getStateResponse200 = {
-  data: void
+  data: PlayerView
   status: 200
 }
 
@@ -737,7 +745,7 @@ export function useGetState<TData = Awaited<ReturnType<typeof getState>>, TError
 
 
 export type postCommandResponse200 = {
-  data: void
+  data: CommandResult
   status: 200
 }
 
@@ -818,7 +826,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
 
 export type postQuoteResponse200 = {
-  data: void
+  data: FlightQuote
   status: 200
 }
 
@@ -899,7 +907,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
 
 export type listReportsResponse200 = {
-  data: void
+  data: BattleReport[]
   status: 200
 }
 
@@ -1005,7 +1013,7 @@ export function useListReports<TData = Awaited<ReturnType<typeof listReports>>, 
 
 
 export type getReportResponse200 = {
-  data: void
+  data: BattleReport
   status: 200
 }
 

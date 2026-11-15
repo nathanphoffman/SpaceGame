@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using SpaceGame.Core;
+using SpaceGame.Server.Discord;
 using SpaceGame.Server.Lobby;
 using SpaceGame.Server.Persistence;
 
@@ -41,7 +42,7 @@ public sealed class SeededDice(int seed, long gameTime) : IDice
 }
 
 /// <summary>Loads a game, advances it to the current game time, saves it and hands it to the caller, all under the game's lock.</summary>
-public sealed class GameSession(GameRepository repo, IGameEngine engine, IClock clock, GameLocks locks)
+public sealed class GameSession(GameRepository repo, IGameEngine engine, IClock clock, GameLocks locks, IGameNotifier notifier, IDiscordNotifier discord)
 {
     /// <summary>Returns null when the game does not exist.</summary>
     public Task<GameSnapshot?> AdvanceAsync(Guid gameId) =>
@@ -91,7 +92,22 @@ public sealed class GameSession(GameRepository repo, IGameEngine engine, IClock 
         }
 
         var version = await repo.SaveAsync(game.Id, state, game.Status, game.Version, clock.UtcNow);
+        var reports = await SaveReportsAsync(game.Id, events);
+        await EventNotifications.PublishAsync(notifier, game.Id, version, events, reports);
+        await DiscordAlerts.SendAsync(discord, game.DiscordWebhook, events);
 
         return new GameSnapshot(game with { State = state, Version = version }, now, events);
+    }
+
+    private async Task<IReadOnlyList<ReportRow>> SaveReportsAsync(Guid gameId, IReadOnlyList<GameEvent> events)
+    {
+        var rows = ReportRecorder.RowsFor(gameId, events);
+
+        if (rows.Count > 0)
+        {
+            await repo.AddReportsAsync(rows);
+        }
+
+        return rows;
     }
 }

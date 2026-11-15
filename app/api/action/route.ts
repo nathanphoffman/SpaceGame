@@ -34,6 +34,7 @@ export async function POST(request: Request) {
 			planets: planetIds,
 		};
 
+		// One switch maps each action name to its engine call; reset has no engine call, resetGame above did the work.
 		const { state } = await withGame((world, time) => {
 			switch (body.action) {
 				case "build":

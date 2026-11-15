@@ -44,14 +44,14 @@ export function mulberry32(seed: number) {
 
 		// scramble the bits (xor and shift) so nearby seeds give unrelated numbers
 		mixed = Math.imul(
-			mixed ^ (mixed >>> MULBERRY_SHIFT_A),
+			mixed ^ (mixed >>> MULBERRY_SHIFT_A), // bit mixing for a well-spread hash
 			mixed | MULBERRY_OR_A,
 		);
 
 		// mix once more; Math.imul is a 32-bit integer multiply
 		mixed ^=
 			mixed +
-			Math.imul(mixed ^ (mixed >>> MULBERRY_SHIFT_B), mixed | MULBERRY_OR_B);
+			Math.imul(mixed ^ (mixed >>> MULBERRY_SHIFT_B), mixed | MULBERRY_OR_B); // bit mixing for a well-spread hash
 
 		// final scramble, then divide by 2^32 to get a number from 0 up to (not including) 1
 		return ((mixed ^ (mixed >>> MULBERRY_SHIFT_C)) >>> 0) / UINT32_RANGE;
@@ -82,9 +82,9 @@ export function noise3(
 	for (let corner = 0; corner < CORNERS; corner++) {
 		// mix the corner's coordinates and the seed: multiply each by a large odd number and combine them with xor
 		let hash =
-			Math.imul(cellX + (corner & 1), HASH_X) ^
-			Math.imul(cellY + ((corner >> 1) & 1), HASH_Y) ^
-			Math.imul(cellZ + (corner >> 2), HASH_Z) ^
+			Math.imul(cellX + (corner & 1), HASH_X) ^ // x cell and corner bit
+			Math.imul(cellY + ((corner >> 1) & 1), HASH_Y) ^ // y cell and corner bit
+			Math.imul(cellZ + (corner >> 2), HASH_Z) ^ // z cell and corner bit
 			Math.imul(seed, HASH_SEED);
 		hash = Math.imul(hash ^ (hash >>> HASH_SHIFT_A), HASH_SEED); // scramble the bits again so close inputs give unrelated outputs
 		hash ^= hash >>> HASH_SHIFT_B; // fold the high bits into the low bits

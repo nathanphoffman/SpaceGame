@@ -26,15 +26,15 @@ export type Resources = Record<string, number>;
 // A planet can build a mine for each element it is made of, plus a shipyard.
 export const MINE_PREFIX = "mine_";
 
-export const mineType = (el: string) => `${MINE_PREFIX}${el}`;
+export const mineType = (element: string) => `${MINE_PREFIX}${element}`;
 
-/** the element a mine building type produces, or null if the type is not a mine */
+/** Lets callers treat non-mine buildings as "no element" instead of checking the type themselves; null if not a mine. */
 export const mineElement = (type: string): Element | null => {
-	const el = type.startsWith(MINE_PREFIX)
+	const element = type.startsWith(MINE_PREFIX)
 		? type.slice(MINE_PREFIX.length)
 		: null;
 
-	return el && el in ELEMENTS ? (el as Element) : null;
+	return element && element in ELEMENTS ? (element as Element) : null;
 };
 
 const MINE_COST_MULT: Partial<Record<Element, number>> = {
@@ -97,15 +97,15 @@ export function buildingInfo(type: string): BuildingInfo | null {
 		};
 	}
 
-	const el = mineElement(type);
+	const element = mineElement(type);
 
-	if (!el) return null;
-	const multiplier = MINE_COST_MULT[el] ?? 1;
+	if (!element) return null;
+	const multiplier = MINE_COST_MULT[element] ?? 1;
 
 	return {
-		name: `${ELEMENTS[el].name} Mine`,
+		name: `${ELEMENTS[element].name} Mine`,
 		// gas, gem or metal mine icon depending on the element
-		icon: mineIcon(el),
+		icon: mineIcon(element),
 		cost: Object.fromEntries(
 			Object.entries(MINE_BASE_COST).map(([symbol, amount]) => [
 				symbol,
@@ -113,7 +113,7 @@ export function buildingInfo(type: string): BuildingInfo | null {
 			]),
 		),
 		time: Math.round(MINE_BASE_SECONDS * Math.sqrt(multiplier)),
-		desc: `Extracts ${ELEMENTS[el].name}`,
+		desc: `Extracts ${ELEMENTS[element].name}`,
 	};
 }
 
@@ -148,8 +148,8 @@ export const buildCost = (type: string, level: number): Resources => {
 	const base = buildingInfo(type)!.cost;
 
 	return Object.fromEntries(
-		Object.entries(base).map(([el, n]) => [
-			el,
+		Object.entries(base).map(([element, n]) => [
+			element,
 			Math.round(n * COST_GROWTH_PER_LEVEL ** level),
 		]),
 	);
@@ -466,6 +466,7 @@ export const flightSeconds = (
 	a: Placed,
 	b: Placed,
 	systems: { id: number; x: number; y: number }[],
+// Seconds between two planets: same system uses the short-hop range, otherwise star distance decides.
 ) => {
 	// same system means a short hop; otherwise distance between the stars decides
 	if (a.systemId === b.systemId)
@@ -478,8 +479,8 @@ export const flightSeconds = (
 			),
 		);
 
-	const fromSystem = systems.find((s) => s.id === a.systemId)!;
-	const toSystem = systems.find((s) => s.id === b.systemId)!;
+	const fromSystem = systems.find((system) => system.id === a.systemId)!;
+	const toSystem = systems.find((system) => system.id === b.systemId)!;
 
 	return Math.round(
 		CROSS_SYSTEM_FLIGHT.base +
@@ -514,21 +515,35 @@ export type QueueDTO = {
 	finishAt: number;
 };
 
-export type FleetDTO = {
+/** where a fleet is going and what it is for */
+type FleetRoute = {
 	id: string;
 	originId: number;
 	targetId: number;
 	mission: Mission;
-	ships: Record<string, number>;
-	loot: Resources;
+};
+
+/** the times that drive a fleet's movement (all ms) */
+type FleetTimes = {
 	departAt: number;
 	arriveAt: number;
 	returnAt: number;
+};
+
+/** what the fleet carries and its outcome */
+type FleetLoad = {
+	ships: Record<string, number>;
+	loot: Resources;
 	status: FleetStatus;
 	report: string;
-	/** an enemy fleet (from the API's Side); drawn in a different colour */
-	hostile?: boolean;
 };
+
+export type FleetDTO = FleetRoute &
+	FleetTimes &
+	FleetLoad & {
+		/** an enemy fleet (from the API's Side); drawn in a different colour */
+		hostile?: boolean;
+	};
 
 export type GameState = {
 	nowMs: number;

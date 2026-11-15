@@ -19,10 +19,10 @@ public static class PlayEndpoints
 {
     public static void MapPlayEndpoints(this RouteGroupBuilder game)
     {
-        game.MapGet("/map", GetMap).WithName("GetMap");
-        game.MapGet("/state", GetState).RequireAuthorization().WithName("GetState");
-        game.MapPost("/commands", PostCommand).RequireAuthorization().WithName("PostCommand");
-        game.MapPost("/quote", PostQuote).RequireAuthorization().WithName("PostQuote");
+        game.MapGet("/map", GetMap).WithName("GetMap").Produces<GalaxyMap>();
+        game.MapGet("/state", GetState).RequireAuthorization().WithName("GetState").Produces<PlayerView>();
+        game.MapPost("/commands", PostCommand).RequireAuthorization().WithName("PostCommand").Produces<CommandResult>();
+        game.MapPost("/quote", PostQuote).RequireAuthorization().WithName("PostQuote").Produces<FlightQuote>();
     }
 
     private static async Task<IResult> GetMap(string gameId, GameRepository repo, IGameEngine engine)

@@ -47,31 +47,31 @@ export function pickAt(
 /** Click (not drag) and hover-cursor handling on `el`. Returns a function that removes the listeners. */
 export function bindPointer(
 	el: HTMLElement,
-	pick: (e: MouseEvent) => number | null,
+	pick: (event: MouseEvent) => number | null,
 	onClick: (pickedId: number | null) => void,
 ) {
 	let hover: number | null = null;
 
-	const onDown = (down: PointerEvent) => {
+	const onDown = (down: PointerEvent) => { // callback run for each event or item
 		// a click only counts if the pointer barely moved between press and release, otherwise it was a drag
 
 		if (down.button !== 0) return;
 		const start = { x: down.clientX, y: down.clientY };
 
-		const up = (e: PointerEvent) => {
+		const up = (event: PointerEvent) => {
 			window.removeEventListener(POINTER_EVENT.up, up);
 
-			if (Math.hypot(e.clientX - start.x, e.clientY - start.y) <= DRAG_PIXELS)
-				onClick(pick(e));
+			if (Math.hypot(event.clientX - start.x, event.clientY - start.y) <= DRAG_PIXELS)
+				onClick(pick(event));
 		};
 
 		window.addEventListener(POINTER_EVENT.up, up);
 	};
 
 	// hover only: while a button is held the drag handler owns the pointer
-	const onMove = (e: PointerEvent) => {
-		if (e.buttons) return;
-		const id = pick(e);
+	const onMove = (event: PointerEvent) => {
+		if (event.buttons) return;
+		const id = pick(event);
 
 		if (id === hover) return;
 		hover = id;

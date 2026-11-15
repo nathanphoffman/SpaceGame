@@ -12,11 +12,12 @@ public sealed record SimArgs(
 {
     private const int DefaultRuns = 1000;
     private const int DefaultSeed = 1;
+    private const int FirstOptionIndex = 3;
 
     /// <summary>Parses <c>fight "10 fighter" "2 battleship, 1 scout" [--runs N] [--defense] [--seed S]</c>.</summary>
     public static SimArgs Parse(string[] args)
     {
-        if (args.Length < 3 || args[0] != "fight")
+        if (args.Length < FirstOptionIndex || args[0] != "fight")
 
             throw new ArgumentException("Usage: fight \"<count> <ship>, ...\" \"<count> <ship>, ...\" [--runs N] [--defense] [--seed S]");
 
@@ -24,7 +25,7 @@ public sealed record SimArgs(
         var seed = DefaultSeed;
         var defense = false;
 
-        for (var i = 3; i < args.Length; i++)
+        for (var i = FirstOptionIndex; i < args.Length; i++)
         {
             switch (args[i])
             {

@@ -27,7 +27,7 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
         var playerId = Guid.NewGuid();
         var state = engine.NewGame(SetupFor(seed, [new PlayerSetup(new PlayerId(playerId.ToString()), req.Name!.Trim())]));
         var game = await repo.CreateAsync(await FreeCodeAsync(), req.Mode!, seed, state, req.DiscordWebhookUrl, clock.UtcNow);
-        var token = await AddPlayerAsync(game.Id, playerId, req.Name!.Trim(), isHost: true);
+        var token = await AddHostAsync(game.Id, playerId, req.Name!.Trim());
 
         return ServiceResult<CreateGameResponse>.Success(new(game.Id, game.Code, playerId, token));
     }
@@ -59,7 +59,7 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
         }
 
         var playerId = Guid.NewGuid();
-        var token = await AddPlayerAsync(game.Id, playerId, name, isHost: false);
+        var token = await AddGuestAsync(game.Id, playerId, name);
 
         return ServiceResult<JoinGameResponse>.Success(new(game.Id, playerId, token));
     }
@@ -155,10 +155,17 @@ public sealed class LobbyService(GameRepository repo, IGameEngine engine, IClock
         }
     }
 
-    private async Task<string> AddPlayerAsync(Guid gameId, Guid playerId, string name, bool isHost)
+    private Task<string> AddHostAsync(Guid gameId, Guid playerId, string name) =>
+        SavePlayerAsync(new PlayerRow { Id = playerId, GameId = gameId, Name = name, IsHost = true });
+
+    private Task<string> AddGuestAsync(Guid gameId, Guid playerId, string name) =>
+        SavePlayerAsync(new PlayerRow { Id = playerId, GameId = gameId, Name = name, IsHost = false });
+
+    private async Task<string> SavePlayerAsync(PlayerRow player)
     {
         var token = PlayerTokens.NewToken();
-        await repo.AddPlayerAsync(new PlayerRow { Id = playerId, GameId = gameId, Name = name, TokenHash = PlayerTokens.Hash(token), IsHost = isHost });
+        player.TokenHash = PlayerTokens.Hash(token);
+        await repo.AddPlayerAsync(player);
 
         return token;
     }

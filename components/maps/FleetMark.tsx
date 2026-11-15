@@ -6,8 +6,8 @@ import { countdownText, prepLeftMs } from "@/lib/galaxy/flight";
 export const fleetClass = (fleet: FleetDTO) => (fleet.hostile ? "fleet enemy" : "fleet");
 
 /** the fleet icon, with the prep countdown under it while it waits at its origin */
-export default function FleetMark({ fleet, now, angle }: { fleet: FleetDTO; now: number; angle: number }) {
-	const prep = prepLeftMs(fleet, now);
+export default function FleetMark({ fleet, nowMs, angle }: { fleet: FleetDTO; nowMs: number; angle: number }) {
+	const prep = prepLeftMs(fleet, nowMs);
 
 	return (
 		<>
@@ -17,6 +17,7 @@ export default function FleetMark({ fleet, now, angle }: { fleet: FleetDTO; now:
 					{countdownText(prep)}
 				</small>
 			)}
+
 		</>
 	);
 }

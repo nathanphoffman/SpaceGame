@@ -13,6 +13,14 @@ export interface CommandBody {
   /** @nullable */
   planet: string | null;
   /** @nullable */
+  from: string | null;
+  /** @nullable */
+  to: string | null;
+  /** @nullable */
+  fleet: string | null;
+  /** @nullable */
+  itemId: string | null;
+  /** @nullable */
   buildingType: string | null;
   /** @nullable */
   element: string | null;
@@ -26,14 +34,6 @@ export interface CommandBody {
   /** @nullable */
   upgradeType: string | null;
   /** @nullable */
-  from: string | null;
-  /** @nullable */
-  to: string | null;
-  /** @nullable */
   ships: CommandBodyShips;
   cargo: null | Resources;
-  /** @nullable */
-  fleet: string | null;
-  /** @nullable */
-  itemId: string | null;
 }

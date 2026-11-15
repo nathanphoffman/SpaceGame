@@ -1,22 +1,15 @@
-"use client";
+import { CreateGameForm, JoinGameForm } from "@/components/home/HomeForms";
 
-import { useGame } from "@/components/hooks/useGame";
-import { useNavigation } from "@/components/hooks/useNavigation";
-import GameScreen from "@/components/screens/GameScreen";
+type Props = { searchParams: Promise<{ code?: string }> };
 
-export default function Page() {
-	const navigation = useNavigation();
-	const { game, error, act, nowMs: now } = useGame(navigation.view);
-
-	if (!game) return <div style={{ padding: 24 }}>{error || "Loading…"}</div>;
+export default async function HomePage({ searchParams }: Props) {
+	const { code } = await searchParams;
 
 	return (
-		<GameScreen
-			game={game}
-			error={error}
-			act={act}
-			now={now}
-			nav={navigation}
-		/>
+		<main style={{ maxWidth: 480, margin: "0 auto", padding: 16 }}>
+			<h1>Space Game</h1>
+			<CreateGameForm />
+			<JoinGameForm defaultCode={code} />
+		</main>
 	);
 }

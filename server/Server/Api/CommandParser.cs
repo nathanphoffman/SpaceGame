@@ -18,8 +18,8 @@ public static class CommandParser
             "queueShip" => QueueShip(body),
             "startUpgrade" => StartUpgrade(body),
             "sendFleet" => SendFleet(body),
-            "recallFleet" => Need(body.Fleet, "fleet", id => new RecallFleet(new FleetId(id))),
-            "colonize" => Need(body.Planet, "planet", id => new Colonize(new PlanetId(id))),
+            "recallFleet" => Need(body.Target.Fleet, "fleet", id => new RecallFleet(new FleetId(id))),
+            "colonize" => Need(body.Target.Planet, "planet", id => new Colonize(new PlanetId(id))),
             "cancelQueueItem" => CancelQueueItem(body),
             _ => Fail($"Unknown command type '{body.Type}'."),
         };
@@ -27,61 +27,61 @@ public static class CommandParser
 
     private static ParsedCommand BuildBuilding(CommandBody b)
     {
-        if (!Enum<BuildingType>(b.BuildingType, "buildingType", out var type, out var error) || Missing(b.Planet, "planet", out error))
+        if (!Enum<BuildingType>(b.Choice.BuildingType, "buildingType", out var type, out var error) || Missing(b.Target.Planet, "planet", out error))
         {
             return Fail(error!);
         }
 
         var needsElement = type == Core.BuildingType.Mine;
 
-        if (needsElement != (b.Element is not null))
+        if (needsElement != (b.Choice.Element is not null))
         {
             return Fail(needsElement ? "A mine needs an element." : "Only a mine takes an element.");
         }
 
         if (!needsElement)
         {
-            return Ok(new BuildBuilding(new PlanetId(b.Planet!), type, null));
+            return Ok(new BuildBuilding(new PlanetId(b.Target.Planet!), type, null));
         }
 
-        return Enum<Element>(b.Element, "element", out var element, out error)
-            ? Ok(new BuildBuilding(new PlanetId(b.Planet!), type, element))
+        return Enum<Element>(b.Choice.Element, "element", out var element, out error)
+            ? Ok(new BuildBuilding(new PlanetId(b.Target.Planet!), type, element))
             : Fail(error!);
     }
 
     private static ParsedCommand QueueShip(CommandBody b)
     {
-        if (!Enum<ShipType>(b.ShipType, "shipType", out var ship, out var error) || Missing(b.Planet, "planet", out error))
+        if (!Enum<ShipType>(b.Choice.ShipType, "shipType", out var ship, out var error) || Missing(b.Target.Planet, "planet", out error))
         {
             return Fail(error!);
         }
 
-        return b.Count is > 0
-            ? Ok(new QueueShip(new PlanetId(b.Planet!), ship, b.Count.Value))
+        return b.Choice.Count is > 0
+            ? Ok(new QueueShip(new PlanetId(b.Target.Planet!), ship, b.Choice.Count.Value))
             : Fail("Count must be at least 1.");
     }
 
     private static ParsedCommand StartUpgrade(CommandBody b) =>
-        Enum<UpgradeType>(b.UpgradeType, "upgradeType", out var type, out var error) ? Ok(new StartUpgrade(type)) : Fail(error!);
+        Enum<UpgradeType>(b.Choice.UpgradeType, "upgradeType", out var type, out var error) ? Ok(new StartUpgrade(type)) : Fail(error!);
 
     private static ParsedCommand CancelQueueItem(CommandBody b) =>
-        Missing(b.Planet, "planet", out var error) || Missing(b.ItemId, "itemId", out error)
+        Missing(b.Target.Planet, "planet", out var error) || Missing(b.Target.ItemId, "itemId", out error)
             ? Fail(error!)
-            : Ok(new CancelQueueItem(new PlanetId(b.Planet!), b.ItemId!));
+            : Ok(new CancelQueueItem(new PlanetId(b.Target.Planet!), b.Target.ItemId!));
 
     private static ParsedCommand SendFleet(CommandBody b)
     {
-        if (Missing(b.From, "from", out var error) || Missing(b.To, "to", out error))
+        if (Missing(b.Target.From, "from", out var error) || Missing(b.Target.To, "to", out error))
         {
             return Fail(error!);
         }
 
-        if (!ParseShips(b.Ships, out var ships, out error))
+        if (!ParseShips(b.Payload.Ships, out var ships, out error))
         {
             return Fail(error!);
         }
 
-        return Ok(new SendFleet(new PlanetId(b.From!), ships, new PlanetId(b.To!), b.Cargo));
+        return Ok(new SendFleet(new PlanetId(b.Target.From!), ships, new PlanetId(b.Target.To!), b.Payload.Cargo));
     }
 
     private static bool ParseShips(Dictionary<string, int>? input, out Dictionary<ShipType, int> ships, out string? error)

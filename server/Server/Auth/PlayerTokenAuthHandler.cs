@@ -11,6 +11,7 @@ public static class PlayerAuth
     public const string Scheme = "PlayerToken";
     public const string GameIdClaim = "game_id";
     public const string HostClaim = "is_host";
+    public const string HubPath = "/hubs";
     private const string BearerPrefix = "Bearer ";
 
     public static string? ReadBearer(string? header) =>
@@ -26,9 +27,13 @@ public sealed class PlayerTokenAuthHandler(
     UrlEncoder encoder,
     GameRepository games) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
+    // Browsers cannot set headers on WebSocket connections, so the hub takes the token from the query.
+    private string? HubQueryToken() =>
+        Request.Path.StartsWithSegments(PlayerAuth.HubPath) ? Request.Query["access_token"].ToString() : null;
+
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var token = PlayerAuth.ReadBearer(Request.Headers.Authorization.ToString());
+        var token = PlayerAuth.ReadBearer(Request.Headers.Authorization.ToString()) ?? HubQueryToken();
 
         if (string.IsNullOrEmpty(token))
         {

@@ -27,7 +27,7 @@ type Props = {
 const MAX_ICONS_PER_ROW = 300; // keep the page light if you build thousands
 const HANGAR_ICON_PX = 22;
 
-/** one row of the hangar: a label and an icon for each ship of one type */
+/** Icons are capped (MAX_ICONS_PER_ROW) so a huge fleet cannot flood the page. */
 function HangarRow({ type, count }: { type: ShipType; count: number }) {
 	const ship = SHIPS[type];
 	const shown = Math.min(count, MAX_ICONS_PER_ROW);

@@ -49,3 +49,4 @@ export const playerViewSchema = z.object({
 export type GalaxyMapDto = z.infer<typeof galaxyMapSchema>;
 export type FleetViewDto = z.infer<typeof fleetViewSchema>;
 export type PlayerViewDto = z.infer<typeof playerViewSchema>;
+export type PlanetInfoDto = z.infer<typeof planetInfoSchema>;

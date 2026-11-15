@@ -13,10 +13,6 @@ public static class GameEndpoints
 
         var game = games.MapGroup("/{gameId}");
         game.MapPlayEndpoints();
-        game.MapGet("/reports", (string gameId) => NotImplemented()).WithName("ListReports");
-        game.MapGet("/reports/{id}", (string gameId, string id) => NotImplemented()).WithName("GetReport");
+        game.MapReportEndpoints();
     }
-
-    private static IResult NotImplemented() =>
-        Results.Problem(statusCode: StatusCodes.Status501NotImplemented, title: "Not implemented yet");
 }

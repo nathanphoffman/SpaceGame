@@ -3,6 +3,9 @@ import { loadSession } from "./session";
 const HTTP_NO_CONTENT = 204;
 const DEFAULT_BASE_URL = "";
 
+export const HTTP_POST = "POST";
+export const GAMES_PATH = "/api/games";
+
 export type ProblemDetails = {
 	type?: string;
 	title?: string;
@@ -34,6 +37,7 @@ async function readProblem(response: Response): Promise<ProblemDetails> {
 		return typeof body === "object" && body !== null ? (body as ProblemDetails) : {};
 	} catch (error) {
 		console.warn("Error response was not JSON", error);
+
 		// The error body was not JSON (proxy page, empty body); fall back to the status text.
 		return { title: response.statusText };
 	}

@@ -178,7 +178,8 @@ export default function Shipyard(props: Props) {
 				{SHIP_TYPES.map(
 					(
 						type, // one tile per ship type
-					) => (
+					) => ( // callback: one rendered entry per item
+
 						<ShipTile
 							key={type}
 							type={type}

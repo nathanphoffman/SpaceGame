@@ -5,10 +5,36 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './battleReport';
+export * from './buildingType';
 export * from './commandBody';
 export * from './commandBodyShips';
+export * from './commandResult';
 export * from './createGameRequest';
+export * from './createGameResponse';
+export * from './element';
+export * from './fleetId';
+export * from './fleetView';
+export * from './fleetViewShips';
+export * from './flightQuote';
+export * from './galaxyMap';
+export * from './holding';
+export * from './holdingMines';
+export * from './holdingShips';
 export * from './joinGameRequest';
+export * from './joinGameResponse';
+export * from './lobbyPlayer';
+export * from './lobbyResponse';
+export * from './planetId';
+export * from './planetInfo';
+export * from './planetInfoRichness';
+export * from './playerId';
+export * from './playerView';
+export * from './queueItem';
 export * from './resources';
 export * from './sendFleetBody';
 export * from './sendFleetBodyShips';
+export * from './shipType';
+export * from './side';
+export * from './systemId';
+export * from './systemInfo';

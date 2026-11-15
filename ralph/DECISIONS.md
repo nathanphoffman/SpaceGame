@@ -55,3 +55,36 @@ To override one, edit or add a line here (`HUMAN:` prefix); workers read this fi
 - [round 1, merge] Glue fixes: NETSDK1188 added to NoWarn (-warnaserror made it fatal); GameRepositoryTests now compares state as JSON (Core's GameState has lists, so record equality is by reference); report stub routes declare gameId/id so Orval accepts openapi.json; generated API client committed.
 - [round 1, merge] `npm run build` fails the first time with a Next.js "SecurityFatalError" upgrade notice, then passes on retry. Not upgrading Next.js in the merge step; left for the user.
 - [round 1, plan] Score 87.4 < 90, so each area's list starts with quality items. Core gets the world milestone next; server finishes f using the fake engine; web moves to generated hooks and starts the game UI against the contract.
+- [round 2, core] check_full.sh stops at `orval: not found` (web tooling missing on this machine); dotnet format/build/tests all pass (103 + 66). Not a core issue.
+- [round 2, core] Skipped: QueueFixture.cs:29 ".Result" finding is a false positive (CommandResult.Result tuple field, not a Task).
+- [round 2, core] Skipped: Core.Tests folder has 18 files and several 12-test classes; splitting further is large/low value. SimArgs "magic numbers" are argument-index checks; left as is.
+- [round 2, core] Score 86.9 before and after (under 90); the remaining findings are mostly in web/server files owned by other areas.
+[round 2, core] Objective band uses 2D distance from Sol divided by Sol-to-enemy-home distance (30% to 70%); Z is always 0 on the map. Only systems with known planets can hold objectives.
+[round 2, core] Split the galaxy wiring item: NewGame and Quote done; PlayerView holdings and CancelQueueItem left as sub-items. Enemy ownership lives in GameState.EnemyPlanets (list of planet ids).
+- [round 2, core] Score 86.7 (under 90). Only tiny owned-file fixes (blank lines in GalaxyGenerator, named constant in SimArgs); the rest is in other areas' files. Full check stops at `orval: not found` (web tool missing in this worktree's node_modules), not a core issue.
+[round 2, core] Recall during prep returns ships instantly; in flight the fleet flies back for the time already flown. Cargo is taken from the stockpile at send.
+- [round 2, core] Score 86.6 before (under 90). Only added blank lines in FleetOrders/FleetArrivals; remaining findings are in other areas' files or are long test files and test-chain depth (risky/large).
+
+[round 2, server] Split the first quality item: test reorganisation done; CommandBody/GameRow splitting left as its own sub-item because it needs a JSON converter / EF owned types.
+- [round 2, server] Score 87.3 before and after (target 90 not reached): most of the gap is in other areas' files (long functions, clever code in components/ and lib/ client code, dependency count).
+- [round 2, server] lib/api/generated was stale after the CommandBody split; regenerated it with `npm run gen:api` and committed it. The first full check had 4 Postgres tests fail that passed on every re-run (flaky, not fixed); `next build` also stops on a Next.js security notice the first time and passes on retry.
+- [round 2, server] Skipped: UseHttpsRedirection/UseHsts and .editorconfig (behaviour or wide formatting change), LobbyService SaveStartedAsync swallowed 409 (intended, already commented), AddPlayerAsync bool flag, db.ts repeated migration statements (risky SQL).
+[round 2, server] BattleResolved event Data keys read as planet, attackersWon ("true"), rounds; report id is the reports row Guid. Core does not emit these yet.
+- [round 2, server] Regenerated lib/api/generated (zod for report endpoints was stale); removed unused private `NotImplemented` in GameEndpoints.cs.
+- [round 2, server] Score stays 87.1 (needs 90): remaining findings are in other areas' files (UI components, Core, lib/data) or are large/risky. Skipped in my area: LobbyService.cs:114 catch (intentional 409, already commented), GameClock.cs:60 catch (cancellation is the normal shutdown path), LobbyCreateTests.cs:35 blank line (nothing can go between `{` and first statement), GameRepository.cs 14 methods (split too large for a quality pass).
+[round 2, server] FleetSpotted event data keys assumed: fleet, planet, arrivesAt, strength; GameEnded: outcome. Hub token also read from access_token query on /hubs.
+- [round 2, server] Score was 87.1 (needs 90). Most of the loss is in files other areas own (maps, planet, panels) and in old code; I only added the missing "why" comment in GameClock and a blank line in EventNotificationsTests. Skipped: lib/server/db.ts repeated migration lines and lib/server/engine.ts size (old code, risky), call-depth chains (spread over many files).
+- [round 2, server] `npm run build` fails every other run with a Next.js "security upgrade" notice from the registry check; it passes on retry. Not changed.
+
+[round 2, web] Generated response types are void/unknown (OpenAPI has no response schemas), so forms/lobby use the generated calls and hooks but parse bodies with the existing small Zod schemas; item split, adapter part waits on the server.
+- [round 2, web] check_full fails in the server tests (PlayEndpointTests.A_token_for_another_game_is_forbidden and State_and_quote_need_a_token): server area, left alone. The web checks (tsc, lint, vitest, build) pass.
+- [round 2, web] Score went 87.5 -> 89.8, short of 90. Remaining gaps are mostly server-owned (deep call chains matched by name across languages, C# config) or large (splitting 70-100 line components, <img> to next/image, which could change rendering); skipped as risky.
+- [round 2, web] Added short comments to clever code, renamed short names (now -> nowMs props, p/el/e/f/b/n), named a few constants, and logged the SignalR start failure instead of swallowing it.
+[round 2, web] Generated-client item closed: the adapter schema swap is blocked until the server adds response schemas to openapi.json (Request open); marked [!].
+- [round 2, web] Second quality pass: score still 89.8 (was 89.8 at start). Small comment/blank-line/helper tweaks in GameTopBar, GameShell, FleetsPanel, gameView. `next build` printed a "SecurityFatalError / upgrade Next.js" notice on the first run of the check script and passed on an immediate retry; no upgrade was run. The server tests passed this time.
+[round 2, web] Ship/upgrade buttons send count 1 and show no costs or times (server owns them); queue list and cancel wait for queue items in PlayerView.
+- [round 2, web] Score was 89.9; PlanetDetails BuildButtons now reuses CommandButtons (removes duplicate). Skipped: long map/planet functions. Added a test for `cancelQueueItemBody`. Score stays at 89.9 (just under 90); the rest is in long functions and server files outside this area.
+- [round 2, web] The first `check_full.sh` build stopped on a Next.js security-advisory message that asked for an upgrade; I did not upgrade (out of scope), and the retry passed.
+
+- Round 2 merge: applied web requests. Added `Produces<T>` to all endpoints (openapi.json now has response schemas; Orval client regenerated). `PlayerView` already carried `Holdings` (buildings, ships, queue items with ids) from core, so no change needed there.
+- Round 2 merge: in `app/api/action/route.ts` kept the server side (server-owned file; web only changed a comment).

@@ -110,7 +110,7 @@ function MineOutput({ tile }: { tile: TileState }) {
 			{mineRate(built, pct).toFixed(1)}/s
 			{/* show the next-level gain only until the building is maxed */}
 			{level < MAX_BUILDING_LEVEL && (
-				<> → +{mineRate(level + 1, pct).toFixed(1)}/s</>
+				<>{/* next-level rate */} → +{mineRate(level + 1, pct).toFixed(1)}/s</>
 			)}{" "}
 
 			{/* the output gain of the next level, shown until the level cap */}
@@ -139,21 +139,21 @@ function NextLevel({ tile, cost }: { tile: TileState; cost: Resources }) {
 /** time left on the building being built, with a bar of how much of its build time has already passed */
 function BuildProgress({
 	active,
-	now,
+	nowMs,
 }: {
 	active: QueueDTO | undefined;
-	now: number;
+	nowMs: number;
 }) {
 	if (!active) return null;
 
 	const share = Math.min(
 		PERCENT,
-		((now - active.startAt) / (active.finishAt - active.startAt)) * PERCENT,
+		((nowMs - active.startAt) / (active.finishAt - active.startAt)) * PERCENT,
 	);
 
 	return (
 		<div className="grow-fill">
-			<div className="sub good">{fmtTime(active.finishAt - now)}</div>
+			<div className="sub good">{fmtTime(active.finishAt - nowMs)}</div>
 			<div className="bar">
 				<div style={{ width: `${share}%` }} />
 			</div>{" "}
@@ -200,7 +200,7 @@ function BuildingTile({ type, props }: { type: string; props: Props }) {
 			<LevelDots tile={tile} />
 			<MineOutput tile={tile} />
 			<NextLevel tile={tile} cost={cost} />
-			<BuildProgress active={tile.queued[0]} now={props.nowMs} />
+			<BuildProgress active={tile.queued[0]} nowMs={props.nowMs} />
 			<button
 				disabled={!!blocker}
 				title={blocker}

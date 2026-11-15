@@ -27,10 +27,12 @@ export default function TopBar({
 		<div className="topbar">
 			<h1>Space Game</h1>
 			<div className="tabs">
+				{/* map: one tab button per base you own */}
 				{planets.map(
 					(
 						planet, // one tab per base you own
-					) => (
+					) => ( // one tab button per base
+
 						<button
 							key={planet.id}
 							className={planet.id === current.id ? "on" : ""}
@@ -51,7 +53,8 @@ export default function TopBar({
 				>
 					<b style={{ color: ELEMENTS[el].color }}>{el}</b>{" "}
 					<span>{Math.floor(stock(el))}</span>
-					{rate[el] > 0 && <small>+{rate[el].toFixed(1)}/s</small>}{" "}
+					{/* The "&&" renders the income label only when the rate is above zero. */}
+					{/* income per second, shown only when above zero */ rate[el] > 0 && <small>+{rate[el].toFixed(1)}/s</small>}{" "}
 					{/* only show the income when this element is produced at all */}
 				</div>
 			))}

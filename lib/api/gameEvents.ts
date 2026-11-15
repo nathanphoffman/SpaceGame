@@ -36,7 +36,8 @@ export function attachGameEvents(
 	client: QueryClient,
 	gameId: string,
 	handlers: Handlers,
-): () => void {
+): () => void { // callback run for each event or item
+
 	const refresh = () => invalidateGame(client, gameId);
 	connection.on("StateChanged", refresh);
 	connection.on("BattleResolved", refresh);
@@ -50,7 +51,9 @@ export function attachGameEvents(
 
 	// Events can be missed while offline, so refetch once we are back.
 	connection.onreconnected(refresh);
-	void connection.start().catch(() => undefined);
+	void connection.start().catch((error) => {
+		console.warn("Live updates could not start; polling still works", error);
+	});
 
 	return () => {
 		void connection.stop();

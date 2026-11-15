@@ -7,13 +7,16 @@ public sealed class FakeEngine : IGameEngine
 {
     public int AdvanceCalls { get; private set; }
 
+    /// <summary>The kind of the one event Advance reports.</summary>
+    public string EventKind { get; set; } = "Tick";
+
     public GameState NewGame(GameSetup setup) => new(setup.Config, 0);
 
     public (GameState State, IReadOnlyList<GameEvent> Events) Advance(GameState state, long now, IDice dice)
     {
         AdvanceCalls++;
 
-        return (state with { Time = now }, [new GameEvent(now, "Tick", new Dictionary<string, string>())]);
+        return (state with { Time = now }, [new GameEvent(now, EventKind, new Dictionary<string, string> { ["planet"] = "p1", ["attackersWon"] = "true", ["rounds"] = "3" })]);
     }
 
     public (GameState State, CommandResult Result) Apply(GameState state, PlayerId player, GameCommand command, long now) =>
@@ -25,7 +28,8 @@ public sealed class FakeEngine : IGameEngine
     public GalaxyMap Map(GameState state) => new([new SystemInfo(new SystemId("s1"), "Sol", 0, 0, 0, [])]);
 
     private const long FlightSeconds = 300;
+    private const long ArrivalFlightMultiple = 3;
 
     public FlightQuote Quote(GameState state, PlayerId player, SendFleet send, long now) =>
-        new(true, null, now + FlightSeconds, now + FlightSeconds * 3);
+        new(true, null, now + FlightSeconds, now + FlightSeconds * ArrivalFlightMultiple);
 }

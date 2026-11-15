@@ -36,7 +36,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGameResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -59,7 +66,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinGameResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -82,7 +96,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LobbyResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -128,7 +149,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GalaxyMap"
+                }
+              }
+            }
           }
         }
       }
@@ -151,7 +179,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerView"
+                }
+              }
+            }
           }
         }
       }
@@ -190,7 +225,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
           }
         }
       }
@@ -229,7 +271,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightQuote"
+                }
+              }
+            }
           }
         }
       }
@@ -237,7 +286,7 @@
     "/api/games/{gameId}/reports": {
       "get": {
         "tags": [
-          "SpaceGame.Server"
+          "ReportEndpoints"
         ],
         "operationId": "ListReports",
         "parameters": [
@@ -252,7 +301,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BattleReport"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -260,7 +319,7 @@
     "/api/games/{gameId}/reports/{id}": {
       "get": {
         "tags": [
-          "SpaceGame.Server"
+          "ReportEndpoints"
         ],
         "operationId": "GetReport",
         "parameters": [
@@ -283,7 +342,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BattleReport"
+                }
+              }
+            }
           }
         }
       }
@@ -291,21 +357,61 @@
   },
   "components": {
     "schemas": {
+      "BattleReport": {
+        "required": [
+          "id",
+          "time",
+          "planet",
+          "attackersWon",
+          "rounds"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "time": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "planet": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "attackersWon": {
+            "type": "boolean"
+          },
+          "rounds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "BuildingType": {
+        "type": "integer"
+      },
       "CommandBody": {
         "required": [
           "type",
           "planet",
+          "from",
+          "to",
+          "fleet",
+          "itemId",
           "buildingType",
           "element",
           "shipType",
           "count",
           "upgradeType",
-          "from",
-          "to",
           "ships",
-          "cargo",
-          "fleet",
-          "itemId"
+          "cargo"
         ],
         "type": "object",
         "properties": {
@@ -316,6 +422,30 @@
             ]
           },
           "planet": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fleet": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemId": {
             "type": [
               "null",
               "string"
@@ -354,18 +484,6 @@
               "string"
             ]
           },
-          "from": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "to": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
           "ships": {
             "type": [
               "null",
@@ -389,14 +507,20 @@
                 "$ref": "#/components/schemas/Resources"
               }
             ]
+          }
+        }
+      },
+      "CommandResult": {
+        "required": [
+          "ok",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
           },
-          "fleet": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "itemId": {
+          "error": {
             "type": [
               "null",
               "string"
@@ -442,6 +566,224 @@
           }
         }
       },
+      "CreateGameResponse": {
+        "required": [
+          "gameId",
+          "code",
+          "playerId",
+          "playerToken"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "playerToken": {
+            "type": "string"
+          }
+        }
+      },
+      "Element": {
+        "type": "integer"
+      },
+      "FleetId": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "FleetView": {
+        "required": [
+          "id",
+          "owner",
+          "side",
+          "from",
+          "to",
+          "launchAt",
+          "departAt",
+          "arriveAt",
+          "ships",
+          "cargo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/FleetId"
+          },
+          "owner": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlayerId"
+              }
+            ]
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "from": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "to": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "launchAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "departAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "arriveAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "ships": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "cargo": {
+            "$ref": "#/components/schemas/Resources"
+          }
+        }
+      },
+      "FlightQuote": {
+        "required": [
+          "ok",
+          "error",
+          "departAt",
+          "arriveAt"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "departAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "arriveAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "GalaxyMap": {
+        "required": [
+          "systems"
+        ],
+        "type": "object",
+        "properties": {
+          "systems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SystemInfo"
+            }
+          },
+          "enemyHome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlanetId"
+              }
+            ]
+          }
+        }
+      },
+      "Holding": {
+        "required": [
+          "planet"
+        ],
+        "type": "object",
+        "properties": {
+          "planet": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "mines": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "hasShipyard": {
+            "type": "boolean"
+          },
+          "hasDefense": {
+            "type": "boolean"
+          },
+          "ships": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "queue": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueueItem"
+            }
+          }
+        }
+      },
       "JoinGameRequest": {
         "required": [
           "code",
@@ -460,6 +802,277 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "JoinGameResponse": {
+        "required": [
+          "gameId",
+          "playerId",
+          "playerToken"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "playerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "playerToken": {
+            "type": "string"
+          }
+        }
+      },
+      "LobbyPlayer": {
+        "required": [
+          "id",
+          "name",
+          "isHost"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isHost": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LobbyResponse": {
+        "required": [
+          "code",
+          "mode",
+          "started",
+          "players"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "started": {
+            "type": "boolean"
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LobbyPlayer"
+            }
+          }
+        }
+      },
+      "PlanetId": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "PlanetInfo": {
+        "required": [
+          "id",
+          "name",
+          "isObjective",
+          "richness"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isObjective": {
+            "type": "boolean"
+          },
+          "richness": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "PlayerId": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "PlayerView": {
+        "required": [
+          "version",
+          "gameTime",
+          "timeLeftSeconds",
+          "teamScore",
+          "enemyScore",
+          "stockpile",
+          "fleets",
+          "reports"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "gameTime": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "timeLeftSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "teamScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "enemyScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "stockpile": {
+            "$ref": "#/components/schemas/Resources"
+          },
+          "fleets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FleetView"
+            }
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BattleReport"
+            }
+          },
+          "ownPlanets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanetId"
+            }
+          },
+          "holdings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Holding"
+            }
+          }
+        }
+      },
+      "QueueItem": {
+        "required": [
+          "id",
+          "building",
+          "element",
+          "ship",
+          "level",
+          "startAt",
+          "finishAt",
+          "cost"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "building": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BuildingType"
+              }
+            ]
+          },
+          "element": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Element"
+              }
+            ]
+          },
+          "ship": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ShipType"
+              }
+            ]
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "finishAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/Resources"
           }
         }
       },
@@ -563,6 +1176,69 @@
             ]
           }
         }
+      },
+      "ShipType": {
+        "type": "integer"
+      },
+      "Side": {
+        "type": "integer"
+      },
+      "SystemId": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "SystemInfo": {
+        "required": [
+          "id",
+          "name",
+          "x",
+          "y",
+          "z",
+          "planets"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SystemId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "x": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "y": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "z": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "planets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanetInfo"
+            }
+          }
+        }
       }
     }
   },
@@ -575,6 +1251,9 @@
     },
     {
       "name": "PlayEndpoints"
+    },
+    {
+      "name": "ReportEndpoints"
     }
   ]
 }

@@ -21,7 +21,7 @@ export default function GalaxyView({ game, current, onSelect }: Props) {
 	const mine = new Set(
 		game.planets
 			.filter((planet) => planet.kind === PLANET_KIND.player)
-			.map((p) => sectorOfSystem.get(p.systemId)),
+			.map((planet) => sectorOfSystem.get(planet.systemId)),
 	);
 
 	const rows = [];
@@ -46,7 +46,8 @@ export default function GalaxyView({ game, current, onSelect }: Props) {
 				>
 					{mine.has(`${sx},${sy}`) ? (
 						<b className="mine">●</b>
-					) : home ? (
+					) : home ? ( // picks one of several cases in order
+
 						"☉"
 					) : (
 						""

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiFetch } from "./client";
+import { createGame as postCreateGame, joinGame as postJoinGame } from "./generated/api";
 import { saveSession } from "./session";
 
 export const GAME_MODES = ["week", "test"] as const;
@@ -43,7 +43,7 @@ const joinedSchema = z.object({
 	playerToken: z.string(),
 });
 
-/** Field name -> first error message, for showing under each input. */
+/** Keyed by field name so each input can show its own first error without searching a list. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
 	const result: Record<string, string> = {};
 
@@ -56,17 +56,14 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
 	return result;
 }
 
-function post(url: string, body: unknown): Promise<unknown> {
-	return apiFetch<unknown>(url, { method: "POST", body: JSON.stringify(body) });
-}
-
 /** Creates a game, stores the session and returns the id to navigate to. */
 export async function createGame(input: CreateGameInput): Promise<string> {
-	const webhook = input.discordWebhookUrl;
-	const response = await post("/api/games", {
+	// The generated types describe responses as void (the OpenAPI file has none), so parse the real body.
+	const response = await postCreateGame({
 		name: input.name,
 		mode: input.mode,
-		...(webhook ? { discordWebhookUrl: webhook } : {}),
+		seed: null,
+		discordWebhookUrl: input.discordWebhookUrl || null,
 	});
 
 	const created = createdSchema.parse(response);
@@ -76,7 +73,7 @@ export async function createGame(input: CreateGameInput): Promise<string> {
 }
 
 export async function joinGame(input: JoinGameInput): Promise<string> {
-	const joined = joinedSchema.parse(await post("/api/games/join", input));
+	const joined = joinedSchema.parse(await postJoinGame(input));
 	saveSession({ gameId: joined.gameId, playerId: joined.playerId, token: joined.playerToken });
 
 	return joined.gameId;

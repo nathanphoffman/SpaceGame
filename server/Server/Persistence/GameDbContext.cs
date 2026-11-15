@@ -17,8 +17,18 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             e.ToTable("games");
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.Code).IsUnique();
-            e.Property(x => x.Config).HasColumnType(JsonColumnType);
-            e.Property(x => x.State).HasColumnType(JsonColumnType);
+            e.ComplexProperty(x => x.Json, j =>
+            {
+                j.Property(x => x.Config).HasColumnName("Config").HasColumnType(JsonColumnType);
+                j.Property(x => x.State).HasColumnName("State").HasColumnType(JsonColumnType);
+            });
+
+            e.ComplexProperty(x => x.Times, t =>
+            {
+                t.Property(x => x.StartedAt).HasColumnName("StartedAt");
+                t.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
+                t.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            });
 
             // Version is the optimistic concurrency token: a stale save updates 0 rows and throws.
             e.Property(x => x.Version).IsConcurrencyToken();

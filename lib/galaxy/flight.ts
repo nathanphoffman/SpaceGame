@@ -1,4 +1,9 @@
-import { FLEET_STATUS, type FleetDTO, type GameState } from "@/lib/defs";
+import {
+	FLEET_STATUS,
+	type FleetDTO,
+	type GameState,
+	SECONDS_PER_MINUTE,
+} from "@/lib/defs";
 
 // find a planet by id; every fleet refers to planets that are loaded
 const planetOf = (game: GameState, planetId: number) =>
@@ -41,9 +46,8 @@ export const prepLeftMs = (fleet: FleetDTO, nowMs: number) =>
 /** "m:ss" countdown text */
 export function countdownText(ms: number) {
 	const seconds = Math.ceil(ms / MS_PER_SECOND);
-	const secondsPerMinute = 60;
 
-	return `${Math.floor(seconds / secondsPerMinute)}:${String(seconds % secondsPerMinute).padStart(2, "0")}`;
+	return `${Math.floor(seconds / SECONDS_PER_MINUTE)}:${String(seconds % SECONDS_PER_MINUTE).padStart(2, "0")}`;
 }
 
 /** Server time in ms now: the server's game time at the last fetch plus the local time passed since. */

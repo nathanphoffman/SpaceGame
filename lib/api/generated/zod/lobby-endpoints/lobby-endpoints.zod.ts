@@ -11,7 +11,16 @@ export const GetLobbyParams = zod.object({
   "gameId": zod.string()
 })
 
-export const GetLobbyResponse = zod.unknown()
+export const GetLobbyResponse = zod.object({
+  "code": zod.string(),
+  "mode": zod.string(),
+  "started": zod.boolean(),
+  "players": zod.array(zod.object({
+  "id": zod.uuid(),
+  "name": zod.string(),
+  "isHost": zod.boolean()
+}))
+})
 
 export const StartGameParams = zod.object({
   "gameId": zod.string()

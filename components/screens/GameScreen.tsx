@@ -33,7 +33,7 @@ type Props = {
 	game: GameState;
 	error: string;
 	act: SendAction;
-	now: number;
+	nowMs: number;
 	nav: Navigation;
 };
 
@@ -56,8 +56,8 @@ function describeScene(game: GameState, navigation: Navigation, nowMs: number) {
 		) ?? null;
 
 	// look up a loaded system by id; one is always loaded for a planet we show
-	const systemOf = (id: number) =>
-		game.systems.find((system) => system.id === id)!;
+	const systemOf = (systemId: number) =>
+		game.systems.find((system) => system.id === systemId)!;
 	const shown =
 		game.systems.find((system) => system.id === navigation.systemId) ??
 		systemOf(viewed.systemId); // (a just-clicked system arrives with the next update)
@@ -87,19 +87,19 @@ type Scene = ReturnType<typeof describeScene>;
 function SolarPanel({
 	game,
 	nav,
-	now,
+	nowMs,
 	scene,
 }: {
 	game: GameState;
 	nav: Navigation;
-	now: number;
+	nowMs: number;
 	scene: Scene;
 }) {
 	const shared = {
 		game,
 		system: scene.shown as SystemDTO,
 		viewed: scene.viewed,
-		nowMs: now,
+		nowMs,
 		onSelect: nav.selectPlanet,
 	};
 
@@ -110,8 +110,7 @@ function SolarPanel({
 					{nav.view3d ? "Show flat map" : "Show 3D view"}
 				</button>
 			</div>
-			{nav.view3d ? <SystemView {...shared} /> : <SolarMap {...shared} />}{" "}
-			{/* show the 3D system or the flat map */}
+			{nav.view3d ? <SystemView {...shared} /> : <SolarMap {...shared} />}{" "}{/* 3D system or flat map */}
 		</>
 	);
 }
@@ -119,12 +118,12 @@ function SolarPanel({
 function GalaxyPanel({
 	game,
 	nav,
-	now,
+	nowMs,
 	shownSystemId,
 }: {
 	game: GameState;
 	nav: Navigation;
-	now: number;
+	nowMs: number;
 	shownSystemId: number;
 }) {
 	if (nav.atGalaxy)
@@ -139,7 +138,7 @@ function GalaxyPanel({
 			game={game}
 			sector={nav.sector}
 			shownSystemId={shownSystemId}
-			nowMs={now}
+			nowMs={nowMs}
 			onSelect={nav.setSystemId}
 			onBack={() => nav.setAtGalaxy(true)}
 		/>
@@ -149,13 +148,13 @@ function GalaxyPanel({
 function LeftColumn({
 	game,
 	nav,
-	now,
+	nowMs,
 	scene,
 	guards,
 }: {
 	game: GameState;
 	nav: Navigation;
-	now: number;
+	nowMs: number;
 	scene: Scene;
 	guards: FleetDTO[];
 }) {
@@ -166,11 +165,11 @@ function LeftColumn({
 				systemSeed={scene.systemOf(scene.viewed.systemId).seed}
 				guards={guards.filter((fleet) => fleet.targetId === scene.viewed.id)}
 			/>
-			<SolarPanel game={game} nav={nav} now={now} scene={scene} />
+			<SolarPanel game={game} nav={nav} nowMs={nowMs} scene={scene} />
 			<GalaxyPanel
 				game={game}
 				nav={nav}
-				now={now}
+				nowMs={nowMs}
 				shownSystemId={scene.shown.id}
 			/>
 		</div>
@@ -181,7 +180,7 @@ function RightColumn({
 	game,
 	error,
 	act,
-	now,
+	nowMs,
 	nav,
 	scene,
 }: Props & { scene: Scene }) {
@@ -190,10 +189,10 @@ function RightColumn({
 		(fleet) => fleet.status !== FLEET_STATUS.done,
 	);
 
-	const planetName = (id: number) =>
-		game.planets.find((candidate) => candidate.id === id)?.name ?? "?"; // a planet's name from its id, or ? when that planet isn't loaded
+	const planetName = (planetId: number) => // callback: one rendered entry per item
+		game.planets.find((candidate) => candidate.id === planetId)?.name ?? "?"; // a planet's name from its id, or ? when that planet isn't loaded
 
-	const queueOf = (kind: QueueKind) =>
+	const queueOf = (kind: QueueKind) => // callback: one rendered entry per item
 		game.queue.filter(
 			(item) => item.planetId === planet.id && item.kind === kind,
 		); // this planet's queue entries of one kind
@@ -219,7 +218,7 @@ function RightColumn({
 					composition={scene.composition}
 					types={buildableTypes(planet, scene.composition)}
 					queue={queueOf(QUEUE_KIND.building)}
-					nowMs={now}
+					nowMs={nowMs}
 					shortfall={shortfall}
 					sendAction={act}
 				/>
@@ -229,7 +228,7 @@ function RightColumn({
 				show={isMine}
 				planet={planet}
 				queue={queueOf(QUEUE_KIND.ship)}
-				nowMs={now}
+				nowMs={nowMs}
 				shortfall={shortfall}
 				sendAction={act}
 			/>
@@ -238,7 +237,7 @@ function RightColumn({
 				showHangar={isMine}
 				fleets={activeFleets}
 				planetName={planetName}
-				nowMs={now}
+				nowMs={nowMs}
 				sendAction={act}
 			/>
 			<Reports fleets={game.fleets} />
@@ -248,8 +247,8 @@ function RightColumn({
 
 /** the whole game screen: top bar, maps and planet details on the left, build and fleet panels on the right */
 export default function GameScreen(props: Props) {
-	const { game, act, now, nav } = props;
-	const scene = describeScene(game, nav, now);
+	const { game, act, nowMs, nav } = props;
+	const scene = describeScene(game, nav, nowMs);
 	const guards = game.fleets.filter(
 		(fleet) => fleet.status === FLEET_STATUS.stationed,
 	);
@@ -261,7 +260,7 @@ export default function GameScreen(props: Props) {
 				current={scene.planet}
 				stock={scene.stock}
 				rate={scene.rate}
-				onSelect={(id) =>
+				onSelect={(id) => // callback: one rendered entry per item
 					nav.goToBase(
 						id,
 						scene.systemOf(
@@ -280,7 +279,7 @@ export default function GameScreen(props: Props) {
 				<LeftColumn
 					game={game}
 					nav={nav}
-					now={now}
+					nowMs={nowMs}
 					scene={scene}
 					guards={guards}
 				/>

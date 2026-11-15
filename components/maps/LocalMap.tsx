@@ -80,18 +80,18 @@ function ZoomControls({ view }: { view: ReturnType<typeof useMapZoom> }) {
 function FlightLines({
 	fleets,
 	game,
-	now,
+	nowMs,
 	positions,
 }: {
 	fleets: FleetDTO[];
 	game: GameState;
-	now: number;
+	nowMs: number;
 	positions: Positions;
 }) {
 	return (
 		<svg viewBox="0 0 100 100" preserveAspectRatio="none">
 			{fleets.map((fleet) => {
-				const { from, to } = flightOf(game, fleet, now);
+				const { from, to } = flightOf(game, fleet, nowMs);
 				const start = positions.get(from.systemId)!,
 					end = positions.get(to.systemId)!;
 
@@ -159,15 +159,15 @@ function StarButton({ system, at, owned, selected, onOpen }: StarProps) {
 function FlyingFleet({
 	fleet,
 	game,
-	now,
+	nowMs,
 	positions,
 }: {
 	fleet: FleetDTO;
 	game: GameState;
-	now: number;
+	nowMs: number;
 	positions: Positions;
 }) {
-	const { from, to, k } = flightOf(game, fleet, now);
+	const { from, to, k } = flightOf(game, fleet, nowMs);
 	const start = positions.get(from.systemId)!,
 		end = positions.get(to.systemId)!;
 	const angle =
@@ -185,7 +185,7 @@ function FlyingFleet({
 			}}
 
 		>
-			<FleetMark fleet={fleet} now={now} angle={angle} />
+			<FleetMark fleet={fleet} nowMs={nowMs} angle={angle} />
 		</span>
 	);
 }
@@ -195,7 +195,7 @@ export default function LocalMap({
 	game,
 	sector,
 	shownSystemId,
-	nowMs: now,
+	nowMs,
 	onSelect,
 	onBack,
 }: Props) {
@@ -211,7 +211,7 @@ export default function LocalMap({
 	); // where each star is drawn at this zoom
 
 	const flying = flyingFleets(game).filter((fleet) => {
-		const { from, to } = flightOf(game, fleet, now);
+		const { from, to } = flightOf(game, fleet, nowMs);
 
 		return (
 			positions.has(from.systemId) &&
@@ -256,7 +256,7 @@ export default function LocalMap({
 				<FlightLines
 					fleets={flying}
 					game={game}
-					now={now}
+					nowMs={nowMs}
 					positions={positions}
 				/>
 				{systems.length === 0 && (
@@ -268,7 +268,8 @@ export default function LocalMap({
 				{visible.map(
 					(
 						system, // one button per star that is on the map
-					) => (
+					) => ( // callback: one rendered entry per item
+
 						<StarButton
 							key={system.id}
 							system={system}
@@ -285,7 +286,7 @@ export default function LocalMap({
 						key={fleet.id}
 						fleet={fleet}
 						game={game}
-						now={now}
+						nowMs={nowMs}
 						positions={positions}
 					/>
 				))}

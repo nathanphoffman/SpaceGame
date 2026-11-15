@@ -34,7 +34,7 @@ function systemsOf(map: GalaxyMapDto, ids: IdMap): SystemDTO[] {
 }
 
 function planetsOf(map: GalaxyMapDto, ids: IdMap): PlanetDTO[] {
-	return map.systems.flatMap((system) =>
+	return map.systems.flatMap((system) => // callback: one rendered entry per item
 		system.planets.map((planet, index) => ({
 			id: ids.numberOf(planet.id),
 			name: planet.name,
@@ -71,7 +71,7 @@ function fleetOf(fleet: FleetViewDto, ids: IdMap): FleetDTO {
 
 /** Build the GameState the existing map components take from the API's map and the player's view. */
 export function toGameState(map: GalaxyMapDto, view: PlayerViewDto): { game: GameState; ids: IdMap } {
-	const ids = makeIdMap(map.systems.flatMap((system) => [system.id, ...system.planets.map((planet) => planet.id)]));
+	const ids = makeIdMap(map.systems.flatMap((system) => [system.id, ...system.planets.map((planet) => planet.id)])); // see the name
 	const game: GameState = {
 		nowMs: view.gameTime * MS_PER_GAME_SECOND,
 		systems: systemsOf(map, ids),

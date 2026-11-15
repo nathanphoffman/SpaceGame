@@ -11,11 +11,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IClock, SpaceGame.Server.SystemClock>();
 builder.Services.AddProblemDetails();
 builder.Services.AddPersistence(builder.Configuration);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddSchemaTransformer(FlatCommandBodySchema.Transform));
 builder.Services.AddSingleton(_ => GameEngineFactory.Create());
 builder.Services.AddScoped<LobbyService>();
 builder.Services.AddSingleton<GameLocks>();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IGameNotifier, SpaceGame.Server.Hubs.SignalRGameNotifier>();
+builder.Services.AddHttpClient<SpaceGame.Server.Discord.IDiscordNotifier, SpaceGame.Server.Discord.DiscordNotifier>(c => c.Timeout = SpaceGame.Server.Discord.DiscordNotifier.RequestTimeout);
 builder.Services.AddScoped<GameSession>();
+builder.Services.AddSingleton<GameClock>();
+builder.Services.AddHostedService<GameClockService>();
 builder.Services.AddAuthentication(PlayerAuth.Scheme).AddScheme<AuthenticationSchemeOptions, PlayerTokenAuthHandler>(PlayerAuth.Scheme, null);
 builder.Services.AddAuthorization();
 
@@ -27,6 +32,7 @@ app.UseAuthorization();
 app.MapOpenApi("/openapi.json");
 app.MapGet("/health", () => Results.Ok(new HealthResponse("ok"))).WithName("Health");
 app.MapGameEndpoints();
+app.MapHub<SpaceGame.Server.Hubs.GameHub>("/hubs/game");
 app.Run();
 
 public sealed record HealthResponse(string Status);

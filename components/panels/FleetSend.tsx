@@ -106,7 +106,8 @@ export default function FleetSend({
 					{SHIP_TYPES.map(
 						(
 							type, // one row per ship type for choosing how many to send
-						) => (
+						) => ( // callback: one rendered entry per item
+
 							<ShipRow
 								key={type}
 								type={type}

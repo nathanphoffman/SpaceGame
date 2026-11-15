@@ -19,25 +19,21 @@ export const CreateGameBody = zod.object({
   "discordWebhookUrl": zod.string().nullable()
 })
 
-export const CreateGameResponse = zod.unknown()
+export const CreateGameResponse = zod.object({
+  "gameId": zod.uuid(),
+  "code": zod.string(),
+  "playerId": zod.uuid(),
+  "playerToken": zod.string()
+})
 
 export const JoinGameBody = zod.object({
   "code": zod.string().nullable(),
   "playerName": zod.string().nullable()
 })
 
-export const JoinGameResponse = zod.unknown()
-
-export const ListReportsParams = zod.object({
-  "gameId": zod.string()
+export const JoinGameResponse = zod.object({
+  "gameId": zod.uuid(),
+  "playerId": zod.uuid(),
+  "playerToken": zod.string()
 })
-
-export const ListReportsResponse = zod.unknown()
-
-export const GetReportParams = zod.object({
-  "gameId": zod.string(),
-  "id": zod.string()
-})
-
-export const GetReportResponse = zod.unknown()
 

@@ -14,6 +14,9 @@ import { flightOf, flyingFleets, isCrossSystem } from "@/lib/galaxy/flight";
 import { planetParams } from "@/lib/planets/planetParams";
 import { starParams } from "@/lib/planets/starParams";
 
+/** The icon points up by default, so a quarter turn aims it right or left. */
+const QUARTER_TURN_DEG = 90;
+
 const SOLAR_Y = 42; // % down the map where the planets sit
 const AXIS_Y = 84;
 const STAR_VISIBLE = 26; // px of the star poking into the map
@@ -220,7 +223,7 @@ function PlanetNode({
 function FlyingFleet({
 	fleet,
 	game,
-	nowMs: now,
+	nowMs,
 	slotById,
 }: {
 	fleet: FleetDTO;
@@ -228,10 +231,10 @@ function FlyingFleet({
 	nowMs: number;
 	slotById: Map<number, number>;
 }) {
-	const { from, to, k } = flightOf(game, fleet, now);
+	const { from, to, k } = flightOf(game, fleet, nowMs);
 	const fromX = slotById.get(from.id) ?? SLOT_LEFT;
 	const destinationX = slotById.get(to.id) ?? SLOT_LEFT;
-	const angle = destinationX >= fromX ? 90 : -90;
+	const angle = destinationX >= fromX ? QUARTER_TURN_DEG : -QUARTER_TURN_DEG;
 
 	return (
 		<span
@@ -243,7 +246,7 @@ function FlyingFleet({
 			}}
 
 		>
-			<FleetMark fleet={fleet} now={now} angle={angle} />
+			<FleetMark fleet={fleet} nowMs={nowMs} angle={angle} />
 		</span>
 	);
 }
@@ -253,7 +256,7 @@ export default function SolarMap({
 	game,
 	system,
 	viewed,
-	nowMs: now,
+	nowMs,
 	onSelect,
 }: System & { nowMs: number; onSelect: (planet: PlanetDTO) => void }) {
 	const star = starParams(system.seed);
@@ -321,7 +324,7 @@ export default function SolarMap({
 						key={fleet.id}
 						fleet={fleet}
 						game={game}
-						nowMs={now}
+						nowMs={nowMs}
 						slotById={slotById}
 					/>
 				))}
