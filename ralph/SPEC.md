@@ -7,7 +7,7 @@ big home world, slowly colonizes inward, and now and then launches bigger attack
 points and tries to take the enemy home world before the enemy scores more or takes Earth.
 Flights take hours, so an incoming invasion can be seen in advance and friends can send help.
 
-The renderer for planets, systems and the galaxy map (three.js, in `components/maps` and `components/planet`) is kept and fed new data.
+The renderer for planets, systems and the galaxy map (in `components/maps` and `components/planet`) is kept and fed new data. That includes the ship movement: you see fleets fly between planets inside a system and between stars on the galaxy map. New: enemy fleets are drawn in a distinct colour, and a fleet in its 5-minute launch prep sits at its origin with a countdown before it moves.
 Everything else is rebuilt: the server in C# (ASP.NET Core, EF Core, Postgres, SignalR), the client in Next.js with TanStack Query and Zod.
 
 ## Done means
@@ -103,7 +103,7 @@ About 24 real systems closest to Sol from the existing star catalog (`lib/data`)
 
 ## Non-goals
 - Accounts, passwords, payments, matchmaking, more than one enemy faction, tech trees, more ship classes, planet-side combat or bases that shoot. Browser push notifications.
-- Touching the look of the renderer. Changing the visual style of planets, stars or the galaxy map.
+- Touching the look of the renderer. Changing the visual style of planets, stars or the galaxy map, or the way fleets are drawn flying between planets and between stars.
 
 ## Rules of the road
 See `ralph/RULES.md` (code rules, the 90% quality target) and `ralph/CONTRACTS.md` (who owns what, the shared interfaces).

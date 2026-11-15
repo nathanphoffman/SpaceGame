@@ -66,6 +66,8 @@ public interface IGameEngine
     FlightQuote Quote(GameState state, PlayerId player, SendFleet send, long now);   // trip timer: prep + flight, arrival time
 }
 // PlayerView, GalaxyMap, FlightQuote, BattleReport are plain records defined in Core; they become the API's response types.
+// PlayerView.Fleets (own and visible enemy) carry what the map needs to draw movement: id, owner, Side, From, To, LaunchAt (when it was ordered),
+// DepartAt (end of the 5-minute prep), ArriveAt (all game seconds), ship counts and cargo. PlayerView also has GameTime so the client can animate in sync with the server.
 public static class GameEngineFactory { public static IGameEngine Create(); }
 ```
 - The dice battle is `BattleResolver.Resolve(BattleSide attackers, BattleSide defenders, int defenderBonus, IDice dice) -> BattleResult` (public, used by the engine and the simulator).

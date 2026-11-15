@@ -25,7 +25,7 @@ Read this every session. It is the repo's rules file for workers.
 
 ## TypeScript (web)
 - Strict TypeScript, no `any`, tabs for indentation (see existing files), Zod to parse everything that comes from the API (the generated schemas), TanStack Query for all server data. No `useEffect` fetching.
-- Do not change how the three.js renderer looks or works (`components/maps/**`, `components/planet/**`). You may change what data goes in, and wire events out, through small adapters in `lib/api/adapters`.
+- Keep how the maps and the planet renderer look and behave (`components/maps/**`, `components/planet/**`), **including the ships you can see moving between planets and between systems** (fleet icons, flight lines, facing the direction of travel, positions animated from departure and arrival times). You may change what data goes in and make small edits so `LocalMap.tsx`, `SolarMap.tsx` and `flightOf` take the new fleet data, but not their look. Adapters live in `lib/api/adapters`.
 - The server owns the rules. The client never has its own copy of ship stats, costs or travel times: it shows what the API sends.
 - Tests with vitest; mock `fetch` in tests, never call a real server.
 
