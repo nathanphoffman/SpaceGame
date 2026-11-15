@@ -67,26 +67,28 @@ internal static class EnemyTurns
     private static Fleet NewFleet(GameState state, PlanetId from, PlanetId to, long departAt, long arriveAt, IReadOnlyDictionary<ShipType, int> ships) =>
         new(new FleetId($"f{state.NextFleetNumber}"), EnemyConfig.Owner, from, to, departAt, departAt, arriveAt, ships, Resources.Zero, Side: Side.Enemy);
 
-    private static GameState Launch(GameState state, LaunchExpedition launch, long atSeconds)
+    private static Fleet LaunchedFleet(GameState state, PlanetId target, Dictionary<ShipType, int> ships, long atSeconds)
     {
         var home = state.EnemyHome!.Value;
-        var ships = new Dictionary<ShipType, int> { [ShipType.Colony] = 1, [ShipType.Fighter] = launch.Escorts };
         var speed = TravelRules.FleetSpeed(state.Config.Catalog, ships, 0);
         var departAt = atSeconds + state.Config.PrepSeconds;
-        var arriveAt = departAt + WorldDistance.FlightSeconds(state.Config.Travel, home, launch.Target, speed);
-        var fleet = NewFleet(state, home, launch.Target, departAt, arriveAt, ships) with { LaunchAt = atSeconds };
+        var arriveAt = departAt + WorldDistance.FlightSeconds(state.Config.Travel, home, target, speed);
+
+        return NewFleet(state, home, target, departAt, arriveAt, ships) with { LaunchAt = atSeconds };
+    }
+
+    private static GameState Launch(GameState state, LaunchExpedition launch, long atSeconds)
+    {
+        var ships = new Dictionary<ShipType, int> { [ShipType.Colony] = 1, [ShipType.Fighter] = launch.Escorts };
+        var fleet = LaunchedFleet(state, launch.Target, ships, atSeconds);
 
         return state with { Fleets = [.. state.Fleets, fleet], NextFleetNumber = state.NextFleetNumber + 1 };
     }
 
     private static GameState LaunchAtEarth(GameState state, LaunchEarthAttack earth, long atSeconds)
     {
-        var home = state.EnemyHome!.Value;
         var ships = new Dictionary<ShipType, int> { [ShipType.Fighter] = earth.Fighters };
-        var speed = TravelRules.FleetSpeed(state.Config.Catalog, ships, 0);
-        var departAt = atSeconds + state.Config.PrepSeconds;
-        var arriveAt = departAt + WorldDistance.FlightSeconds(state.Config.Travel, home, StartingKit.EarthId, speed);
-        var fleet = NewFleet(state, home, StartingKit.EarthId, departAt, arriveAt, ships) with { LaunchAt = atSeconds };
+        var fleet = LaunchedFleet(state, StartingKit.EarthId, ships, atSeconds);
 
         return state with
         {

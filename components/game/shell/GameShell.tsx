@@ -43,6 +43,7 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 	const [pickedId, setPickedId] = useState<string>();
 	useEscape(pickedId !== undefined, () => setPickedId(undefined));
 
+	// every planet in every system, then the one matching the picked id
 	const picked = data.map.systems.flatMap((entry) => entry.planets).find((planet) => planet.id === pickedId);
 	const nowMs = syncedNowMs(game.nowMs, data.fetchedAtMs, localNow);
 	const system = game.systems.find((candidate) => candidate.id === systemId) ?? game.systems[0];
@@ -51,6 +52,7 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 	if (!system || !viewed) return <p>No systems yet.</p>;
 
 	const holding = data.view.holdings.find((entry) => entry.planet === picked?.id);
+	// every planet in every system, minus the picked one
 	const destinations = data.map.systems.flatMap((entry) => entry.planets).filter((planet) => planet.id !== picked?.id);
 
 	return (

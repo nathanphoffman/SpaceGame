@@ -50,6 +50,16 @@ Code-quality score (`codequality . --quick`): **89.9** (down 0.1 from 90.0, just
 - `npm run build` still prints a Next.js security-advisory stop on the first run and passes on retry; round 6 web has an item to upgrade Next.
 - Full checks were not run in the planning step because milestone i and the quality floor are not met, so the game is not complete.
 
+## Round 6
+Code-quality score (`codequality . --quick`): **89.9** (unchanged from round 5, just under the 90 floor; round 7 starts with quality items). Weakest: call depth (239 of 475 entry points over 6, many from helpers whose names clash with Core methods like `Build`/`Advance`), "Minimize dependencies" 68%, unexplained clever code (58, mostly regex in `ReportViews.tsx`), test count 376 vs 139 expected, one `.Result` in `Core.Tests/Queues/QueueFixture.cs`, 3 plain `<img>`/`<a>` tags.
+
+- **core**: Core.Tests regrouped into subfolders, `Advance` now calls its steps directly, no method over 36 lines, Core README with rule locations, Sim balance check for Dreadnought and wave 4 (no config change). The "flatten chains in tests" item was impossible from tests alone and was split.
+- **server**: Server.Tests regrouped (Api/Commands, Api/Reports, Game/Discord, Game/Clock), `GameSessionTests` split, `GameOutcome` catches log a warning, restart-safety test, README on test mode, Discord, `/health`, `/outcome`. `DiscordSessionTests` call chains not fixed.
+- **web**: shared constants, scout range text hint from `SightHops`, Next upgraded (build passes first run), `useGameEvents` live-wiring test with a fake connection, README for a 1-hour test game.
+- **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests (about 3,100 lines) still needs the user's OK. Milestone i and the "old server gone" Done item stay open. It would also lift the dependency score and cut the test count.
+- **failed to merge**: nothing.
+- Full checks were not run: milestone i is open and the score is under 90, so the game is not complete.
+
 ## Milestones
 - [x] a. Rules in C# (Core): done; Sim used for the balance pass.
 - [x] b. World (Core): done, travel and objective tests exist.
@@ -58,6 +68,6 @@ Code-quality score (`codequality . --quick`): **89.9** (down 0.1 from 90.0, just
 - [x] e. Enemy and endgame (Core): done.
 - [x] f. Server: done; real-engine end-to-end test passes.
 - [x] g. Client plumbing (web): done, generated Zod in use.
-- [~] h. Game UI (web): all panels done; `SightHops` is available but the scout range hint is not drawn; live wiring only tested with a fake hub.
+- [x] h. Game UI (web): all panels done; scout range shown as text hint; live wiring tested with a fake connection.
 - [~] i. Cleanup: README and `npm run play` done; deleting the old TS server and legacy UI blocked on the user's OK.
-- [~] j. Balance and polish: balance run done; server test-mode full game test done; docs polish and a final test-mode play-through note left.
+- [~] j. Balance and polish: balance run done; server test-mode full game test done; Core README, server and web docs done; only a final test-mode play-through note is left.

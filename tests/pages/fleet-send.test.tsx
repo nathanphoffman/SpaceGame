@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { FleetSendDialog } from "@/components/game/commands/FleetSendDialog";
-import { FleetList } from "@/components/game/panels/FleetList";
+import { FleetList, scoutRangeHint } from "@/components/game/panels/FleetList";
 import { formatDuration, recallFleetCommand, sendFleetBody, sendFleetCommand } from "@/lib/api/game/fleetOrders";
 import { playerViewFixture } from "../fixtures/apiMap";
 
@@ -46,5 +46,25 @@ describe("fleet panels", () => {
 		const html = wrap(<FleetList gameId="g1" fleets={fleets} gameTime={1000} />);
 
 		expect(html).toContain("Recall");
+	});
+});
+
+describe("scout range hint", () => {
+	const flying = { ...playerViewFixture.fleets[0], side: "Team" as const, arriveAt: 2000 };
+
+	it("shows the sight range from the API", () => {
+		const html = wrap(<FleetList gameId="g1" fleets={[{ ...flying, sightHops: 2 }]} gameTime={1000} />);
+
+		expect(html).toContain("Sees systems within 2 jumps.");
+	});
+
+	it("says nothing for fleets without scouting range", () => {
+		const html = wrap(<FleetList gameId="g1" fleets={[{ ...flying, sightHops: 0 }]} gameTime={1000} />);
+
+		expect(html).not.toContain("Sees systems");
+	});
+
+	it("uses the singular for one jump", () => {
+		expect(scoutRangeHint(1)).toBe("Sees systems within 1 jump.");
 	});
 });

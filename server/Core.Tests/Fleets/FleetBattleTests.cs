@@ -53,7 +53,7 @@ public class FleetBattleTests
     }
 
     [Fact]
-    public void EnemyWinningAtEarthDestroysDefendersAndParks()
+    public void EnemyWinningAtEarthParksThere()
     {
         var state = FleetGame();
         state = state with { Fleets = [EnemyArriving(20, StartingKit.EarthId, 100)] };

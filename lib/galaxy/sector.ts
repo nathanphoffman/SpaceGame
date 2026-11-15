@@ -55,6 +55,7 @@ const sectorRng = (sectorX: number, sectorY: number) => {
 	return random;
 };
 
+// takes a random source and returns a function that picks a count with it
 const countFrom = (random: () => number) =>
 	MIN_STARS + Math.floor(random() * STAR_COUNT_SPREAD);
 

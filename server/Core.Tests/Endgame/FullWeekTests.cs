@@ -49,7 +49,7 @@ public class FullWeekTests
     }
 
     [Fact]
-    public void EnemyColonizesAndAttacksEarthOnSchedule()
+    public void EnemyAttackOnEarthComesOnSchedule()
     {
         var (state, _) = PlayIdleWeek(Seed);
 

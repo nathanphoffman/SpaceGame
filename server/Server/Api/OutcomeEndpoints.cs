@@ -9,7 +9,7 @@ public static class OutcomeEndpoints
     public static void MapOutcomeEndpoints(this RouteGroupBuilder game) =>
         game.MapGet("/outcome", GetOutcome).RequireAuthorization().WithName("GetOutcome").Produces<GameOutcome>();
 
-    private static async Task<IResult> GetOutcome(string gameId, HttpContext http, GameRepository repo)
+    private static async Task<IResult> GetOutcome(string gameId, HttpContext http, GameRepository repo, ILogger<GameOutcome> log)
     {
         var denied = LobbyEndpoints.Authorize(gameId, http, out var id, out _);
 
@@ -22,6 +22,6 @@ public static class OutcomeEndpoints
 
         return row is null
             ? Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: "The game has not ended yet.")
-            : Results.Ok(OutcomeRecorder.Parse(row));
+            : Results.Ok(OutcomeRecorder.Parse(row, log));
     }
 }

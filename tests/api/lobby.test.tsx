@@ -42,6 +42,7 @@ describe("LobbyView", () => {
 		const html = renderToString(
 			<LobbyView lobby={lobby} isHost={false} starting={false} copied shareLink="http://x/?code=ABCD" onStart={noop} onCopy={noop} />,
 		);
+
 		expect(html).toContain("http://x/?code=ABCD");
 		expect(html).toContain("Copied!");
 	});
@@ -63,7 +64,7 @@ describe("lobby api", () => {
 	});
 
 	it("fetches and parses the lobby", async () => {
-		const fn = vi.fn(async (..._args: unknown[]) => new Response(JSON.stringify(lobby)));
+		const fn = vi.fn<typeof fetch>(async () => new Response(JSON.stringify(lobby)));
 		vi.stubGlobal("fetch", fn);
 		expect(parseLobby(await getLobby("g1"))).toEqual(lobby);
 		expect(fn.mock.calls[0]?.[0]).toBe("/api/games/g1/lobby");
@@ -76,7 +77,7 @@ describe("lobby api", () => {
 	});
 
 	it("posts start", async () => {
-		const fn = vi.fn(async (..._args: unknown[]) => new Response(null, { status: 204 }));
+		const fn = vi.fn<typeof fetch>(async () => new Response(null, { status: 204 }));
 		vi.stubGlobal("fetch", fn);
 		await startGame("g1");
 		expect(fn.mock.calls[0]?.[0]).toBe("/api/games/g1/start");

@@ -39,7 +39,7 @@ public class FleetRecallTests
     }
 
     [Fact]
-    public void RecallFailsForUnknownArrivedOrReturningFleets()
+    public void RecallFailsWhenTheFleetCannotTurnBack()
     {
         var state = Sent();
         var fleetId = state.Fleets[0].Id;

@@ -29,8 +29,20 @@ internal sealed class GameEngine : IGameEngine
     private static PlanetData ToPlanetData(WorldPlanet planet) =>
         new(planet.Id, Enum.GetValues<Element>().ToDictionary(e => e, planet.Richness.Of));
 
-    public (GameState State, IReadOnlyList<GameEvent> Events) Advance(GameState state, long nowSeconds, IDice dice) =>
-        state.Outcome is not null ? Drained(state) : Move(BuildCompletion.Complete(state, nowSeconds), nowSeconds, dice);
+    public (GameState State, IReadOnlyList<GameEvent> Events) Advance(GameState state, long nowSeconds, IDice dice)
+    {
+        if (state.Outcome is not null) return Drained(state);
+
+        var (built, buildEvents) = BuildCompletion.Complete(state, nowSeconds);
+        var events = buildEvents.ToList();
+        var drained = Scoring.Drain(built, events);
+        var enemyMoved = EnemyTurns.Run(drained, nowSeconds, events, dice);
+        var resolved = FleetArrivals.Resolve(enemyMoved, nowSeconds, events, dice);
+        var scored = Scoring.ScoreHours(resolved, nowSeconds, events);
+        var timed = Endgame.CheckTime(scored, nowSeconds, events);
+
+        return (Visibility.Announce(timed, nowSeconds, events), [.. events.OrderBy(e => e.Time)]);
+    }
 
     // After the end only events still waiting from a command (such as the winning capture) are reported.
     private static (GameState State, IReadOnlyList<GameEvent> Events) Drained(GameState state)
@@ -40,31 +52,18 @@ internal sealed class GameEngine : IGameEngine
         return (Scoring.Drain(state, events), events);
     }
 
-    private static (GameState State, IReadOnlyList<GameEvent> Events) Move(
-        (GameState State, IReadOnlyList<GameEvent> Events) built, long nowSeconds, IDice dice)
-    {
-        var events = built.Events.ToList();
-        var resolved = FleetArrivals.Resolve(EnemyTurns.Run(Scoring.Drain(built.State, events), nowSeconds, events, dice), nowSeconds, events, dice);
-        var scored = Endgame.CheckTime(Scoring.ScoreHours(resolved, nowSeconds, events), nowSeconds, events);
-        var state = Visibility.Announce(scored, nowSeconds, events);
-
-        return (state, [.. events.OrderBy(e => e.Time)]);
-    }
-
     // Routes each command type to the rule that handles it.
     public (GameState State, CommandResult Result) Apply(GameState state, PlayerId player, GameCommand command, long nowSeconds) =>
-        state.Outcome is not null ? (state, new CommandResult(false, GameOver)) : Dispatch(state, player, command, nowSeconds);
-
-    private static (GameState State, CommandResult Result) Dispatch(GameState state, PlayerId player, GameCommand command, long nowSeconds) =>
-        command switch
+        (state.Outcome, command) switch
         {
-            BuildBuilding build => BuildQueues.QueueBuilding(state, player, build, nowSeconds),
-            QueueShip ships => BuildQueues.QueueShips(state, player, ships, nowSeconds),
-            StartUpgrade upgrade => Upgrades.BeginResearch(state, player, upgrade, nowSeconds),
-            CancelQueueItem cancel => QueueCancel.Cancel(state, player, cancel, nowSeconds),
-            SendFleet send => FleetOrders.Send(state, player, send, nowSeconds),
-            RecallFleet recall => FleetOrders.Recall(state, player, recall, nowSeconds),
-            Colonize colonize => Colonizing.Colonize(state, player, colonize, nowSeconds),
+            (not null, _) => (state, new CommandResult(false, GameOver)),
+            (_, BuildBuilding build) => BuildQueues.QueueBuilding(state, player, build, nowSeconds),
+            (_, QueueShip ships) => BuildQueues.QueueShips(state, player, ships, nowSeconds),
+            (_, StartUpgrade upgrade) => Upgrades.BeginResearch(state, player, upgrade, nowSeconds),
+            (_, CancelQueueItem cancel) => QueueCancel.Cancel(state, player, cancel, nowSeconds),
+            (_, SendFleet send) => FleetOrders.Send(state, player, send, nowSeconds),
+            (_, RecallFleet recall) => FleetOrders.Recall(state, player, recall, nowSeconds),
+            (_, Colonize colonize) => Colonizing.Colonize(state, player, colonize, nowSeconds),
             _ => (state, new CommandResult(false, NotYet)),
         };
 
@@ -88,6 +87,7 @@ internal sealed class GameEngine : IGameEngine
     {
         var planets = StarCatalog.Systems.SelectMany(s => s.Planets).ToDictionary(p => p.Id);
         var objectives = state.Objectives.Where(planets.ContainsKey).Select(id => planets[id]).ToList();
+
         return new Galaxy(StarCatalog.Systems, planets[state.EnemyHome!.Value], objectives).ToMap();
     }
 

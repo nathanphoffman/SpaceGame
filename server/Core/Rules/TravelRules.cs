@@ -30,16 +30,13 @@ public static class TravelRules
 
     /// <summary>Flight seconds inside one system.</summary>
     public static long FlightSecondsInSystem(TravelConfig config, double au, double speed) =>
-        Seconds(config, config.SecondsPerAu * au, speed);
+        Math.Max(config.MinFlightSeconds, (long)Math.Round(config.SecondsPerAu * au / speed));
 
     /// <summary>Interstellar legs scale with distance squared so long jumps stay costly.</summary>
     public static long FlightSecondsBetweenSystems(TravelConfig config, double lightYears, double speed) =>
-        Seconds(config, config.SecondsPerLySquared * lightYears * lightYears, speed);
+        Math.Max(config.MinFlightSeconds, (long)Math.Round(config.SecondsPerLySquared * lightYears * lightYears / speed));
 
     /// <summary>The trip timer: prep first, then the flight.</summary>
     public static FlightQuote Quote(long nowSeconds, long prepSeconds, long flightSeconds) =>
         new(true, null, nowSeconds + prepSeconds, nowSeconds + prepSeconds + flightSeconds);
-
-    private static long Seconds(TravelConfig config, double secondsAtSpeedOne, double speed) =>
-        Math.Max(config.MinFlightSeconds, (long)Math.Round(secondsAtSpeedOne / speed));
 }

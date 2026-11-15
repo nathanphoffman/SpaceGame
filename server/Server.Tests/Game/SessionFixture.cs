@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using SpaceGame.Core;
 using SpaceGame.Server.Discord;
 using SpaceGame.Server.Game;
@@ -14,6 +15,6 @@ public static class SessionFixture
         var clock = new FakeClock(StoredGame.StartTime);
         clock.Advance(TimeSpan.FromSeconds(SecondsPassed));
 
-        return new GameSession(stored.Repo, stored.Writer, engine, clock, new GameLocks(), new NullGameNotifier(), discord);
+        return new GameSession(stored.Repo, stored.Writer, engine, clock, new GameLocks(), new NullGameNotifier(), discord, NullLogger<GameSession>.Instance);
     }
 }

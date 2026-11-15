@@ -1,9 +1,9 @@
-# web tasks (round 6)
+# web tasks (round 7)
 
 Owns `app/**` (not `app/api/**`), `components/**`, `lib/**` (not `lib/server/**`), `tests/**`, `orval.config.ts`. Do not change how the renderer (`components/maps/**`, `components/planet/**`) looks or works. Read the Next docs in `node_modules/next/dist/docs/` before writing Next code. Build against `server/openapi.json` and the generated client in `lib/api/generated` (never edit generated files).
 - [!] Delete `/legacy` (app/legacy, components/screens, components/panels, components/hooks), then `lib/defs.ts` and `lib/economy.ts` if unused, and the old `lib/` tests (milestone i). Blocked: needs the user's OK to delete files; do not do it until this line is changed.
-- [ ] Quality: the score is 89.9. In web files outside the renderer and outside the legacy folders, replace repeated strings and numbers used in 2+ files with shared constants (`lib/`), shorten functions over 36 lines (e.g. `fillSystem`), and fix the "what, not why" comments. Do not widen `.codequalityignore`.
-- [ ] Game UI (milestone h): draw the scout range hint from `FleetView.SightHops` in the fleet panel/map overlay (text or highlight of systems within the hops, data only from the API; no look change to the renderer), with tests.
-- [ ] Build: the first `npm run build` prints a Next.js security-advisory stop. Read the notice, upgrade `next` (and `eslint-config-next` if needed) to the fixed version, and check build, lint and tests pass on the first run. Note it in DECISIONS.md.
-- [ ] Live wiring: a test that runs `useGameEvents` against a fake SignalR connection with a real `QueryClient` and checks that a `FleetSpotted` event shows a warning and refetches state.
-- [ ] Docs: README "how to play a 1-hour test game" with the exact steps (`npm run play`, create game in test mode, join, start), checked against the pages.
+- [ ] Quality: the score is 89.9. Add a one-line "how it works" comment above each unexplained regex and chained/nested-closure line in `components/game/reports/ReportViews.tsx` and `components/game/panels/TradePanel.tsx`, then the rest of the `RULE-03-CLEVER-IS-EXPLAINED` findings in web files outside the renderer and legacy folders.
+- [ ] Quality: replace the 3 plain `<img>`/`<a>` tags with `next/image` / `next/link` in non-renderer, non-legacy files (`TS-NEXT-002`); check the Next docs first; tests and build stay green.
+- [ ] Quality: replace strings repeated 3+ times in non-renderer, non-legacy web files (`"planet"`, `"fleet"`, `"lobby"`, ...) with constants in `lib/`; shorten names under 4 characters (`id`, `now`) in files you touch.
+- [ ] Quality: web tests: merge near-duplicate `it(...)` cases with `it.each` in `tests/**` and `lib/**` tests outside the legacy set, without losing coverage; list it in DECISIONS.md. Do not delete files.
+- [ ] Polish (milestone j): add a short "final test-mode play-through" checklist to the README (what to see at minute 5, 20, 40, 60) checked against the pages and the game UI.

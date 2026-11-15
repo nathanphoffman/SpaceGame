@@ -16,13 +16,13 @@ public class EnemyAttackTests
         var earth = state.PlayerById(Me)!.HoldingAt(StartingKit.EarthId)!;
         var fleet = new Fleet(new FleetId("e1"), EnemyConfig.Owner, Colony, Colony, 0, 0, 0, Fighters(attackers), Resources.Zero, Parked: true, Side: Side.Enemy);
 
-        return state.WithPlayer(state.PlayerById(Me)!.WithHolding(earth with { Ships = Fighters(defenders) }))
-            with
-        { EnemyPlanets = [Colony], Fleets = [fleet], EnemyHome = Colony };
+        var player = state.PlayerById(Me)!.WithHolding(earth with { Ships = Fighters(defenders) });
+
+        return state.WithPlayer(player) with { EnemyPlanets = [Colony], Fleets = [fleet], EnemyHome = Colony };
     }
 
     [Fact]
-    public void Attacks_WhenAtLeastOneAndAHalfTimesAsStrong()
+    public void Attacks_WhenOneAndAHalfTimesAsStrong()
     {
         var attack = EnemyAttack.Choose(Setup(attackers: 15, defenders: 10));
 

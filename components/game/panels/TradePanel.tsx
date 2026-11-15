@@ -33,6 +33,7 @@ export function TradePanel({ gameId, holding, destinations, gameTime }: TradePro
 
 				</select>
 			</label>
+			{/* one number field per element; each edits that element's entry in the cargo draft */}
 			{ELEMENTS.map((element) => (
 				<NumberField key={element} label={`Load ${element}`} value={draft.cargo[element] ?? 0} onChange={(amount) => setDraft({ ...draft, cargo: { ...draft.cargo, [element]: amount } })} />
 			))}

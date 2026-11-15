@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using SpaceGame.Core;
 using SpaceGame.Server.Persistence;
 
@@ -20,40 +21,44 @@ public static class OutcomeRecorder
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public static ReportRow? RowFor(Guid gameId, IEnumerable<GameEvent> events) =>
+    public static ReportRow? RowFor(Guid gameId, IEnumerable<GameEvent> events, ILogger log) =>
         events.FirstOrDefault(e => e.Kind == OutcomeKind) is { } ended
-            ? new ReportRow { Id = Guid.NewGuid(), GameId = gameId, GameTime = ended.Time, Kind = OutcomeKind, Payload = JsonSerializer.Serialize(FromEvent(ended), Json) }
+            ? new ReportRow { Id = Guid.NewGuid(), GameId = gameId, GameTime = ended.Time, Kind = OutcomeKind, Payload = JsonSerializer.Serialize(FromEvent(ended, log), Json) }
             : null;
 
     public const string Unknown = "unknown";
 
     /// <summary>Reads a stored outcome; a payload that cannot be read gives an "unknown" outcome, never an error.</summary>
-    public static GameOutcome Parse(ReportRow row)
+    public static GameOutcome Parse(ReportRow row, ILogger log)
     {
         try
         {
             return JsonSerializer.Deserialize<GameOutcome>(row.Payload, Json) ?? Empty;
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            log.LogWarning(ex, "Stored outcome {RowId} could not be read; reporting it as unknown.", row.Id);
+
             return Empty;
         }
     }
 
     private static readonly GameOutcome Empty = new(Unknown, Unknown, 0, 0, []);
 
-    private static GameOutcome FromEvent(GameEvent ended) =>
-        new(ReadText(ended, "winner"), ReadText(ended, "reason"), ReadNumber(ended, "teamScore"), ReadNumber(ended, "enemyScore"), ReadContributions(ended));
+    private static GameOutcome FromEvent(GameEvent ended, ILogger log) =>
+        new(ReadText(ended, "winner"), ReadText(ended, "reason"), ReadNumber(ended, "teamScore"), ReadNumber(ended, "enemyScore"), ReadContributions(ended, log));
 
     // Contributions arrive as a JSON array in the event's string data; bad data gives an empty table instead of an error.
-    private static List<PlayerContribution> ReadContributions(GameEvent ended)
+    private static List<PlayerContribution> ReadContributions(GameEvent ended, ILogger log)
     {
         try
         {
             return JsonSerializer.Deserialize<List<PlayerContribution>>(Read(ended, "contributions"), Json) ?? [];
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            log.LogWarning(ex, "Contributions of the ended game could not be read; the table is left empty.");
+
             return [];
         }
     }

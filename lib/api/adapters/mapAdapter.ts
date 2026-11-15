@@ -22,6 +22,7 @@ export type IdMap = { numberOf: (id: string) => number; idOf: (num: number) => s
 function makeIdMap(ids: string[]): IdMap {
 	const numbers = new Map(ids.map((id, index) => [id, index]));
 
+	// two lookups over the same list: id to number, and number back to id
 	return { numberOf: (id) => numbers.get(id) ?? -1, idOf: (num) => ids[num] };
 }
 
@@ -71,7 +72,7 @@ function fleetOf(fleet: FleetViewDto, ids: IdMap): FleetDTO {
 
 /** Build the GameState the existing map components take from the API's map and the player's view. */
 export function toGameState(map: GalaxyMapDto, view: PlayerViewDto): { game: GameState; ids: IdMap } {
-	const ids = makeIdMap(map.systems.flatMap((system) => [system.id, ...system.planets.map((planet) => planet.id)])); // see the name
+	const ids = makeIdMap(map.systems.flatMap((system) => [system.id, ...system.planets.map((planet) => planet.id)])); // planet ids may be strings, the map wants stable numbers
 	const game: GameState = {
 		nowMs: view.gameTime * MS_PER_GAME_SECOND,
 		systems: systemsOf(map, ids),

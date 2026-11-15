@@ -254,6 +254,7 @@ function earliestDue(world: World, currentTime: Date) {
 
 	// the action to run for the earliest due event, kept in a variable the compiler can't narrow
 	let action: (() => void) | null = null;
+
 	// remembers the event if it is due and earlier than any seen so far
 	const consider = (when: Date, run: () => void) => {
 		if (when <= currentTime && (!earliest || when < earliest)) {

@@ -25,13 +25,15 @@ public class LobbyCreateTests
         await using var factory = await LobbyApiFactory.CreateAsync();
         var client = factory.CreateClient();
 
-        foreach (var bad in new[]
+        var badRequests = new[]
         {
             new CreateGameRequest("", "week", null, null),
             new CreateGameRequest("Ann", "forever", null, null),
             new CreateGameRequest("Ann", "week", null, "http://insecure.example/hook"),
             new CreateGameRequest(new string('x', 31), "week", null, null),
-        })
+        };
+
+        foreach (var bad in badRequests)
         {
             var response = await client.PostAsJsonAsync("/api/games", bad);
 

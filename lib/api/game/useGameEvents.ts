@@ -43,6 +43,7 @@ export function useGameEvents(gameId: string): LiveEvents {
 			.build();
 
 		return attachGameEvents(connection, client, gameId, {
+			// add the spotted fleet to the known ones, keyed by fleet id (copy, don't mutate)
 			onFleetSpotted: (event) => setSpotted((known) => ({ ...known, [event.fleetId]: event })),
 			onBattleResolved: setBattleReportId,
 			onGameEnded: setEndedOutcome,

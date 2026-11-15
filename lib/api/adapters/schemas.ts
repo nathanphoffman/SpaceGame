@@ -49,6 +49,9 @@ export type FleetViewDto = {
 	arriveAt: number;
 	ships: Counts;
 	cargo: Counts;
+
+	/** How many jumps away this fleet can see (scouts); 0 when it has no scouting range. */
+	sightHops: number;
 };
 
 export type QueueItemDto = {
@@ -107,6 +110,7 @@ const fleetOf = (fleet: WireView["fleets"][number]): FleetViewDto => ({
 	arriveAt: num(fleet.arriveAt),
 	ships: countsOf(fleet.ships),
 	cargo: resourcesOf(fleet.cargo),
+	sightHops: num(fleet.sightHops ?? 0),
 });
 
 type WireQueueItem = NonNullable<NonNullable<WireView["holdings"]>[number]["queue"]>[number];

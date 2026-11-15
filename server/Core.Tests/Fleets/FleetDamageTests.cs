@@ -69,7 +69,7 @@ public class FleetDamageTests
     }
 
     [Fact]
-    public void WithoutAShipyardTheShipStaysDamagedAndDies()
+    public void WithoutAShipyardDamageIsFatal()
     {
         var state = EarthWithDamagedBattleship(shipyard: false) with { Fleets = [EnemyFleet(ShipType.Fighter, StartingKit.EarthId, HalfHour, false)] };
         var (after, _) = Engine.Advance(state, HalfHour, new ScriptedDice(6, 6, 6));

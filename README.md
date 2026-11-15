@@ -9,6 +9,14 @@ npm run play          # starts Postgres (Docker), the .NET server (:5000) and Ne
 
 Open http://localhost:3000, create a game and share the code with friends. The host starts the game from the lobby.
 
+## Play a 1-hour test game
+
+1. `npm ci`, then `npm run play` (needs Docker and the .NET 10 SDK). Wait until Next prints `Ready`.
+2. Open http://localhost:3000. In "Create a game", type your name, set Mode to "1-hour test" and press Create. You land in the lobby as the host.
+3. Friends open the same address (or the "Share" link from the lobby), type the game code under "Join a game", add their name and press Join. Up to 8 players.
+4. When everyone is listed under "Players", the host presses "Start game". The game page opens for all players.
+5. Test mode runs 168x faster than a real week, so the game ends after about one hour.
+
 ## Controls
 
 - Click a system on the galaxy map to open it; click a planet for its details.
@@ -41,6 +49,10 @@ Run steps:
 3. Open `/health` (returns `{"status":"ok"}`) to check it is up. The OpenAPI document is `server/openapi.json`.
 
 Test-mode game: create a game with `"mode": "test"`. It runs 168x faster than `"week"` mode, so a week of game time passes in about one hour. Use `GameClock__TickSeconds=1` to make it smoother.
+
+Discord alerts: pass an optional `discordWebhookUrl` (must be an `https` URL, otherwise the create call fails with a 400) when creating a game. The server then posts one message to that webhook for each enemy fleet spotted heading for your planets. If Discord is down or the URL is wrong, the game carries on and only a warning is logged.
+
+Game end: `GET /api/games/{gameId}/outcome` returns the winner, the reason, both team scores and each player's contribution. Before the game has ended it answers 404.
 
 ### HTTP endpoints
 

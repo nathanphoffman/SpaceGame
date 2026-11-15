@@ -63,7 +63,7 @@ public class BattleResolverTests
     }
 
     [Fact]
-    public void HitsGoToUnarmedFirst_ThenFighterBeforeBattleship()
+    public void HitsPreferUnarmedShips()
     {
         // If round 1's two hits went to the Battleship, the Fighter would outlive round 3.
         var def = Side(ShipType.Battleship, ShipType.Fighter, ShipType.Hauler);

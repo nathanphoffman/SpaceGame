@@ -25,6 +25,7 @@ export function ReportList({ gameId, reports }: { gameId: string; reports: Battl
 		<ul>
 			{reports.map((report) => (
 				<li key={report.id}>
+					{/* link to this report's detail page */}
 					<Link href={`/game/${gameId}/reports/${report.id}`}>{`${report.planet}: ${reportOutcome(report)}`}</Link>
 				</li>
 			))}
@@ -41,6 +42,7 @@ export function ReportsPage({ gameId }: { gameId: string }) {
 	return (
 		<main>
 			<h2>Battle reports</h2>
+			{/* link back to the game screen */}
 			<Link href={`/game/${gameId}`}>Back to the game</Link>
 			{data ? <ReportList gameId={gameId} reports={data} /> : <p>Loading reports…</p>}
 		</main>
@@ -55,6 +57,7 @@ export function ReportDetailPage({ gameId, reportId }: { gameId: string; reportI
 	return (
 		<main>
 			<h2>Battle report</h2>
+			{/* link to the list of all reports */}
 			<Link href={`/game/${gameId}/reports`}>All reports</Link>
 			{data ? <ReportSummary report={data} /> : <p>Loading report…</p>}
 		</main>

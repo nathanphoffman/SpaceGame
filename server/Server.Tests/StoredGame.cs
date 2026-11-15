@@ -6,7 +6,9 @@ namespace SpaceGame.Server.Tests;
 /// <summary>One game row in its own migrated schema, with the reader and writer that point at it.</summary>
 public sealed class StoredGame
 {
-    public static readonly DateTimeOffset StartTime = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private const int StartYear = 2026;
+
+    public static readonly DateTimeOffset StartTime = new(StartYear, 1, 1, 0, 0, 0, TimeSpan.Zero);
     public static readonly GameState EmptyState = new(new GameConfig(), 0);
 
     public required GameDbContext Db { get; init; }

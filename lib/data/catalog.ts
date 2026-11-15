@@ -120,6 +120,7 @@ export const SYSTEMS: SystemSpec[] = STARS.map(
 );
 
 export const BODY_BY_SEED = new Map(
+	// flatten every system's bodies, then pair each body with its seed for the Map
 	SYSTEMS.flatMap((system) => system.bodies).map((body) => [body.seed, body]),
 );
 

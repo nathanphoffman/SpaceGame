@@ -14,6 +14,7 @@ public class GameClockTests
         services.AddScoped(_ => TestDatabase.NewContext(stored.Schema));
         services.AddScoped<GameRepository>();
         services.AddScoped<GameWriter>();
+        services.AddLogging();
         services.AddScoped<GameSession>();
         services.AddSingleton<IGameEngine>(engine);
         services.AddSingleton<IClock>(time);

@@ -44,7 +44,7 @@ public sealed class SeededDice(int seed, long gameTime) : IDice
 }
 
 /// <summary>Loads a game, advances it to the current game time, saves it and hands it to the caller, all under the game's lock.</summary>
-public sealed class GameSession(GameRepository repo, GameWriter writer, IGameEngine engine, IClock clock, GameLocks locks, IGameNotifier notifier, IDiscordNotifier discord)
+public sealed class GameSession(GameRepository repo, GameWriter writer, IGameEngine engine, IClock clock, GameLocks locks, IGameNotifier notifier, IDiscordNotifier discord, ILogger<GameSession> log)
 {
     /// <summary>Returns null when the game does not exist.</summary>
     public Task<GameSnapshot?> AdvanceAsync(Guid gameId) =>
@@ -114,7 +114,7 @@ public sealed class GameSession(GameRepository repo, GameWriter writer, IGameEng
     {
         var rows = ReportRecorder.RowsFor(gameId, events);
 
-        if (OutcomeRecorder.RowFor(gameId, events) is { } outcome)
+        if (OutcomeRecorder.RowFor(gameId, events, log) is { } outcome)
         {
             await writer.AddReportsAsync([outcome]);
         }

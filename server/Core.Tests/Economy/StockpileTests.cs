@@ -75,7 +75,7 @@ public class StockpileTests
     }
 
     [Fact]
-    public void AdvancingBackwardsOrToTheSameTimeChangesNothing()
+    public void AdvancingToAnEarlierTimeChangesNothing()
     {
         var stock = Stockpile.Open(new Resources(5, 5, 5, 5), 100);
         Assert.Same(stock, stock.AdvanceTo(100, IronRate));

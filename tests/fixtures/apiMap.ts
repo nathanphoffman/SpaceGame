@@ -46,6 +46,7 @@ export const playerViewFixture: PlayerViewDto = {
 			arriveAt: 1500,
 			ships: { Scout: 2 },
 			cargo: { Iron: 0, Hydrogen: 0, Titanium: 0, Helium3: 0 },
+			sightHops: 0,
 		},
 	],
 };
