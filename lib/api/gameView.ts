@@ -1,12 +1,19 @@
 "use client";
 
-import { useGetMap, useGetState } from "./generated/api";
-import { galaxyMapSchema, playerViewSchema, type GalaxyMapDto, type PlayerViewDto } from "./adapters/schemas";
+import { useGetMap, useGetOutcome, useGetState } from "./generated/api";
+import { galaxyMapSchema, outcomeSchema, playerViewSchema, type GalaxyMapDto, type OutcomeDto, type PlayerViewDto } from "./adapters/schemas";
 
 /** The generated client types these responses as void (no response schema in the OpenAPI file), so parse them here. */
 const parseMap = (body: unknown): GalaxyMapDto => galaxyMapSchema.parse(body);
 
 const parseView = (body: unknown): PlayerViewDto => playerViewSchema.parse(body);
+
+const parseOutcome = (body: unknown): OutcomeDto => outcomeSchema.parse(body);
+
+/** Final result from `GET /outcome`; only requested once the game is finished. */
+export function useOutcome(gameId: string, finished: boolean): OutcomeDto | undefined {
+	return useGetOutcome(gameId, { query: { select: parseOutcome, enabled: finished } }).data;
+}
 
 export type GameData = { map: GalaxyMapDto; view: PlayerViewDto; fetchedAtMs: number };
 

@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useGameEvents } from "@/lib/api/useGameEvents";
 import { useGetLobby, useStartGame } from "@/lib/api/generated/api";
 import { gamePath, isHostPlayer, joinLink, parseLobby } from "@/lib/api/lobby";
 
+import { friendlyError } from "@/lib/api/errors";
 import { loadSession } from "@/lib/api/session";
 import { LobbyView } from "./LobbyView";
 
-const errorText = (error: unknown) => (error instanceof Error ? error.message : "Something went wrong");
+const errorText = friendlyError;
 
 /** Live lobby: refreshes on SignalR events and moves into the game once it starts. */
 export function LobbyPage({ gameId }: { gameId: string }) {
@@ -17,6 +18,7 @@ export function LobbyPage({ gameId }: { gameId: string }) {
 	useGameEvents(gameId);
 	const query = useGetLobby(gameId, { query: { select: parseLobby } });
 	const start = useStartGame();
+	const [copied, setCopied] = useState(false);
 	const started = query.data?.started === true;
 
 	useEffect(() => {
@@ -27,7 +29,10 @@ export function LobbyPage({ gameId }: { gameId: string }) {
 
 	if (!query.data) return <p>Loading lobby…</p>;
 
-	const copy = () => void navigator.clipboard?.writeText(joinLink(location.origin, query.data.code));
+	const copy = () => {
+		void navigator.clipboard?.writeText(joinLink(location.origin, query.data.code));
+		setCopied(true);
+	};
 
 	return (
 		<LobbyView
@@ -36,6 +41,8 @@ export function LobbyPage({ gameId }: { gameId: string }) {
 			starting={start.isPending}
 			error={start.error ? errorText(start.error) : undefined}
 			onStart={() => start.mutate({ gameId })}
+			copied={copied}
+			shareLink={joinLink(location.origin, query.data.code)}
 			onCopy={copy}
 		/>
 	);

@@ -1,95 +1,162 @@
 import { z } from "zod";
+import { GetMapResponse, GetStateResponse } from "../generated/zod/play-endpoints/play-endpoints.zod";
+import { GetOutcomeResponse } from "../generated/zod/outcome-endpoints/outcome-endpoints.zod";
+import { ListReportsResponseItem } from "../generated/zod/report-endpoints/report-endpoints.zod";
 
-// Hand-written Zod schemas for the map-related API responses (until Orval output exists).
-// Ids are strings in the API; richness and ship counts are keyed by name.
-const idSchema = z.string();
-const countsSchema = z.record(z.string(), z.number());
+// The wire format is validated with the generated Zod schemas. The functions below only reshape the result
+// for the UI: numbers that came as strings become numbers, `Resources` objects become records keyed by element
+// name, and enum ordinals (the OpenAPI file types them as integers) become names.
+type WireMap = z.infer<typeof GetMapResponse>;
+type WireView = z.infer<typeof GetStateResponse>;
+type WireOutcome = z.infer<typeof GetOutcomeResponse>;
+type WireReport = z.infer<typeof ListReportsResponseItem>;
+type WireResources = WireView["stockpile"];
+type Wire = number | string;
 
-export const planetInfoSchema = z.object({
-	id: idSchema,
-	name: z.string(),
-	isObjective: z.boolean(),
-	richness: countsSchema,
+export type Counts = Record<string, number>;
+
+// Order of the C# enums in CONTRACTS.md (the wire sends their ordinals).
+const BUILDING_NAMES = ["Mine", "Shipyard", "Defense"];
+const ELEMENT_NAMES = ["Iron", "Hydrogen", "Titanium", "Helium3"];
+const SHIP_NAMES = ["Scout", "Hauler", "Colony", "Fighter", "Battleship", "Dreadnought"];
+
+const num = (value: Wire): number => Number(value);
+
+const countsOf = (record: Record<string, Wire> | undefined): Counts =>
+	Object.fromEntries(Object.entries(record ?? {}).map(([key, value]) => [key, num(value)]));
+
+const resourcesOf = (res: WireResources): Counts => ({
+	Iron: num(res.iron),
+	Hydrogen: num(res.hydrogen),
+	Titanium: num(res.titanium),
+	Helium3: num(res.helium3),
 });
 
-export const systemInfoSchema = z.object({
-	id: idSchema,
-	name: z.string(),
-	x: z.number(),
-	y: z.number(),
-	z: z.number(),
-	planets: z.array(planetInfoSchema),
+const nameOf = (names: string[], ordinal: number | null): string | null => (ordinal === null ? null : (names[ordinal] ?? null));
+
+export type PlanetInfoDto = { id: string; name: string; isObjective: boolean; richness: Counts };
+export type SystemInfoDto = { id: string; name: string; x: number; y: number; z: number; planets: PlanetInfoDto[] };
+export type GalaxyMapDto = { systems: SystemInfoDto[]; enemyHome?: string };
+
+export type FleetViewDto = {
+	id: string;
+	owner: string | null;
+	side: "Team" | "Enemy";
+	from: string;
+	to: string;
+	launchAt: number;
+	departAt: number;
+	arriveAt: number;
+	ships: Counts;
+	cargo: Counts;
+};
+
+export type QueueItemDto = {
+	id: string;
+	building: string | null;
+	element: string | null;
+	ship: string | null;
+	level: number;
+	startAt: number;
+	finishAt: number;
+	cost: Counts;
+};
+
+export type HoldingDto = {
+	planet: string;
+	mines: Counts;
+	hasShipyard: boolean;
+	hasDefense: boolean;
+	ships: Counts;
+	queue: QueueItemDto[];
+};
+
+export type ContributionDto = { player: string; points: number; battlesWon: number; planetsCaptured: number };
+export type OutcomeDto = { winner: string; reason: string; teamScore: number; enemyScore: number; contributions: ContributionDto[] };
+
+export type BattleReportDto = { id: string; time: number; planet: string; attackersWon: boolean; rounds: number };
+
+export type PlayerViewDto = {
+	version: number;
+	gameTime: number;
+	timeLeftSeconds: number;
+	teamScore: number;
+	enemyScore: number;
+	stockpile: Counts;
+	upgrades: Counts;
+	fleets: FleetViewDto[];
+	holdings: HoldingDto[];
+	reports: BattleReportDto[];
+};
+
+const mapOf = (wire: WireMap): GalaxyMapDto => ({
+	enemyHome: wire.enemyHome,
+	systems: wire.systems.map((system) => ({
+		...system,
+		x: num(system.x),
+		y: num(system.y),
+		z: num(system.z),
+		planets: system.planets.map((planet) => ({ ...planet, richness: countsOf(planet.richness) })),
+	})),
 });
 
-export const galaxyMapSchema = z.object({ systems: z.array(systemInfoSchema) });
-
-export const fleetViewSchema = z.object({
-	id: idSchema,
-	owner: idSchema.nullable(),
-	side: z.enum(["Team", "Enemy"]),
-	from: idSchema,
-	to: idSchema,
-	launchAt: z.number(),
-	departAt: z.number(),
-	arriveAt: z.number(),
-	ships: countsSchema,
-	cargo: countsSchema,
+const fleetOf = (fleet: WireView["fleets"][number]): FleetViewDto => ({
+	...fleet,
+	launchAt: num(fleet.launchAt),
+	departAt: num(fleet.departAt),
+	arriveAt: num(fleet.arriveAt),
+	ships: countsOf(fleet.ships),
+	cargo: resourcesOf(fleet.cargo),
 });
 
-export const queueItemSchema = z.object({
-	id: z.string(),
-	building: z.string().nullable().optional(),
-	element: z.string().nullable().optional(),
-	ship: z.string().nullable().optional(),
-	level: z.number(),
-	startAt: z.number(),
-	finishAt: z.number(),
-	cost: countsSchema,
+type WireQueueItem = NonNullable<NonNullable<WireView["holdings"]>[number]["queue"]>[number];
+type WireHolding = NonNullable<WireView["holdings"]>[number];
+
+const queueItemOf = (item: WireQueueItem): QueueItemDto => ({
+	id: item.id,
+	building: nameOf(BUILDING_NAMES, item.building),
+	element: nameOf(ELEMENT_NAMES, item.element),
+	ship: nameOf(SHIP_NAMES, item.ship),
+	level: num(item.level),
+	startAt: num(item.startAt),
+	finishAt: num(item.finishAt),
+	cost: resourcesOf(item.cost),
 });
 
-export const holdingSchema = z.object({
-	planet: idSchema,
-	mines: countsSchema.default({}),
-	hasShipyard: z.boolean().default(false),
-	hasDefense: z.boolean().default(false),
-	ships: countsSchema.default({}),
-	queue: z.array(queueItemSchema).default([]),
+const holdingOf = (holding: WireHolding): HoldingDto => ({
+	planet: holding.planet,
+	mines: countsOf(holding.mines),
+	hasShipyard: holding.hasShipyard ?? false,
+	hasDefense: holding.hasDefense ?? false,
+	ships: countsOf(holding.ships),
+	queue: (holding.queue ?? []).map(queueItemOf),
 });
 
-export const contributionSchema = z.object({
-	player: z.string(),
-	points: z.number().default(0),
-	battlesWon: z.number().default(0),
-	planetsCaptured: z.number().default(0),
+const reportOf = (report: WireReport): BattleReportDto => ({ ...report, time: num(report.time), rounds: num(report.rounds) });
+
+const viewOf = (wire: WireView): PlayerViewDto => ({
+	version: num(wire.version),
+	gameTime: num(wire.gameTime),
+	timeLeftSeconds: num(wire.timeLeftSeconds),
+	teamScore: num(wire.teamScore),
+	enemyScore: num(wire.enemyScore),
+	stockpile: resourcesOf(wire.stockpile),
+	upgrades: countsOf(wire.upgrades),
+	fleets: wire.fleets.map(fleetOf),
+	holdings: (wire.holdings ?? []).map(holdingOf),
+	reports: wire.reports.map(reportOf),
 });
 
-/** Set once the game is over. The contract does not fix the shape yet, so every field is forgiving. */
-export const outcomeSchema = z.object({
-	winner: z.string(),
-	reason: z.string().default(""),
-	teamScore: z.number().optional(),
-	enemyScore: z.number().optional(),
-	contributions: z.array(contributionSchema).default([]),
+const outcomeOf = (wire: WireOutcome): OutcomeDto => ({
+	winner: wire.winner,
+	reason: wire.reason,
+	teamScore: num(wire.teamScore),
+	enemyScore: num(wire.enemyScore),
+	// The contract has no per-player battle counts yet, so they show as 0.
+	contributions: wire.contributions.map((row) => ({ player: row.player, points: num(row.points), battlesWon: 0, planetsCaptured: 0 })),
 });
 
-export const playerViewSchema = z.object({
-	version: z.number(),
-	gameTime: z.number(),
-	timeLeftSeconds: z.number(),
-	teamScore: z.number(),
-	enemyScore: z.number(),
-	stockpile: countsSchema,
-	/** Upgrade levels by name; the server may not send them yet. */
-	upgrades: countsSchema.default({}),
-	fleets: z.array(fleetViewSchema),
-	holdings: z.array(holdingSchema).default([]),
-	outcome: outcomeSchema.nullable().optional(),
-});
-
-export type GalaxyMapDto = z.infer<typeof galaxyMapSchema>;
-export type FleetViewDto = z.infer<typeof fleetViewSchema>;
-export type PlayerViewDto = z.infer<typeof playerViewSchema>;
-export type PlanetInfoDto = z.infer<typeof planetInfoSchema>;
-export type HoldingDto = z.infer<typeof holdingSchema>;
-export type QueueItemDto = z.infer<typeof queueItemSchema>;
-export type OutcomeDto = z.infer<typeof outcomeSchema>;
+export const galaxyMapSchema = GetMapResponse.transform(mapOf);
+export const playerViewSchema = GetStateResponse.transform(viewOf);
+export const outcomeSchema = GetOutcomeResponse.transform(outcomeOf);
+export const battleReportSchema = ListReportsResponseItem.transform(reportOf);

@@ -1,10 +1,9 @@
-# web tasks (round 4)
+# web tasks (round 5)
 
 Owns `app/**` (not `app/api/**`), `components/**`, `lib/**` (not `lib/server/**`), `tests/**`, `orval.config.ts`. Do not change how the renderer (`components/maps/**`, `components/planet/**`) looks or works. Read the Next docs in `node_modules/next/dist/docs/` before writing Next code. Build against `server/openapi.json` and the generated client in `lib/api/generated` (never edit generated files).
-- [ ] Generated Zod swap (carried over, now unblocked: ids are strings and `Side` is a string in the OpenAPI file): replace `lib/api/adapters/schemas.ts`, `lib/api/reports.ts` and the other hand-written response parsers with the generated Zod and types. Regenerate with `npm run gen:api` if stale. If a mismatch is left, add it as a request in CONTRACTS.md. Update tests.
-- [ ] Upgrades and outcome from the server: read levels from `PlayerView.Upgrades` (now sent) instead of the optional map, and load the end screen from `GET /outcome` through the generated hook when the game is finished. Tests with fixtures.
-- [ ] Live updates check: make sure `useGameEvents` invalidates the right queries on each SignalR event (state, reports, outcome), reconnects, and shows a small "reconnecting" note. Tests with a fake hub.
-- [ ] Lobby polish: share link and code with a copy button, player list that updates live, host-only start button, error messages from ProblemDetails (full game, duplicate name, already started). Tests.
-- [ ] Game UI gaps: confirm the warning strip, scout range hint and the recall button work with the Round 3 view data; add a score/target bar to the top bar once `PlayerView` has scores (add a request to CONTRACTS.md if it does not). Tests.
-- [!] Delete `/legacy` (app/legacy, components/screens, components/panels, components/hooks), then `lib/defs.ts` and `lib/economy.ts` if unused, and the old `lib/` tests (milestone i). Blocked: needs the user's OK to delete files.
-- [ ] README: describe the new stack and controls; add the `npm run play` script to `package.json` (one line, append-only) starting Postgres, the server and Next together.
+- [!] Delete `/legacy` (app/legacy, components/screens, components/panels, components/hooks), then `lib/defs.ts` and `lib/economy.ts` if unused, and the old `lib/` tests (milestone i). Blocked: needs the user's OK to delete files; do not do it until this line is changed.
+- [ ] Quality: the score is 90.0. In web files outside the renderer, shrink the longest functions (over 36 lines) and folders with more than 6 items (`components/game` 14, `lib/api` 12) by moving files into subfolders and fixing imports; keep tests green. Do not widen `.codequalityignore`.
+- [ ] Game UI: loading, empty and error states for the game page (state query fails, game not found, token missing -> redirect to home), with tests.
+- [ ] Game UI: reconnect handling end to end: after a SignalR drop and reconnect, refetch state and show no stale warning strip; test with a fake hub.
+- [ ] Controls and docs: keyboard shortcuts for closing panels and a short "how to play" panel (rules summary from SPEC: score, 500 points, Earth attacks, fog of war) reachable from the top bar; update README controls.
+- [ ] Polish: mobile/narrow layout check for the top bar, panels and lobby (CSS only, no renderer changes); add component tests for the top bar and end screen.

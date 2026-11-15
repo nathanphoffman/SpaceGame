@@ -4,6 +4,7 @@ export const WIN_SCORE = 500;
 const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
 const PAD = 2;
+const PERCENT = 100;
 
 /** Time left as h:mm:ss. */
 export function formatTimeLeft(seconds: number): string {
@@ -22,14 +23,28 @@ function scoreText(label: string, score: number): string {
 	return label + " " + score + "/" + WIN_SCORE;
 }
 
+/** Share of the win score reached, 0 to 100. */
+export function scorePercent(score: number): number {
+	return Math.min(PERCENT, Math.max(0, (score / WIN_SCORE) * PERCENT));
+}
+
+function ScoreBar({ label, score }: { label: string; score: number }) {
+	return (
+		<span className="scorebar" title={scoreText(label, score)}>
+			<span>{scoreText(label, score)}</span>
+			<progress max={WIN_SCORE} value={Math.min(score, WIN_SCORE)} aria-label={label + " score"} />
+		</span>
+	);
+}
+
 /** Game clock, team and enemy score toward the win score, and the stockpile of each element. */
 export function GameTopBar({ view }: { view: PlayerViewDto }) {
 	return (
 		<div className="topbar">
 			<h1>Space Game</h1>
 			<span title="Time left">⏱ {formatTimeLeft(view.timeLeftSeconds)}</span>
-			<span>{scoreText("Team", view.teamScore)}</span>
-			<span>{scoreText("Enemy", view.enemyScore)}</span>
+			<ScoreBar label="Team" score={view.teamScore} />
+			<ScoreBar label="Enemy" score={view.enemyScore} />
 			<div className="spacer" />
 			{Object.entries(view.stockpile).map(([element, amount]) => (
 				<div key={element} className="res">

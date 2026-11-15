@@ -3,7 +3,6 @@ import { renderToString } from "react-dom/server";
 import { QueryClient } from "@tanstack/react-query";
 import { EndScreen } from "@/components/game/EndScreen";
 import { attachGameEvents, type HubConnectionLike } from "@/lib/api/gameEvents";
-import { playerViewSchema } from "@/lib/api/adapters/schemas";
 import { playerViewFixture } from "../fixtures/apiMap";
 
 const outcome = {
@@ -16,7 +15,7 @@ const outcome = {
 
 describe("end screen", () => {
 	it("shows winner, reason, scores and the contribution table", () => {
-		const html = renderToString(<EndScreen view={playerViewSchema.parse({ ...playerViewFixture, outcome })} fallbackWinner={null} />);
+		const html = renderToString(<EndScreen view={playerViewFixture} outcome={outcome} fallbackWinner={null} />);
 
 		expect(html).toContain("Winner: Team");
 		expect(html).toContain("Enemy home world claimed");

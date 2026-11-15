@@ -1,18 +1,9 @@
-import { z } from "zod";
 import { useGetReport, useListReports } from "./generated/api";
+import { battleReportSchema, type BattleReportDto } from "./adapters/schemas";
 
-// The generated schemas type ids as objects (see Requests in CONTRACTS.md), so parse the real wire format here.
-export const battleReportSchema = z.object({
-	id: z.string(),
-	time: z.coerce.number(),
-	planet: z.string(),
-	attackersWon: z.boolean(),
-	rounds: z.coerce.number(),
-});
+export { battleReportSchema, type BattleReportDto };
 
-export type BattleReportDto = z.infer<typeof battleReportSchema>;
-
-const parseList = (body: unknown): BattleReportDto[] => z.array(battleReportSchema).parse(body);
+const parseList = (body: unknown): BattleReportDto[] => battleReportSchema.array().parse(body);
 
 const parseOne = (body: unknown): BattleReportDto => battleReportSchema.parse(body);
 

@@ -40,8 +40,8 @@ describe("fleet flight from server times", () => {
 	it("marks enemy fleets from the API as hostile", () => {
 		const map = galaxyMapSchema.parse({ systems: [{ id: "s", name: "S", x: 0, y: 0, z: 0, planets: [
 			{ id: "a", name: "A", richness: {}, isObjective: false }, { id: "b", name: "B", richness: {}, isObjective: false }] }] });
-		const view = playerViewSchema.parse({ version: 1, gameTime: 0, timeLeftSeconds: 1, teamScore: 0, enemyScore: 0, stockpile: {},
-			fleets: ["Team", "Enemy"].map((side) => ({ id: side, owner: null, side, from: "a", to: "b", launchAt: 0, departAt: 300, arriveAt: 600, ships: {}, cargo: {} })) });
+		const view = playerViewSchema.parse({ version: 1, gameTime: 0, timeLeftSeconds: 1, teamScore: 0, enemyScore: 0, stockpile: { iron: 0, hydrogen: 0, titanium: 0, helium3: 0 }, reports: [],
+			fleets: ["Team", "Enemy"].map((side) => ({ id: side, owner: null, side, from: "a", to: "b", launchAt: 0, departAt: 300, arriveAt: 600, ships: {}, cargo: { iron: 0, hydrogen: 0, titanium: 0, helium3: 0 } })) });
 		const { game: legacy } = toGameState(map, view);
 		expect(legacy.fleets.map((x) => x.hostile)).toEqual([false, true]);
 	});

@@ -25,10 +25,25 @@ public static class OutcomeRecorder
             ? new ReportRow { Id = Guid.NewGuid(), GameId = gameId, GameTime = ended.Time, Kind = OutcomeKind, Payload = JsonSerializer.Serialize(FromEvent(ended), Json) }
             : null;
 
-    public static GameOutcome? Parse(ReportRow row) => JsonSerializer.Deserialize<GameOutcome>(row.Payload, Json);
+    public const string Unknown = "unknown";
+
+    /// <summary>Reads a stored outcome; a payload that cannot be read gives an "unknown" outcome, never an error.</summary>
+    public static GameOutcome Parse(ReportRow row)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<GameOutcome>(row.Payload, Json) ?? Empty;
+        }
+        catch (JsonException)
+        {
+            return Empty;
+        }
+    }
+
+    private static readonly GameOutcome Empty = new(Unknown, Unknown, 0, 0, []);
 
     private static GameOutcome FromEvent(GameEvent ended) =>
-        new(Read(ended, "winner"), Read(ended, "reason"), ReadNumber(ended, "teamScore"), ReadNumber(ended, "enemyScore"), ReadContributions(ended));
+        new(ReadText(ended, "winner"), ReadText(ended, "reason"), ReadNumber(ended, "teamScore"), ReadNumber(ended, "enemyScore"), ReadContributions(ended));
 
     // Contributions arrive as a JSON array in the event's string data; bad data gives an empty table instead of an error.
     private static List<PlayerContribution> ReadContributions(GameEvent ended)
@@ -42,6 +57,8 @@ public static class OutcomeRecorder
             return [];
         }
     }
+
+    private static string ReadText(GameEvent e, string key) => Read(e, key) is { Length: > 0 } text ? text : Unknown;
 
     private static string Read(GameEvent e, string key) => e.Data.TryGetValue(key, out var value) ? value : "";
 

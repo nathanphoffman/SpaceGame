@@ -6,7 +6,7 @@ import { UpgradePanel } from "@/components/game/ShipyardPanel";
 import { startUpgradeBody } from "@/lib/api/commands";
 import { playerViewSchema } from "@/lib/api/adapters/schemas";
 import { sendFleetCommand } from "@/lib/api/fleetOrders";
-import { playerViewFixture } from "../fixtures/apiMap";
+import { wireViewFixture } from "../fixtures/apiMap";
 
 const wrap = (node: React.ReactNode) => renderToString(<QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>);
 const holding = { planet: "a1", mines: {}, hasShipyard: true, hasDefense: false, ships: { Hauler: 2 }, queue: [] };
@@ -26,7 +26,7 @@ describe("upgrades", () => {
 	});
 
 	it("defaults missing upgrade levels to none", () => {
-		expect(playerViewSchema.parse({ ...playerViewFixture }).upgrades).toEqual({});
+		expect(playerViewSchema.parse({ ...wireViewFixture, upgrades: undefined }).upgrades).toEqual({});
 	});
 });
 

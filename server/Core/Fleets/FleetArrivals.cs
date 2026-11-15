@@ -9,7 +9,7 @@ public static class FleetArrivals
         var result = state;
 
         // Always take the earliest due fleet next, because earlier battles change what later arrivals meet.
-        while (result.Fleets.Where(f => !f.Parked && f.ArriveAt <= nowSeconds)
+        while (result.Outcome is null && result.Fleets.Where(f => !f.Parked && f.ArriveAt <= nowSeconds)
                    .OrderBy(f => f.ArriveAt).ThenBy(f => f.Id.Value, StringComparer.Ordinal)
                    .FirstOrDefault() is { } due)
         {

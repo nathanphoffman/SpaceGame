@@ -1,5 +1,6 @@
 "use client";
 
+import { friendlyError } from "@/lib/api/errors";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -45,7 +46,7 @@ function useSchemaForm<T>(schema: z.ZodType<T>, action: (input: T) => Promise<st
 		if (parsed.success) mutation.mutate(parsed.data);
 	};
 
-	return { errors, submit, apiError: mutation.error?.message, pending: mutation.isPending };
+	return { errors, submit, apiError: mutation.error ? friendlyError(mutation.error) : undefined, pending: mutation.isPending };
 }
 
 export function CreateGameForm() {

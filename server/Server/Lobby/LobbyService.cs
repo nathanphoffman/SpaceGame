@@ -55,9 +55,16 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
             return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status409Conflict, "That game has already started.");
         }
 
-        if ((await repo.PlayersAsync(game.Id)).Count >= MaxPlayers)
+        var players = await repo.PlayersAsync(game.Id);
+
+        if (players.Count >= MaxPlayers)
         {
             return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status409Conflict, "That game is full.");
+        }
+
+        if (players.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status409Conflict, "That name is already taken in this game.");
         }
 
         var playerId = Guid.NewGuid();

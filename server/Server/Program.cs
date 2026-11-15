@@ -16,6 +16,11 @@ builder.Services.AddSingleton(_ => GameEngineFactory.Create());
 builder.Services.AddScoped<LobbyService>();
 builder.Services.AddSingleton<GameLocks>();
 builder.Services.AddSignalR();
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
+    .WithOrigins("http://localhost:3000")
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
 builder.Services.AddSingleton<IGameNotifier, SpaceGame.Server.Hubs.SignalRGameNotifier>();
 builder.Services.AddHttpClient<SpaceGame.Server.Discord.IDiscordNotifier, SpaceGame.Server.Discord.DiscordNotifier>(c => c.Timeout = SpaceGame.Server.Discord.DiscordNotifier.RequestTimeout);
 builder.Services.AddScoped<GameSession>();
@@ -36,6 +41,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapOpenApi("/openapi.json");

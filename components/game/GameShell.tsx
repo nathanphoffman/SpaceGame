@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import LocalMap from "@/components/maps/LocalMap";
 import SolarMap from "@/components/maps/SolarMap";
 import { toGameState } from "@/lib/api/adapters/mapAdapter";
-import { useGameData, type GameData } from "@/lib/api/gameView";
+import { useGameData, useOutcome, type GameData } from "@/lib/api/gameView";
 import { useGameEvents, type LiveEvents } from "@/lib/api/useGameEvents";
 import { syncedNowMs } from "@/lib/galaxy/flight";
 import { GameTopBar } from "./GameTopBar";
@@ -55,6 +55,7 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 			{holding && <FleetSendDialog key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
 			{holding && <TradePanel key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
 			<AttackWarnings fleets={data.view.fleets} gameTime={data.view.gameTime} spotted={live.spotted} />
+			{live.reconnecting && <p role="status">Reconnecting to live updates…</p>}
 			<BattleToast gameId={gameId} reportId={live.battleReportId} />
 			<FleetList gameId={gameId} fleets={data.view.fleets} gameTime={data.view.gameTime} />
 		</>
@@ -65,12 +66,14 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 export function GameShell({ gameId }: { gameId: string }) {
 	const live = useGameEvents(gameId);
 	const { data, error } = useGameData(gameId);
+	const finished = live.endedOutcome !== null || (data !== undefined && data.view.timeLeftSeconds <= 0);
+	const outcome = useOutcome(gameId, finished);
 
 	if (error) return <p role="alert">{error.message}</p>;
 
 	if (!data) return <p>Loading game…</p>;
 
-	if (data.view.outcome || live.endedOutcome) return <EndScreen view={data.view} fallbackWinner={live.endedOutcome} />;
+	if (finished) return <EndScreen view={data.view} outcome={outcome} fallbackWinner={live.endedOutcome} />;
 
 	return (
 		<main>

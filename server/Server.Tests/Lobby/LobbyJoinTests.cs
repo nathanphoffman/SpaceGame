@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using SpaceGame.Server.Auth;
 using SpaceGame.Server.Lobby;
 using SpaceGame.Server.Persistence;
@@ -48,7 +49,26 @@ public class LobbyJoinTests
             Assert.Equal(HttpStatusCode.OK, (await JoinAsync(client, created.Code, $"P{i}")).StatusCode);
         }
 
-        Assert.Equal(HttpStatusCode.Conflict, (await JoinAsync(client, created.Code, "Extra")).StatusCode);
+        await AssertProblemAsync(await JoinAsync(client, created.Code, "Extra"), HttpStatusCode.Conflict);
+    }
+
+    [PostgresFact]
+    public async Task DuplicateNameIsRejectedIgnoringCase()
+    {
+        await using var factory = await LobbyApiFactory.CreateAsync();
+        var client = factory.CreateClient();
+        var created = await LobbyApiFactory.CreateGameAsync(client);
+        await AssertProblemAsync(await JoinAsync(client, created.Code, "host"), HttpStatusCode.Conflict);
+        Assert.Equal(HttpStatusCode.OK, (await JoinAsync(client, created.Code, "Bob")).StatusCode);
+        await AssertProblemAsync(await JoinAsync(client, created.Code, "BOB"), HttpStatusCode.Conflict);
+    }
+
+    private static async Task AssertProblemAsync(HttpResponseMessage response, HttpStatusCode status)
+    {
+        Assert.Equal(status, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.Equal((int)status, problem!.Status);
+        Assert.False(string.IsNullOrEmpty(problem.Detail));
     }
 
     [PostgresFact]
@@ -75,13 +95,13 @@ public class LobbyJoinTests
         var url = $"/api/games/{created.GameId}/start";
 
         var byGuest = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Post, url, guest!.PlayerToken));
-        Assert.Equal(HttpStatusCode.Forbidden, byGuest.StatusCode);
+        await AssertProblemAsync(byGuest, HttpStatusCode.Forbidden);
         var byHost = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Post, url, created.PlayerToken));
         Assert.Equal(HttpStatusCode.OK, byHost.StatusCode);
 
-        Assert.Equal(HttpStatusCode.Conflict, (await JoinAsync(client, created.Code, "Late")).StatusCode);
+        await AssertProblemAsync(await JoinAsync(client, created.Code, "Late"), HttpStatusCode.Conflict);
         var again = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Post, url, created.PlayerToken));
-        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+        await AssertProblemAsync(again, HttpStatusCode.Conflict);
         var lobby = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, $"/api/games/{created.GameId}/lobby", created.PlayerToken));
         Assert.True((await lobby.Content.ReadFromJsonAsync<LobbyResponse>())!.Started);
     }

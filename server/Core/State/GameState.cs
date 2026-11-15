@@ -22,8 +22,26 @@ public sealed record GameState(GameConfig Config, long Time)
     /// <summary>Game second of the enemy's last tick.</summary>
     public long EnemyLastTick { get; init; }
 
+    /// <summary>How many scheduled attacks on Earth the enemy has sent.</summary>
+    public int EarthAttacksSent { get; init; }
+
     /// <summary>The objective planets that score points.</summary>
     public IReadOnlyList<PlanetId> Objectives { get; init; } = [];
+
+    /// <summary>Points the team has scored.</summary>
+    public int TeamScore { get; init; }
+
+    /// <summary>Points the enemy has scored.</summary>
+    public int EnemyScore { get; init; }
+
+    /// <summary>How many whole game hours have already been scored.</summary>
+    public int HoursScored { get; init; }
+
+    /// <summary>How the game ended; null while it is running.</summary>
+    public GameOutcome? Outcome { get; init; }
+
+    /// <summary>Events made outside Advance (a player's capture); the next Advance reports them.</summary>
+    public IReadOnlyList<GameEvent> PendingEvents { get; init; } = [];
 
     /// <summary>Fleets in flight, or parked where their owner has no base.</summary>
     public IReadOnlyList<Fleet> Fleets { get; init; } = [];

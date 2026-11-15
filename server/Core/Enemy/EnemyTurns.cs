@@ -37,7 +37,9 @@ internal static class EnemyTurns
     {
         BuyGarrison buy => AddToGarrison(state, state.EnemyHome!.Value, new Dictionary<ShipType, int> { [ShipType.Fighter] = buy.Fighters }),
         LaunchExpedition launch => Launch(state, launch, atSeconds),
-        ClaimPlanet claim => Claim(state, claim),
+        ClaimPlanet claim => Claim(state, claim, atSeconds),
+        LaunchEarthAttack earth => LaunchAtEarth(state, earth, atSeconds),
+        LaunchAttack attack => Attack(state, attack, atSeconds),
         _ => state,
     };
 
@@ -73,13 +75,51 @@ internal static class EnemyTurns
         return state with { Fleets = [.. state.Fleets, fleet], NextFleetNumber = state.NextFleetNumber + 1 };
     }
 
+    private static GameState LaunchAtEarth(GameState state, LaunchEarthAttack earth, long atSeconds)
+    {
+        var home = state.EnemyHome!.Value;
+        var ships = new Dictionary<ShipType, int> { [ShipType.Fighter] = earth.Fighters };
+        var speed = TravelRules.FleetSpeed(state.Config.Catalog, ships, 0);
+        var departAt = atSeconds + state.Config.PrepSeconds;
+        var arriveAt = departAt + WorldDistance.FlightSeconds(state.Config.Travel, home, StartingKit.EarthId, speed);
+        var fleet = NewFleet(state, home, StartingKit.EarthId, departAt, arriveAt, ships) with { LaunchAt = atSeconds };
+
+        return state with
+        {
+            Fleets = [.. state.Fleets, fleet],
+            NextFleetNumber = state.NextFleetNumber + 1,
+            EarthAttacksSent = state.EarthAttacksSent + 1,
+        };
+    }
+
+    // The whole parked fleet sets off; it fights on arrival like any enemy fleet.
+    private static GameState Attack(GameState state, LaunchAttack attack, long atSeconds)
+    {
+        var fleet = state.Fleets.Single(f => f.Id == attack.Fleet);
+        var speed = TravelRules.FleetSpeed(state.Config.Catalog, fleet.Ships, 0);
+        var departAt = atSeconds + state.Config.PrepSeconds;
+        var arriveAt = departAt + WorldDistance.FlightSeconds(state.Config.Travel, fleet.To, attack.Target, speed);
+
+        return Replace(state, fleet, fleet with
+        {
+            From = fleet.To,
+            To = attack.Target,
+            LaunchAt = atSeconds,
+            DepartAt = departAt,
+            ArriveAt = arriveAt,
+            Parked = false,
+        });
+    }
+
     // The Colony ship is used up; the rest of the fleet stays as the new planet's garrison.
-    private static GameState Claim(GameState state, ClaimPlanet claim)
+    private static GameState Claim(GameState state, ClaimPlanet claim, long atSeconds)
     {
         var fleet = state.Fleets.Single(f => f.Id == claim.Fleet);
         var rest = fleet.Ships.Where(s => s.Key != ShipType.Colony).ToDictionary(s => s.Key, s => s.Value);
         var fleets = state.Fleets.Where(f => f.Id != fleet.Id).Concat(rest.Count == 0 ? [] : [fleet with { Ships = rest }]);
 
-        return state with { Fleets = [.. fleets], EnemyPlanets = [.. state.EnemyPlanets, fleet.To] };
+        var claimed = state with { Fleets = [.. fleets], EnemyPlanets = [.. state.EnemyPlanets, fleet.To] };
+
+        return Scoring.Capture(claimed, Side.Enemy, fleet.To, atSeconds);
     }
 }

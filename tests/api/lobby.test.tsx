@@ -9,8 +9,8 @@ const lobby: Lobby = {
 	mode: "test",
 	started: false,
 	players: [
-		{ id: "p1", name: "Ann", isHost: true },
-		{ id: "p2", name: "Bo", isHost: false },
+		{ id: "6f9619ff-8b86-4d11-b42d-00c04fc964ff", name: "Ann", isHost: true },
+		{ id: "7f9619ff-8b86-4d11-b42d-00c04fc964ff", name: "Bo", isHost: false },
 	],
 };
 
@@ -38,6 +38,14 @@ describe("LobbyView", () => {
 		expect(view(false)).toContain("Waiting for the host");
 	});
 
+	it("shows the share link and copied state", () => {
+		const html = renderToString(
+			<LobbyView lobby={lobby} isHost={false} starting={false} copied shareLink="http://x/?code=ABCD" onStart={noop} onCopy={noop} />,
+		);
+		expect(html).toContain("http://x/?code=ABCD");
+		expect(html).toContain("Copied!");
+	});
+
 	it("shows an error", () => {
 		expect(view(true, "Nope")).toContain("Nope");
 	});
@@ -45,7 +53,7 @@ describe("LobbyView", () => {
 
 describe("lobby api", () => {
 	it("detects the host by session player id", () => {
-		expect(isHostPlayer(lobby, "p1")).toBe(true);
+		expect(isHostPlayer(lobby, "6f9619ff-8b86-4d11-b42d-00c04fc964ff")).toBe(true);
 		expect(isHostPlayer(lobby, "p2")).toBe(false);
 		expect(isHostPlayer(lobby, undefined)).toBe(false);
 	});

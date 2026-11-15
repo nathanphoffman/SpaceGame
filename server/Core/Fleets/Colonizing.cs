@@ -31,11 +31,16 @@ public static class Colonizing
             Holdings = [.. player.Holdings, new Holding(planet) { DamagedAt = nowSeconds }],
         });
 
-        return (claimed with
+        var moved = claimed with
         {
             Fleets = [.. rest, .. remaining.Count == 0 ? [] : new[] { fleet with { Ships = remaining, Cargo = Resources.Zero } }],
             EnemyPlanets = [.. state.EnemyPlanets.Where(p => p != planet)],
-        }, new CommandResult(true, null));
+        };
+
+        var captured = Scoring.Capture(moved, Side.Team, planet, nowSeconds, playerId);
+        var won = planet == state.EnemyHome ? Endgame.EndPending(captured, Side.Team, Endgame.HomeCapturedReason, nowSeconds) : captured;
+
+        return (won, new CommandResult(true, null));
     }
 
     // Returns why the colony ship cannot claim the planet, or null when it can.

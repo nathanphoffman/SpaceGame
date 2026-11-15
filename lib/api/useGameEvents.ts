@@ -23,6 +23,9 @@ export type LiveEvents = {
 
 	/** Outcome text from the GameEnded event, or null while the game runs. */
 	endedOutcome: string | null;
+
+	/** True while SignalR is trying to reconnect. */
+	reconnecting: boolean;
 };
 
 /** Live updates for one game. Returns what the warning strip and the battle toast need. */
@@ -31,6 +34,7 @@ export function useGameEvents(gameId: string): LiveEvents {
 	const [spotted, setSpotted] = useState<Record<string, FleetSpottedEvent>>({});
 	const [battleReportId, setBattleReportId] = useState<string | null>(null);
 	const [endedOutcome, setEndedOutcome] = useState<string | null>(null);
+	const [reconnecting, setReconnecting] = useState(false);
 
 	useEffect(() => {
 		const connection = new HubConnectionBuilder()
@@ -42,8 +46,9 @@ export function useGameEvents(gameId: string): LiveEvents {
 			onFleetSpotted: (event) => setSpotted((known) => ({ ...known, [event.fleetId]: event })),
 			onBattleResolved: setBattleReportId,
 			onGameEnded: setEndedOutcome,
+			onReconnecting: setReconnecting,
 		});
 	}, [client, gameId]);
 
-	return { spotted, battleReportId, endedOutcome };
+	return { spotted, battleReportId, endedOutcome, reconnecting };
 }

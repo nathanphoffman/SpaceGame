@@ -13,6 +13,8 @@ public static class EnemyBrain
         var budget = state.EnemyBudget + Income(state);
         var orders = new List<EnemyOrder>();
 
+        if (EarthAttackSchedule.Due(state, nowSeconds) is { } earthAttack) orders.Add(earthAttack);
+
         orders.AddRange(EnemyFleets(state).Where(f => CanClaim(state, f)).Select(f => new ClaimPlanet(f.Id)));
 
         if (RefillGarrison(state, budget) is { } refill)
@@ -22,6 +24,8 @@ public static class EnemyBrain
         }
 
         if (ExpeditionOrder(state, budget) is { } expedition) orders.Add(expedition);
+
+        if (EnemyAttack.Choose(state) is { } attack) orders.Add(attack);
 
         return orders;
     }

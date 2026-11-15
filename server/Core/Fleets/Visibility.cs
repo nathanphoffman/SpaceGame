@@ -40,8 +40,11 @@ public static class Visibility
         });
 
     /// <summary>Expected damage per round times hit points, summed over the ships.</summary>
-    public static int Strength(Catalog catalog, Fleet fleet) =>
-        (int)Math.Round(fleet.Ships.Sum(ship => ship.Value * ShipPower(catalog.Ship(ship.Key))));
+    public static int Strength(Catalog catalog, Fleet fleet) => Strength(catalog, fleet.Ships);
+
+    /// <summary>Strength of a group of ships.</summary>
+    public static int Strength(Catalog catalog, IReadOnlyDictionary<ShipType, int> ships) =>
+        (int)Math.Round(ships.Sum(ship => ship.Value * ShipPower(catalog.Ship(ship.Key))));
 
     private static double ShipPower(ShipSpec spec) =>
         spec.HitsOn == 0 ? 0 : spec.Shots * (ChancesPerRoll - spec.HitsOn + 1) / ChancesPerRoll * spec.Hp;

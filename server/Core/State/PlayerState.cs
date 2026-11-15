@@ -65,6 +65,9 @@ public sealed record PlayerState(PlayerId Id, Stockpile Stock, IReadOnlyList<Hol
     /// <summary>Finished upgrade levels.</summary>
     public IReadOnlyDictionary<UpgradeType, int> Upgrades { get; init; } = new Dictionary<UpgradeType, int>();
 
+    /// <summary>Team points this player earned (captures and held objectives).</summary>
+    public int Points { get; init; }
+
     /// <summary>The upgrade being researched (one at a time), if any.</summary>
     public ResearchJob? Research { get; init; }
 

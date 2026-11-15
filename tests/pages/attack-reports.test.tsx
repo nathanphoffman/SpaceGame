@@ -29,7 +29,9 @@ describe("AttackWarnings", () => {
 
 describe("battle reports", () => {
 	it("parses string numbers from the wire", () => {
-		expect(battleReportSchema.parse({ ...report, time: "90", rounds: "3" })).toEqual(report);
+		const wire = { ...report, time: "90", rounds: "3" };
+
+		expect(battleReportSchema.parse(wire)).toEqual({ ...report, time: 90, rounds: 3 });
 	});
 
 	it("renders the list and the detail", () => {

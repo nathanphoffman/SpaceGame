@@ -1,8 +1,7 @@
-import type { PlayerViewDto } from "@/lib/api/adapters/schemas";
+import type { OutcomeDto, PlayerViewDto } from "@/lib/api/adapters/schemas";
 
 /** Final result: who won, why, the scores and a small per-player table (for fun). */
-export function EndScreen({ view, fallbackWinner }: { view: PlayerViewDto; fallbackWinner: string | null }) {
-	const outcome = view.outcome;
+export function EndScreen({ view, outcome, fallbackWinner }: { view: PlayerViewDto; outcome?: OutcomeDto; fallbackWinner: string | null }) {
 	const winner = outcome?.winner ?? fallbackWinner ?? "unknown";
 	const contributions = outcome?.contributions ?? [];
 

@@ -5,9 +5,11 @@ import { attachGameEvents, type HubConnectionLike } from "@/lib/api/gameEvents";
 function fakeConnection() {
 	const handlers = new Map<string, (...args: never[]) => void>();
 	let reconnected: () => void = () => undefined;
+	let reconnecting: () => void = () => undefined;
 	const connection: HubConnectionLike = {
 		on: (method, handler) => void handlers.set(method, handler),
 		onreconnected: (handler) => void (reconnected = handler),
+		onreconnecting: (handler) => void (reconnecting = handler),
 		start: vi.fn(async () => undefined),
 		stop: vi.fn(async () => undefined),
 	};
@@ -15,13 +17,15 @@ function fakeConnection() {
 	const emit = (method: string, ...args: unknown[]) =>
 		(handlers.get(method) as (...a: unknown[]) => void)(...args);
 
-	return { connection, emit, reconnect: () => reconnected() };
+	return { connection, emit, reconnect: () => reconnected(), dropping: () => reconnecting() };
 }
 
 function setup() {
 	const client = new QueryClient();
 	client.setQueryData(["/api/games/g1/state"], 1);
 	client.setQueryData(["/api/games/g2/state"], 1);
+	client.setQueryData(["/api/games/g1/reports"], 1);
+	client.setQueryData(["/api/games/g1/outcome"], 1);
 	const fake = fakeConnection();
 	const onFleetSpotted = vi.fn();
 	const detach = attachGameEvents(fake.connection, client, "g1", { onFleetSpotted });
@@ -64,5 +68,22 @@ describe("attachGameEvents", () => {
 		const { client, fake } = setup();
 		fake.reconnect();
 		expect(isStale(client, "/api/games/g1/state")).toBe(true);
+	});
+
+	it("invalidates reports and outcome too", () => {
+		const { client, fake } = setup();
+		fake.emit("GameEnded", "won");
+		expect(isStale(client, "/api/games/g1/reports")).toBe(true);
+		expect(isStale(client, "/api/games/g1/outcome")).toBe(true);
+	});
+
+	it("reports reconnecting then connected", () => {
+		const client = new QueryClient();
+		const fake = fakeConnection();
+		const onReconnecting = vi.fn();
+		attachGameEvents(fake.connection, client, "g1", { onFleetSpotted: vi.fn(), onReconnecting });
+		fake.dropping();
+		fake.reconnect();
+		expect(onReconnecting.mock.calls).toEqual([[true], [false]]);
 	});
 });

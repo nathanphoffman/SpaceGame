@@ -25,3 +25,15 @@ public sealed record ClaimPlanet(FleetId Fleet) : EnemyOrder
 {
     public override int Cost(Catalog catalog) => 0;
 }
+
+/// <summary>A parked enemy fleet leaves its planet to attack a player-held planet.</summary>
+public sealed record LaunchAttack(FleetId Fleet, PlanetId Target) : EnemyOrder
+{
+    public override int Cost(Catalog catalog) => 0;
+}
+
+/// <summary>Sends a fresh fighter-only fleet from the home world to attack Earth on schedule.</summary>
+public sealed record LaunchEarthAttack(int Fighters) : EnemyOrder
+{
+    public override int Cost(Catalog catalog) => 0;
+}

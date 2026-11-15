@@ -16,7 +16,16 @@ public sealed class PostgresFactAttribute : FactAttribute
 /// <summary>Gives each test its own schema so tests can run in parallel.</summary>
 public static class TestDatabase
 {
-    public static string? ConnectionString => Environment.GetEnvironmentVariable("SPACEGAME_TEST_PG");
+    /// <summary>Pooling is off: every test has its own schema, so pools would pile up idle connections and exhaust the server.</summary>
+    public static string? ConnectionString
+    {
+        get
+        {
+            var connection = Environment.GetEnvironmentVariable("SPACEGAME_TEST_PG");
+
+            return connection is null ? null : $"{connection};Pooling=false";
+        }
+    }
 
     public static async Task<string> CreateSchemaAsync()
     {

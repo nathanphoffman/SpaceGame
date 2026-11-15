@@ -128,3 +128,26 @@ To override one, edit or add a line here (`HUMAN:` prefix); workers read this fi
 - DECISIONS.md conflicts in the server and web merges were append-only; kept both sides.
 
 - [round 3, plan] Score is 90.6 (floor met), so no quality-only items in round 4. File deletion (milestone i) stays `[!]`: the user's rule is to ask before deleting, and workers cannot ask. The user needs to approve it. Not COMPLETE: milestones e, i, j are open.
+[round 4, core] Enemy attack uses a whole parked enemy fleet (no Colony ship) and a 2-hop sight around enemy planets; strength is Visibility.Strength.
+[round 4, core] Earth attack fleets are spawned free at the enemy home (not paid from budget); first is 6 fighters, rounded per player count.
+[round 4, core] Scoring: Apply cannot return events, so a player's capture is stored in GameState.PendingEvents and emitted by the next Advance; hours are scored with the holders at the end of Advance.
+- [round 4, core] Score 90.6 before and after pass checks; blank lines/comment fixes only. Skipped: long-test-name and magic-number findings (risky churn). check_full.sh stops at `orval: not found` (env, not core); dotnet format/build/tests pass.
+- [round 4, core] Enemy wins at Earth only through a battle (an undefended landing is not a loss); score/time ends are checked per scored hour and at week end; per-player points are `PlayerState.Points`.
+- [round 4, core] Server.Tests OutcomeEndpointTests: aliased GameOutcome to the Server type (Core now also defines GameOutcome; build was ambiguous). check_full.sh still stops at `orval: not found` (env); dotnet checks pass. Score 90.4.
+- [round 4, core] Balance (2000 runs each, seed 1, attacker win rate): 4 Fighters vs 1 Battleship 38% (22% with Defense); 6 Fighters vs 2 Battleships 13% (about 0% with Defense, defenders lose ~40 resources); 6 Fighters vs 1 Battleship with Defense: attackers win most (2.5 survive); 10 Fighters vs 1 Dreadnought 9%; Dreadnought vs 4 Fighters 100% with no losses. Earth's first attack (6 Fighters) is beaten by 2 Battleships plus Defense, so no config changes. Weapons upgrade (-1 to hit) not simulated by the CLI.
+- [round 4, core] Quality pass 2: score 90.4 at start (floor met); added two blank lines in core tests. check_full.sh still stops at `orval: not found` (env); dotnet format/build/tests pass. QueueFixture `.Result` finding is a false positive (a property, not a Task).
+- [round 4, server] Outcome with missing winner/reason says "unknown" (200), not an error. Test suite shows flaky 'too many clients' Postgres failures (max_connections=60) when run in parallel.
+- [round 4, server] Fixed the Postgres "too many clients" test failures: test connection strings now set Pooling=false, so per-test schemas no longer leave idle pooled connections behind. Test-only change.
+- [round 4, server] Skipped: GameOutcome.cs catch blocks flagged as swallowing errors; they are deliberate (bad stored data gives an "unknown" outcome, per the outcome endpoint decision). Score stayed at 90.5.
+[round 4, server] Share link is built by the web client from the join code (server returns code only); duplicate join names are refused case-insensitively with 409.
+- [round 4, server] Quality pass: full check passed except one `npm run build` run that hit a Next.js security-advisory error (environmental, passed on retry; Next.js upgrade left to the user). Score 90.5 (A-), at or above 90 so no code changes; remaining findings in server files are minor/risky and skipped.
+
+- [round 4 merge] Applied server request: `GameEngine.Map` now builds the map from the star catalog with the game's objectives and enemy home (via `Galaxy.ToMap`), instead of returning no systems.
+[round 4, web] Generated Zod types 64-bit numbers as number|string and Resources as {iron,...}, so `lib/api/adapters/schemas.ts` validates with the generated schemas and then converts to numbers and name-keyed records; queue enum ordinals map to names using the CONTRACTS.md enum order.
+[round 4, web] Game counts as finished when GameEnded arrives or timeLeftSeconds <= 0 (PlayerView has no status field).
+[round 4, web] Quality pass: `npm run build` compiles but exits 1 on a Next.js security-advisory gate. Fixing needs a Next.js upgrade (dependency change, out of scope for a no-behaviour pass), so left for the user. Remaining lint warnings (react-hooks purity/refs in useGame.ts and SolarMap.tsx) skipped as risky behaviour changes. Score 90.5, kept.
+[round 4, web] Skipped scout range hint: PlayerView has no range data and the client must not own rules.
+[round 4, web] `play` runs the server in the background of the same shell and kills it when Next exits; no new dependency (no concurrently).
+[round 4, web] Quality pass: full checks pass, score 90.6 (A-), no changes needed in web-owned files.
+
+- [round 4 merge] Applied web request: Server allows CORS from http://localhost:3000 (with credentials, for SignalR) so `npm run play` works.

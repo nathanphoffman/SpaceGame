@@ -30,8 +30,9 @@ export const playerViewFixture: PlayerViewDto = {
 	timeLeftSeconds: 5000,
 	teamScore: 0,
 	enemyScore: 0,
-	stockpile: { Iron: 10 },
+	stockpile: { Iron: 10, Hydrogen: 0, Titanium: 0, Helium3: 0 },
 	holdings: [],
+	reports: [],
 	upgrades: {},
 	fleets: [
 		{
@@ -44,7 +45,33 @@ export const playerViewFixture: PlayerViewDto = {
 			departAt: 1200,
 			arriveAt: 1500,
 			ships: { Scout: 2 },
-			cargo: {},
+			cargo: { Iron: 0, Hydrogen: 0, Titanium: 0, Helium3: 0 },
+		},
+	],
+};
+
+const wireResources = (iron = 0) => ({ iron, hydrogen: 0, titanium: 0, helium3: 0 });
+
+/** The same map and view as above, in the shape the server sends (strings for 64-bit numbers, Resources objects, enum ordinals). */
+export const wireMapFixture = {
+	systems: galaxyMapFixture.systems.map((system) => ({ ...system, x: String(system.x) })),
+};
+
+export const wireViewFixture = {
+	version: "3",
+	gameTime: "1000",
+	timeLeftSeconds: 5000,
+	teamScore: 0,
+	enemyScore: 0,
+	stockpile: wireResources(10),
+	reports: [],
+	upgrades: {},
+	fleets: [{ ...playerViewFixture.fleets[0], launchAt: "900", ships: { Scout: 2 }, cargo: wireResources() }],
+	holdings: [
+		{
+			planet: "a1",
+			mines: { Iron: 1 },
+			queue: [{ id: "q1", building: 0, element: 0, ship: null, level: 1, startAt: 0, finishAt: 60, cost: wireResources(5) }],
 		},
 	],
 };

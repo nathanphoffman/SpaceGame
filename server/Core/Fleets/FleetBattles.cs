@@ -33,11 +33,15 @@ internal static class FleetBattles
         var after = Survive(state, planet, defenders, result.Defenders, defenderSide, attacker.ArriveAt);
         var left = Count(result.Attackers);
         var hurt = ShipDamage.Tally(result.Attackers, type => FullHp(state, attacker.Owner, attacker.Side, type));
-
-        return left.Count == 0
+        var landed = left.Count == 0
             ? after
             : FleetArrivals.Land(after, attacker with { Ships = left, Damage = hurt }, planet, attacker.ArriveAt, events);
+
+        return EnemyTookEarth(attacker, planet, result) ? Endgame.End(landed, Side.Enemy, Endgame.EarthLostReason, attacker.ArriveAt, events) : landed;
     }
+
+    private static bool EnemyTookEarth(Fleet attacker, PlanetId planet, BattleResult result) =>
+        attacker.Side == Side.Enemy && planet == StartingKit.EarthId && result.AttackersWon;
 
     private static List<Garrison> Defenders(GameState state, Fleet attacker)
     {

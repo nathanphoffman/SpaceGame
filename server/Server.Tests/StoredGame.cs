@@ -15,12 +15,12 @@ public sealed class StoredGame
     public required GameWriter Writer { get; init; }
     public required Guid GameId { get; init; }
 
-    public static async Task<StoredGame> CreateAsync(string code = "ABCD", string mode = "week", string status = "lobby")
+    public static async Task<StoredGame> CreateAsync(string code = "ABCD", string mode = "week", string status = "lobby", string? webhook = null)
     {
         var schema = await TestDatabase.MigratedSchemaAsync();
         var db = TestDatabase.NewContext(schema);
         var writer = new GameWriter(db);
-        var gameRow = await writer.CreateAsync(code, mode, 1, EmptyState, null, StartTime);
+        var gameRow = await writer.CreateAsync(code, mode, 1, EmptyState, webhook, StartTime);
 
         if (status != "lobby")
         {

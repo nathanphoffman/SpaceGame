@@ -36,9 +36,11 @@ public static class TimeScale
 /// <summary>Dice that are reproducible from a seed and the game time they are rolled for.</summary>
 public sealed class SeededDice(int seed, long gameTime) : IDice
 {
+    private const int DieSides = 6;
+
     private readonly Random random = new(HashCode.Combine(seed, gameTime));
 
-    public int Roll() => random.Next(1, 7);
+    public int Roll() => random.Next(1, DieSides + 1);
 }
 
 /// <summary>Loads a game, advances it to the current game time, saves it and hands it to the caller, all under the game's lock.</summary>

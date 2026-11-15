@@ -1,18 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
+import type { z } from "zod";
+import { PostQuoteResponse } from "./generated/zod/play-endpoints/play-endpoints.zod";
 import { postQuote } from "./generated/api";
 import type { Resources, SendFleetBody } from "./generated/model";
 import { commandBody, ELEMENTS, type ElementName } from "./commands";
 import type { CommandBody } from "./generated/model";
 
-const quoteSchema = z.object({
-	ok: z.boolean(),
-	error: z.string().nullable().optional(),
-	departAt: z.coerce.number(),
-	arriveAt: z.coerce.number(),
-});
+const quoteSchema = PostQuoteResponse.transform((quote) => ({
+	ok: quote.ok,
+	error: quote.error,
+	departAt: Number(quote.departAt),
+	arriveAt: Number(quote.arriveAt),
+}));
 
-export type QuoteResult = z.infer<typeof quoteSchema>;
+export type QuoteResult = z.output<typeof quoteSchema>;
 
 export type FleetDraft = { from: string; to: string; ships: Record<string, number>; cargo: Partial<Record<ElementName, number>> };
 

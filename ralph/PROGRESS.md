@@ -30,14 +30,23 @@ Code-quality score (`codequality . --quick`): **90.6** (up from 88.7, floor met;
 - **failed to merge**: nothing. After the merge the web requests were applied (string ids, string `Side`, `PlayerView.Upgrades`).
 - `npm run build` still fails once per run with a Next.js security notice and passes on retry (flaky, left for the user).
 
+## Round 4
+Code-quality score (`codequality . --quick`): **90.0** (down 0.6 from 90.6, floor met but only just; weakest rules: call depth in tests, "Minimize dependencies" 67%, "Simple beats clever" 80%). `ralph/check_full.sh` passes.
+
+- **core**: enemy attacks (`EnemyAttack`), Earth attack schedule, scoring, endgame (`GameEnded` with the keys the server reads), world checks, full-week determinism test, balance run with `server/Sim` (no config change). Core rules are all in.
+- **server**: end-to-end test with the real engine, outcome payload fallbacks, Discord session tests, lobby rules tests, README endpoints and run steps. Only the old TS server deletion is left.
+- **web**: generated Zod swap, outcome from `GET /outcome`, live-update checks, lobby polish, score bars, README and `npm run play`. Only the legacy deletion is left.
+- **blocked**: `[!]` deleting `lib/server`, `app/api`, `app/legacy`, `components/screens|panels|hooks`, `lib/defs.ts`, `lib/economy.ts` and old tests needs the user's OK (the user's rule is to ask before deleting). Milestone i and the "old server gone" Done item cannot finish until then. Deleting them would also lift the dependency score.
+- **failed to merge**: nothing. Two glue fixes after merge (Core `Map` fills systems, CORS for localhost:3000).
+
 ## Milestones
-- [~] a. Rules in C# (Core): catalog, resolver and `server/Sim` exist; balance use comes in j.
-- [~] b. World (Core): galaxy, generator, real distances done; no test yet that the enemy trip is 1 to 2 days.
+- [x] a. Rules in C# (Core): done; Sim used for the balance pass.
+- [x] b. World (Core): done, travel and objective tests exist.
 - [x] c. Economy and building (Core): done.
-- [~] d. Fleets (Core): send, recall, flight, arrival, battles, colonize, trade, visibility done. Reports exist as events; mostly done.
-- [~] e. Enemy and endgame (Core): AI part 1 done; attack choice, Earth schedule, scoring, instant win/loss, week end not started.
-- [~] f. Server: done apart from checking `GameEnded` payload against Core's real events.
-- [~] g. Client plumbing (web): mostly done; adapters still use hand-written Zod (swap now possible).
-- [~] h. Game UI (web): top bar, maps, planet/queue/upgrade/trade panels, send dialog, warnings, reports, end screen done; needs live wiring check.
-- [ ] i. Cleanup: not started; blocked on the user's OK to delete files (`lib/server`, `app/api`, `/legacy`, old defs); `npm run play` missing.
-- [ ] j. Balance and polish: not started.
+- [x] d. Fleets (Core): done.
+- [x] e. Enemy and endgame (Core): done.
+- [x] f. Server: done; real-engine end-to-end test passes.
+- [x] g. Client plumbing (web): done, generated Zod in use.
+- [~] h. Game UI (web): all panels done; no scout range hint (view has no range data); live wiring only tested with a fake hub.
+- [~] i. Cleanup: README and `npm run play` done; deleting the old TS server and legacy UI blocked on the user's OK.
+- [~] j. Balance and polish: balance run done; fast test-mode full game and docs polish left.

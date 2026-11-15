@@ -11,6 +11,7 @@ export type FleetSpottedEvent = {
 export type HubConnectionLike = {
 	on(method: string, handler: (...args: never[]) => void): void;
 	onreconnected(handler: () => void): void;
+	onreconnecting?(handler: () => void): void;
 	start(): Promise<void>;
 	stop(): Promise<void>;
 };
@@ -19,6 +20,7 @@ type Handlers = {
 	onFleetSpotted: (event: FleetSpottedEvent) => void;
 	onBattleResolved?: (reportId: string) => void;
 	onGameEnded?: (outcome: string) => void;
+	onReconnecting?: (reconnecting: boolean) => void;
 };
 
 function invalidateGame(client: QueryClient, gameId: string): void {
@@ -61,7 +63,12 @@ export function attachGameEvents(
 	);
 
 	// Events can be missed while offline, so refetch once we are back.
-	connection.onreconnected(refresh);
+	connection.onreconnecting?.(() => handlers.onReconnecting?.(true));
+	connection.onreconnected(() => {
+		handlers.onReconnecting?.(false);
+		refresh();
+	});
+
 	void connection.start().catch((error) => {
 		console.warn("Live updates could not start; polling still works", error);
 	});
