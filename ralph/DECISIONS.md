@@ -13,3 +13,8 @@ To override one, edit or add a line here (`HUMAN:` prefix); workers read this fi
 - Assumed: players can only join before the host starts the game.
 - Assumed: the enemy sees everything; fog of war applies to players only.
 - Known at the start: `npm run lint` has 1 error in `lib/server/seedGalaxy.ts` (an `any`); the old TS server is deleted later anyway, so round 0 fixes it with the smallest change. `next build` may fail once with a Next.js security-advisory notice on a fresh checkout; running it again passes.
+- [round 0, setup] Skeleton is C# only (solution, Core stubs for every shared type, tiny Sim and Server hosts, one test each). `server/openapi.json`, the Orval client (`gen:api`) and `lib/api` are NOT created: they belong to the server and web round-1 items, and check_full skips those steps until both exist.
+- [round 0, setup] `GameConfig`, `GameState`, `PlayerView`, `GalaxyMap`, `FlightQuote`, `BattleReport` are minimal placeholders with only the fields CONTRACTS.md names; core fills them in (adding only). `GameEvent` payload is `IReadOnlyDictionary<string,string>`.
+- [round 0, setup] `GenerateDocumentationFile` left off in Core (it makes missing-param-doc warnings fatal under TreatWarningsAsErrors); doc comments are still written.
+- [round 0, setup] Fixed `ralph/pg_up.sh`: Postgres could not create its socket in /var/run/postgresql (added `unix_socket_directories=/tmp`) and the daemon inherited the flock fd and deadlocked later callers (`9>&-`).
+- [round 0, setup] Fixed the one lint error in `lib/server/seedGalaxy.ts` by moving the eslint-disable to the line above.

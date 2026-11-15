@@ -6,8 +6,9 @@ import { fillSystem } from "@/lib/galaxy/systemGen";
 
 /** anything with pg's query(): the pool, or a client inside a transaction */
 export type Queryable = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	query(text: string, values?: unknown[]): Promise<{ rows: any[] }>;
-}; // eslint-disable-line @typescript-eslint/no-explicit-any
+};
 
 // a new game starts on the planet flagged `start` in the catalog (Earth)
 const START = {
