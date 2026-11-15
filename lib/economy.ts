@@ -8,7 +8,9 @@ import {
 } from "@/lib/defs";
 
 /** how many of an element the planet holds `seconds` after the last server update, counting what its mines produce meanwhile */
+// curried so callers can build the lookup once and apply it to each element
 export const stockAfter =
+	// first call fixes the planet and time; the returned function then answers per element
 	(planet: PlanetDTO, rate: Resources, seconds: number) => (element: string) =>
 		(planet.resources[element] ?? 0) + (rate[element] ?? 0) * seconds;
 

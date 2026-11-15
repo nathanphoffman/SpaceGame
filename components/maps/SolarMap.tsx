@@ -1,5 +1,6 @@
 import { planetThumb, thumbDisplaySize } from "@/components/planet/planetThumb";
-import { fleetIcon, fmtAU } from "@/components/ui";
+import { fmtAU } from "@/components/ui";
+import FleetMark, { fleetClass } from "./FleetMark";
 import {
 	FLEET_STATUS,
 	type FleetDTO,
@@ -230,18 +231,19 @@ function FlyingFleet({
 	const { from, to, k } = flightOf(game, fleet, now);
 	const fromX = slotById.get(from.id) ?? SLOT_LEFT;
 	const destinationX = slotById.get(to.id) ?? SLOT_LEFT;
+	const angle = destinationX >= fromX ? 90 : -90;
 
 	return (
 		<span
-			className="fleet"
+			className={fleetClass(fleet)}
 			style={{
 				left: `${fromX + (destinationX - fromX) * k}%`,
 				top: `${SOLAR_Y}%`,
-				transform: `translate(-50%,-50%) rotate(${destinationX >= fromX ? 90 : -90}deg)`,
+				transform: `translate(-50%,-50%) rotate(${angle}deg)`,
 			}}
 
 		>
-			<img src={fleetIcon(fleet)} alt="" />
+			<FleetMark fleet={fleet} now={now} angle={angle} />
 		</span>
 	);
 }

@@ -28,6 +28,7 @@ export const MINE_PREFIX = "mine_";
 
 export const mineType = (el: string) => `${MINE_PREFIX}${el}`;
 
+/** the element a mine building type produces, or null if the type is not a mine */
 export const mineElement = (type: string): Element | null => {
 	const el = type.startsWith(MINE_PREFIX)
 		? type.slice(MINE_PREFIX.length)
@@ -69,9 +70,11 @@ const GEM_MINES = new Set(["Si", "C"]);
 
 /** gas, gem or metal mine icon depending on the element */
 const mineIcon = (element: string) =>
+	// pick the icon by element family: gas, then gem, otherwise metal
 	GAS_MINES.has(element)
 		? MINE_ICONS.gas
 		: GEM_MINES.has(element)
+			// the nested ternary keeps the three-way choice in one expression
 			? MINE_ICONS.gem
 			: MINE_ICONS.metal;
 
@@ -139,6 +142,7 @@ export const toRoman = (n: number) => {
 	return result;
 };
 
+// total cost of building one level of a building, scaled by its current level
 export const buildCost = (type: string, level: number): Resources => {
 	// the cost of a level: the base cost grows by 1.6x for each level already built
 	const base = buildingInfo(type)!.cost;
@@ -463,6 +467,7 @@ export const flightSeconds = (
 	b: Placed,
 	systems: { id: number; x: number; y: number }[],
 ) => {
+	// same system means a short hop; otherwise distance between the stars decides
 	if (a.systemId === b.systemId)
 
 		return Math.max(
@@ -521,6 +526,8 @@ export type FleetDTO = {
 	returnAt: number;
 	status: FleetStatus;
 	report: string;
+	/** an enemy fleet (from the API's Side); drawn in a different colour */
+	hostile?: boolean;
 };
 
 export type GameState = {

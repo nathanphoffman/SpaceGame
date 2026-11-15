@@ -31,3 +31,21 @@ export function flightOf(game: GameState, fleet: FleetDTO, nowMs: number) {
 		k: Math.min(1, Math.max(0, (nowMs - departure) / (arrival - departure))),
 	};
 }
+
+const MS_PER_SECOND = 1000;
+
+/** milliseconds left of the 5-minute prep (0 once the fleet has left); the fleet sits at its origin until then */
+export const prepLeftMs = (fleet: FleetDTO, nowMs: number) =>
+	fleet.status === FLEET_STATUS.outbound ? Math.max(0, fleet.departAt - nowMs) : 0;
+
+/** "m:ss" countdown text */
+export function countdownText(ms: number) {
+	const seconds = Math.ceil(ms / MS_PER_SECOND);
+	const secondsPerMinute = 60;
+
+	return `${Math.floor(seconds / secondsPerMinute)}:${String(seconds % secondsPerMinute).padStart(2, "0")}`;
+}
+
+/** Server time in ms now: the server's game time at the last fetch plus the local time passed since. */
+export const syncedNowMs = (serverGameTimeMs: number, fetchedAtLocalMs: number, localNowMs: number) =>
+	serverGameTimeMs + (localNowMs - fetchedAtLocalMs);

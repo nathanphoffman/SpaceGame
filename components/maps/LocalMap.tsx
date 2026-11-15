@@ -1,5 +1,5 @@
 import { useMapZoom } from "@/components/maps/useMapZoom";
-import { fleetIcon } from "@/components/ui";
+import FleetMark, { fleetClass } from "./FleetMark";
 import {
 	type FleetDTO,
 	type GameState,
@@ -177,7 +177,7 @@ function FlyingFleet({
 
 	return (
 		<span
-			className="fleet"
+			className={fleetClass(fleet)}
 			style={{
 				left: `${start.x + (end.x - start.x) * k}%`,
 				top: `${start.y + (end.y - start.y) * k}%`,
@@ -185,7 +185,7 @@ function FlyingFleet({
 			}}
 
 		>
-			<img src={fleetIcon(fleet)} alt="" />
+			<FleetMark fleet={fleet} now={now} angle={angle} />
 		</span>
 	);
 }

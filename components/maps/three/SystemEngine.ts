@@ -282,6 +282,7 @@ export class SystemEngine {
 			node.label.classList.toggle("sel", planetId === id);
 	}
 
+	/** select a body by id; selecting the already selected one does nothing */
 	private select(id: number | null) {
 		if (id === this.view.selected) return;
 
@@ -366,6 +367,7 @@ export class SystemEngine {
 		this.camera.updateProjectionMatrix();
 	}
 
+	/** advance every planet along its orbit by the elapsed time */
 	private moveBodies(deltaSeconds: number, now: number) {
 		for (const node of this.world.planets.values()) {
 			planetPosition(node.dto, now, node.holder.position);

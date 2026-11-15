@@ -108,6 +108,7 @@ function MineOutput({ tile }: { tile: TileState }) {
 		>
 			<b style={{ color: elementColor(element) }}>{element}</b> {pct}% · +
 			{mineRate(built, pct).toFixed(1)}/s
+			{/* show the next-level gain only until the building is maxed */}
 			{level < MAX_BUILDING_LEVEL && (
 				<> → +{mineRate(level + 1, pct).toFixed(1)}/s</>
 			)}{" "}

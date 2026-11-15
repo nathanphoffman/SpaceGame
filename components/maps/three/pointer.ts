@@ -68,6 +68,7 @@ export function bindPointer(
 		window.addEventListener(POINTER_EVENT.up, up);
 	};
 
+	// hover only: while a button is held the drag handler owns the pointer
 	const onMove = (e: PointerEvent) => {
 		if (e.buttons) return;
 		const id = pick(e);

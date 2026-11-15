@@ -13,5 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Core/SpaceGame.Core.csproj" />
+    <ProjectReference Include="../Sim/SpaceGame.Sim.csproj" />
   </ItemGroup>
 </Project>

@@ -13,3 +13,18 @@ public class ResourcesTests
         Assert.False(sum.Covers(new Resources(3, 0, 0, 0)));
     }
 }
+
+public class ResourcesHelperTests
+{
+    [Fact]
+    public void SubtractTotalScaleAndGet()
+    {
+        var r = new Resources(10, 20, 30, 40);
+        Assert.Equal(100, r.Total);
+        Assert.False((r - r).HasNegative);
+        Assert.True((r - new Resources(11, 0, 0, 0)).HasNegative);
+        Assert.Equal(new Resources(15, 30, 45, 60), r.Scale(1.5));
+        Assert.Equal(new Resources(20, 40, 60, 80), r * 2);
+        Assert.Equal(30, r.Get(Element.Titanium));
+    }
+}

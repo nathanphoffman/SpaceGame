@@ -819,3 +819,17 @@ input[type="number"] {
 	color: var(--accent);
 	margin-top: -14px;
 }
+.fleet.enemy img {
+	filter: hue-rotate(150deg) saturate(2);
+}
+.fleet-prep {
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	margin-left: -1.5em;
+	width: 3em;
+	text-align: center;
+	font-size: 10px;
+	line-height: 1;
+	color: var(--accent);
+}

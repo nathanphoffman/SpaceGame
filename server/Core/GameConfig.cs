@@ -4,7 +4,21 @@ namespace SpaceGame.Core;
 /// <param name="ScoreTarget">Points that win the game.</param>
 /// <param name="WeekSeconds">Game length in game seconds.</param>
 /// <param name="PrepSeconds">Launch and crew prep before every flight.</param>
-public sealed record GameConfig(int ScoreTarget = 500, long WeekSeconds = 604_800, long PrepSeconds = 300);
+public sealed record GameConfig(
+    int ScoreTarget = GameConfig.DefaultScoreTarget,
+    long WeekSeconds = GameConfig.SecondsPerWeek,
+    long PrepSeconds = GameConfig.DefaultPrepSeconds)
+{
+    private const int DefaultScoreTarget = 500;
+    private const long SecondsPerWeek = 7 * 24 * 3600;
+    private const long DefaultPrepSeconds = 5 * 60;
+
+    /// <summary>Every ship, building and upgrade.</summary>
+    public Catalog Catalog { get; init; } = Catalog.Default;
+
+    /// <summary>Flight time constants.</summary>
+    public TravelConfig Travel { get; init; } = new();
+}
 
 /// <summary>Who plays.</summary>
 public sealed record PlayerSetup(PlayerId Id, string Name);

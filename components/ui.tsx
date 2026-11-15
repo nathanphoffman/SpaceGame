@@ -61,6 +61,7 @@ export const Cost = ({ cost }: { cost: Resources }) => (
 	</>
 );
 
+// renders one icon and count per ship type; the inner map builds each entry
 export const ShipList = ({ ships }: { ships: Record<string, number> }) => {
 	// list the ship types present, skipping those with none
 	const list = Object.entries(ships).filter(([, n]) => n > 0);
