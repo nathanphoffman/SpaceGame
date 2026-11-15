@@ -1,0 +1,10 @@
+# web tasks (round 1)
+
+Owns `app/**` (not `app/api/**`), `components/**`, `lib/**` (not `lib/server/**`), `tests/**`, `orval.config.ts`. Do not change how the renderer (`components/maps/**`, `components/planet/**`) looks or works. Read the Next docs in `node_modules/next/dist/docs/` before writing Next code.
+
+- [ ] Add the dependencies (`@tanstack/react-query`, `zod`, `@microsoft/signalr`, `orval`) and an `orval.config.ts` that reads `server/openapi.json` and writes TanStack Query hooks and Zod schemas to `lib/api/generated`. Add the `gen:api` script, run it, commit the output, and add `lib/api/generated` to `.codequalityignore`. Keep the old app working: the old pages and API routes stay until milestone i.
+- [ ] `lib/api/client.ts` (the fetch mutator Orval uses: base URL from env, bearer token from the session, `ProblemDetails` errors turned into a typed `ApiError`) and `lib/api/session.ts` (gameId, playerId, token in `localStorage`, safe when storage is unavailable). Tests with a mocked `fetch`.
+- [ ] A `QueryClientProvider` in the app layout, and `lib/api/useGameEvents.ts`: connects to the SignalR hub for the current game, reconnects, and invalidates the right queries on `StateChanged`, `FleetSpotted`, `BattleResolved`; exposes the last `FleetSpotted` event for toasts. Test with a fake connection object.
+- [ ] New home page `/` (replace the old one only when the new flow works behind a feature flag or a new route like `/new` if needed): create a game (name, week or 1-hour test mode, optional Discord webhook) or join with a code and a name. Forms validated with Zod, errors shown from `ApiError`. Component tests.
+- [ ] Lobby page `/game/[gameId]/lobby`: shows the code with a copy-link button, the players (live), and a Start button for the host. Redirects into `/game/[gameId]` when started. Component tests.
+- [ ] Map adapters in `lib/api/adapters`: turn the API's `GalaxyMap` and `PlayerView` into the props the existing renderer components already take (`GalaxyView`, `SystemView`, `PlanetView`), without changing those components. Unit tests with fixture data in `tests/fixtures`.

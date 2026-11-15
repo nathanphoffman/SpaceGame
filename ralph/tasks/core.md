@@ -1,0 +1,12 @@
+# core tasks (round 1)
+
+Owns `server/Core/**`, `server/Core.Tests/**`, `server/Sim/**`. One item per Claude session. Core is pure C#: no I/O, no clock, dice and time are arguments.
+
+- [ ] Resources and the catalog: `Resources` with arithmetic and comparison helpers, and a `Catalog` (or config records inside `GameConfig`) holding every ship, building and upgrade from SPEC.md (cost, build time, speed, hits-on, shots, HP, cargo). Tests that check each number against the SPEC.md tables.
+- [ ] `BattleResolver.Resolve` per SPEC.md "Battle (dice)": simultaneous rounds, roll of 1 always misses, hit assignment order (no weapons, Fighter, Battleship, Dreadnought), damage persists, defender bonus, allied ships fight together. Tests with a scripted `IDice` for exact outcomes (a 1-on-1, a Dreadnought against a Fighter swarm, the defender bonus, a draw-out round count).
+- [ ] The battle simulator `server/Sim`: `fight "<count> <ship>, ..." "<count> <ship>, ..." --runs N [--defense] [--seed S]` prints attacker win rate, average survivors and an efficiency line (resource cost lost per side). Use a seeded `IDice`. A small test for the argument parser.
+- [ ] `TravelRules`: prep time (5 minutes), in-system and between-system flight time per SPEC.md (quadratic in light years), fleet speed = slowest ship, Engines upgrade, and `FlightQuote`. Tests for Sun to Pluto being about 1 hour of flight plus the prep, and Earth to the Moon being about 5 minutes.
+- [ ] Mine output and the stockpile: output per second from mine level, planet richness, Mining upgrade; `Stockpile` brought up to date to a time `now` without drift (integer fractions carried). Tests over several hours and across level changes.
+- [ ] Build queues for buildings and ships on `GameState`: `Apply(BuildBuilding)` and `Apply(QueueShip)` check cost, shipyard, one mine per element, level caps, and take the cost up front; `Advance` completes items in time order. Tests for every error message and for completion order.
+- [ ] Upgrades: `Apply(StartUpgrade)`, level caps, costs, completion in `Advance`, and their effects (Engines speed, Weapons hit number, Armor HP, Mining output) wired into the rules above. Tests per upgrade.
+- [ ] `GameEngineFactory.Create()` returns a real `GameEngine` that implements `IGameEngine` for everything done so far (`NewGame` with the starting kit from SPEC.md, `Advance`, `Apply`, `Quote`); `System.Text.Json` round-trip test for `GameState`.
