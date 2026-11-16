@@ -58,9 +58,12 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 	const destinations = data.map.systems.flatMap((entry) => entry.planets).filter((planet) => planet.id !== picked?.id);
 
 	return (
-		<>
+		<div className="game-grid">
+			<div className="game-maps">
 			<LocalMap game={game} sector={[system.sectorX, system.sectorY]} shownSystemId={system.id} nowMs={nowMs} onSelect={setSystemId} onBack={() => undefined} />
 			<SolarMap game={game} system={system} viewed={viewed} nowMs={nowMs} onSelect={(planet) => setPickedId(ids.idOf(planet.id))} />
+			</div>
+			<div className="game-side">
 			{picked && <PlanetDetails gameId={gameId} planet={picked} holding={holding} gameTime={data.view.gameTime} upgrades={data.view.upgrades} />}
 			{holding && <FleetSendDialog key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
 			{holding && <TradePanel key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
@@ -68,7 +71,8 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 			{live.reconnecting && <p role="status">Reconnecting to live updates…</p>}
 			<BattleToast gameId={gameId} reportId={live.battleReportId} />
 			<FleetList gameId={gameId} fleets={data.view.fleets} gameTime={data.view.gameTime} />
-		</>
+			</div>
+		</div>
 	);
 }
 

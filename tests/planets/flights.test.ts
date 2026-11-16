@@ -1,6 +1,4 @@
-import * as THREE from "three";
 import { describe, expect, it } from "vitest";
-import { planetPosition, systemRadius } from "@/components/maps/three/orbits";
 import type { FleetDTO, GameState, PlanetDTO } from "@/lib/defs";
 import { flightOf, flyingFleets, isCrossSystem } from "@/lib/galaxy/flight";
 
@@ -16,35 +14,6 @@ const planet = (id: number, orbit: number, systemId = 1): PlanetDTO => ({
 	defense: 0,
 	seed: id * 1000,
 	shared: false,
-});
-
-describe("3D orbits", () => {
-	it("keeps a planet at the same distance from the star as it moves", () => {
-		const earth = planet(1, 1);
-		const early = planetPosition(earth, 0, new THREE.Vector3());
-		const later = planetPosition(earth, 25_000, new THREE.Vector3());
-		expect(early.length()).toBeCloseTo(later.length(), 5);
-		expect(early.distanceTo(later)).toBeGreaterThan(0);
-	});
-
-	it("keeps outer planets further out", () => {
-		const near = planetPosition(
-			planet(1, 0.4),
-			0,
-			new THREE.Vector3(),
-		).length();
-
-		const far = planetPosition(planet(2, 30), 0, new THREE.Vector3()).length();
-		expect(far).toBeGreaterThan(near);
-	});
-
-	it("sizes the system by its outermost planet", () => {
-		expect(systemRadius([planet(1, 1), planet(2, 30)])).toBeGreaterThan(
-			systemRadius([planet(1, 1)]),
-		);
-
-		expect(systemRadius([])).toBe(0);
-	});
 });
 
 describe("fleet flights", () => {

@@ -8,7 +8,7 @@ import {
 	useState,
 } from "react";
 
-import { POINTER_EVENT } from "@/components/maps/three/pointer";
+import { POINTER_EVENT } from "@/components/maps/pointer";
 
 const MAX_ZOOM = 12;
 const BUTTON_ZOOM_STEP = 1.6;

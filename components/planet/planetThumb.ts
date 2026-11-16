@@ -1,4 +1,4 @@
-import { planetExtent } from "@/components/planet/planetMesh";
+import { planetExtent } from "@/components/planet/planetColors";
 import { renderPlanetPixels } from "@/components/planet/softThumb";
 import { planetParams } from "@/lib/planets/planetParams";
 

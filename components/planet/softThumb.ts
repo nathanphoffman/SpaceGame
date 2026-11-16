@@ -4,7 +4,7 @@ import {
 	gasVertexColor,
 	ringVertexColor,
 	rockyVertex,
-} from "@/components/planet/planetMesh";
+} from "@/components/planet/planetColors";
 
 import type { PlanetParams, RgbColor } from "@/lib/planets/types";
 

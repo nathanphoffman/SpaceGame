@@ -1,11 +1,5 @@
-import * as THREE from "three";
-import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { fbm, noise3 } from "@/lib/planets/noise";
 import type { PlanetParams, RgbColor } from "@/lib/planets/types";
-
-const SPHERE_WIDTH_SEGMENTS = 160;
-const SPHERE_HEIGHT_SEGMENTS = 110;
-const WELD_TOLERANCE = 1e-4;
 
 // gas giants: bands wobble with noise, then two band patterns are blended
 const GAS_WARP_SCALE = 3;
@@ -37,9 +31,7 @@ const CRATER_RIM_HEIGHT = 0.25 * 4 * 0.5; // the raised rim is a quarter of the 
 
 type Vec3 = [number, number, number];
 
-const RGB_CHANNELS = 3;
 const HALF = 0.5;
-const SURFACE_ROUGHNESS = 0.95;
 const BAND_COLORS = { first: 0, second: 1, third: 2, fourth: 3 };
 const GAS_BLEND_SCALE = { x: 6, y: 1.5 }; // the second band pattern is stretched along the poles
 
@@ -197,64 +189,6 @@ export function rockyVertex(
 	};
 }
 
-/** a sphere whose vertices are pushed out by terrain noise and coloured by the planet's look */
-function buildPlanet(params: PlanetParams, detail: number): THREE.Mesh {
-	// merge duplicate vertices so normals are smooth across the texture seam
-	let geometry: THREE.BufferGeometry = new THREE.SphereGeometry(
-		1,
-		Math.round(SPHERE_WIDTH_SEGMENTS * detail),
-		Math.round(SPHERE_HEIGHT_SEGMENTS * detail),
-	);
-
-	geometry.deleteAttribute("uv");
-	geometry.deleteAttribute("normal");
-	geometry = mergeVertices(geometry, WELD_TOLERANCE);
-
-	const pos = geometry.attributes.position as THREE.BufferAttribute;
-	const colors = new Float32Array(pos.count * RGB_CHANNELS);
-
-	for (let index = 0; index < pos.count; index++) {
-		const length = Math.hypot(
-			pos.getX(index),
-			pos.getY(index),
-			pos.getZ(index),
-		);
-
-		const unitX = pos.getX(index) / length,
-			ny = pos.getY(index) / length,
-			nz = pos.getZ(index) / length;
-		const { color, lift } =
-			params.kind === "gas"
-				? { color: gasVertexColor(params, unitX, ny, nz), lift: 0 }
-				: rockyVertex(params, [unitX, ny, nz]);
-
-		pos.setXYZ(index, unitX * (1 + lift), ny * (1 + lift), nz * (1 + lift));
-		colors.set(color, index * RGB_CHANNELS);
-	}
-
-	geometry.setAttribute(
-		"color",
-		new THREE.BufferAttribute(colors, RGB_CHANNELS),
-	);
-
-	geometry.computeVertexNormals();
-
-	const mesh = new THREE.Mesh(
-		geometry,
-		new THREE.MeshStandardMaterial({
-			vertexColors: true,
-			roughness: SURFACE_ROUGHNESS,
-			metalness: 0,
-		}),
-	);
-
-	mesh.scale.setScalar(params.radius);
-
-	return mesh;
-}
-
-const RING_SEGMENTS = { around: 128, across: 40 };
-const RGBA = 4; // red, green, blue and alpha per ring vertex
 const RING_BAND_NOISE_SCALE = 14; // how fast the ring brightness varies from inner to outer edge
 const RING_GAP_NOISE_SCALE = 40;
 const RING_GAP_SEED_OFFSET = 9;
@@ -267,7 +201,6 @@ const NOISE_SLICE_Y = 0.5; // the ring noise is sampled along a thin slice of th
 const NOISE_SLICE_GAP_Y = 1.5;
 export const ATMOSPHERE_SCALE = 1.07; // the atmosphere shell is this much bigger than the planet
 export const ATMOSPHERE_OPACITY = 0.18;
-const ATMOSPHERE_SEGMENTS = { around: 48, across: 32 };
 
 /** RGBA of one ring vertex at the given distance from the planet centre */
 export function ringVertexColor(
@@ -303,71 +236,6 @@ export function ringVertexColor(
 		rings.color[2] * shade,
 		alpha,
 	];
-}
-
-/** a flat ring around the planet, with soft edges and a few gaps, coloured per vertex */
-function buildRings(params: PlanetParams): THREE.Mesh {
-	const rings = params.rings!;
-	const geometry = new THREE.RingGeometry(
-		rings.inner,
-		rings.outer,
-		RING_SEGMENTS.around,
-		RING_SEGMENTS.across,
-	);
-
-	const position = geometry.attributes.position;
-	const colors = new Float32Array(position.count * RGBA);
-
-	for (let index = 0; index < position.count; index++) {
-		const distance = Math.hypot(position.getX(index), position.getY(index));
-		colors.set(ringVertexColor(rings, distance), index * RGBA);
-	}
-
-	geometry.setAttribute("color", new THREE.BufferAttribute(colors, RGBA));
-	const mesh = new THREE.Mesh(
-		geometry,
-		new THREE.MeshBasicMaterial({
-			vertexColors: true,
-			transparent: true,
-			side: THREE.DoubleSide,
-			depthWrite: false,
-		}),
-	);
-
-	mesh.rotation.x = -Math.PI / 2 + rings.tilt;
-
-	return mesh;
-}
-
-/** a faint shell around the planet, seen from inside so it glows at the edge */
-function buildAtmosphere(params: PlanetParams, color: RgbColor): THREE.Mesh {
-	return new THREE.Mesh(
-		new THREE.SphereGeometry(
-			params.radius * ATMOSPHERE_SCALE,
-			ATMOSPHERE_SEGMENTS.around,
-			ATMOSPHERE_SEGMENTS.across,
-		),
-		new THREE.MeshBasicMaterial({
-			color: new THREE.Color(...color),
-			transparent: true,
-			opacity: ATMOSPHERE_OPACITY,
-			side: THREE.BackSide,
-		}),
-	);
-}
-
-/** Planet + rings + atmosphere, tilted. `detail` 1 = full quality, lower = fewer vertices (thumbnails). */
-export function createPlanetGroup(params: PlanetParams, detail = 1) {
-	const group = new THREE.Group();
-	group.rotation.z = params.tilt;
-	const planet = buildPlanet(params, detail);
-	group.add(planet);
-
-	if (params.rings) group.add(buildRings(params));
-
-	if (params.atmosphere) group.add(buildAtmosphere(params, params.atmosphere));
-
-	return { group, planet };
 }
 
 /** Half the visible world height needed to frame the whole planet (including rings). */
