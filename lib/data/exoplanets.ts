@@ -1,5 +1,8 @@
 import type { PlanetKind } from "@/lib/planets/types";
 
+const TAU_CETI = "Tau Ceti";
+const BARNARDS_STAR = "Barnard's Star";
+
 // Known planets outside the solar system. Sizes are estimated from the measured minimum mass
 // (radius ~ mass^0.27 for rocky worlds); composition and appearance are not known, so the game generates those.
 // star, planet, orbit (AU), kind, diameter (km), candidate (not yet confirmed)
@@ -14,10 +17,10 @@ export const EXOPLANETS: [
 	["Proxima Centauri", "Proxima b", 0.0485, "rocky", 13000],
 	["Proxima Centauri", "Proxima d", 0.0289, "desert", 8900],
 	["Proxima Centauri", "Proxima c", 1.489, "gas", 30000, true],
-	["Barnard's Star", "Barnard's Star d", 0.0187, "desert", 8500],
-	["Barnard's Star", "Barnard's Star b", 0.0229, "desert", 9700],
-	["Barnard's Star", "Barnard's Star c", 0.0273, "desert", 9300],
-	["Barnard's Star", "Barnard's Star e", 0.0379, "desert", 9000],
+	[BARNARDS_STAR, "Barnard's Star d", 0.0187, "desert", 8500],
+	[BARNARDS_STAR, "Barnard's Star b", 0.0229, "desert", 9700],
+	[BARNARDS_STAR, "Barnard's Star c", 0.0273, "desert", 9300],
+	[BARNARDS_STAR, "Barnard's Star e", 0.0379, "desert", 9000],
 	["Lalande 21185", "Lalande 21185 b", 0.0789, "desert", 16650],
 	["Lalande 21185", "Lalande 21185 c", 2.94, "gas", 44000],
 	["Epsilon Eridani", "Epsilon Eridani b", 3.5, "gas", 140000],
@@ -26,10 +29,10 @@ export const EXOPLANETS: [
 	["Ross 128", "Ross 128 b", 0.0496, "rocky", 13950],
 	["Groombridge 34", "Groombridge 34 b", 0.072, "desert", 17100],
 	["Groombridge 34", "Groombridge 34 c", 5.4, "gas", 55000, true],
-	["Tau Ceti", "Tau Ceti g", 0.133, "rocky", 14800, true],
-	["Tau Ceti", "Tau Ceti h", 0.243, "rocky", 14900, true],
-	["Tau Ceti", "Tau Ceti e", 0.538, "rocky", 18300, true],
-	["Tau Ceti", "Tau Ceti f", 1.334, "rocky", 18300, true],
+	[TAU_CETI, "Tau Ceti g", 0.133, "rocky", 14800, true],
+	[TAU_CETI, "Tau Ceti h", 0.243, "rocky", 14900, true],
+	[TAU_CETI, "Tau Ceti e", 0.538, "rocky", 18300, true],
+	[TAU_CETI, "Tau Ceti f", 1.334, "rocky", 18300, true],
 	["Epsilon Indi", "Epsilon Indi Ab", 28, "gas", 140000],
 	["Gliese 1061", "Gliese 1061 b", 0.021, "desert", 13900],
 	["Gliese 1061", "Gliese 1061 c", 0.035, "rocky", 14800],

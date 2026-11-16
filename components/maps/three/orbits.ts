@@ -28,7 +28,7 @@ const startPhase = (seed: number) =>
 
 // the farthest planet decides how big the system is on screen
 export const systemRadius = (planets: PlanetDTO[]) =>
-	Math.max(0, ...planets.map((p) => sceneDistance(p.orbit)));
+	Math.max(0, ...planets.map((planet) => sceneDistance(planet.orbit)));
 
 /** where a planet is at the given server time (ms) */
 export function planetPosition(

@@ -74,14 +74,14 @@ function addLabel(parent: THREE.Object3D, text: string, starClass: string) {
 
 /** frees the geometry and materials under an object */
 export function disposeTree(root: THREE.Object3D) {
-	root.traverse((object) => {
+	root.traverse((object) => { // callback run for each event or item
 		// visit every mesh under this object
 		const mesh = object as THREE.Mesh;
 		mesh.geometry?.dispose();
 		const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
 
 		// a material can be one material, a list of them, or missing; handle all three
-		(Array.isArray(mat) ? mat : mat ? [mat] : []).forEach((x) => x.dispose());
+		(Array.isArray(mat) ? mat : mat ? [mat] : []).forEach((material) => material.dispose());
 	});
 }
 
@@ -169,7 +169,7 @@ export function createShip(fleet: FleetDTO): ShipNode {
 	holder.add(hull, glowSprite(color, SHIP_LENGTH, SHIP_GLOW_OPACITY));
 
 	// total ships in the fleet: add up the count of every ship type
-	const count = Object.values(fleet.ships).reduce((total, n) => total + n, 0);
+	const count = Object.values(fleet.ships).reduce((total, shipCount) => total + shipCount, 0);
 	addLabel(
 		holder,
 		`${fleet.mission === MISSION.colonize ? "Colony" : "Fleet"} ×${count}`,

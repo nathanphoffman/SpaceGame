@@ -1,0 +1,1363 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "SpaceGame.Server | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "SpaceGame.Server"
+        ],
+        "operationId": "Health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/games": {
+      "post": {
+        "tags": [
+          "SpaceGame.Server"
+        ],
+        "operationId": "CreateGame",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/join": {
+      "post": {
+        "tags": [
+          "SpaceGame.Server"
+        ],
+        "operationId": "JoinGame",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinGameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/lobby": {
+      "get": {
+        "tags": [
+          "LobbyEndpoints"
+        ],
+        "operationId": "GetLobby",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LobbyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/start": {
+      "post": {
+        "tags": [
+          "LobbyEndpoints"
+        ],
+        "operationId": "StartGame",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/map": {
+      "get": {
+        "tags": [
+          "PlayEndpoints"
+        ],
+        "operationId": "GetMap",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GalaxyMap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/state": {
+      "get": {
+        "tags": [
+          "PlayEndpoints"
+        ],
+        "operationId": "GetState",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/commands": {
+      "post": {
+        "tags": [
+          "PlayEndpoints"
+        ],
+        "operationId": "PostCommand",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CommandBody"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/quote": {
+      "post": {
+        "tags": [
+          "PlayEndpoints"
+        ],
+        "operationId": "PostQuote",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SendFleetBody"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightQuote"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/reports": {
+      "get": {
+        "tags": [
+          "ReportEndpoints"
+        ],
+        "operationId": "ListReports",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BattleReport"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/reports/{id}": {
+      "get": {
+        "tags": [
+          "ReportEndpoints"
+        ],
+        "operationId": "GetReport",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BattleReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameId}/outcome": {
+      "get": {
+        "tags": [
+          "OutcomeEndpoints"
+        ],
+        "operationId": "GetOutcome",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameOutcome"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BattleReport": {
+        "required": [
+          "id",
+          "time",
+          "planet",
+          "attackersWon",
+          "rounds"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "time": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "planet": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "attackersWon": {
+            "type": "boolean"
+          },
+          "rounds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "BuildingType": {
+        "type": "integer"
+      },
+      "CommandBody": {
+        "required": [
+          "type",
+          "planet",
+          "from",
+          "to",
+          "fleet",
+          "itemId",
+          "buildingType",
+          "element",
+          "shipType",
+          "count",
+          "upgradeType",
+          "ships",
+          "cargo"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "planet": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fleet": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "buildingType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "element": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shipType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "upgradeType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ships": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "cargo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Resources"
+              }
+            ]
+          }
+        }
+      },
+      "CommandResult": {
+        "required": [
+          "ok",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CreateGameRequest": {
+        "required": [
+          "name",
+          "mode",
+          "seed",
+          "discordWebhookUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "discordWebhookUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CreateGameResponse": {
+        "required": [
+          "gameId",
+          "code",
+          "playerId",
+          "playerToken"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "playerToken": {
+            "type": "string"
+          }
+        }
+      },
+      "Element": {
+        "type": "integer"
+      },
+      "FleetId": {
+        "type": "string"
+      },
+      "FleetView": {
+        "required": [
+          "id",
+          "owner",
+          "side",
+          "from",
+          "to",
+          "launchAt",
+          "departAt",
+          "arriveAt",
+          "ships",
+          "cargo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/FleetId"
+          },
+          "owner": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlayerId"
+              }
+            ]
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "from": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "to": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "launchAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "departAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "arriveAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "ships": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "cargo": {
+            "$ref": "#/components/schemas/Resources"
+          },
+          "sightHops": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "FlightQuote": {
+        "required": [
+          "ok",
+          "error",
+          "departAt",
+          "arriveAt"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "departAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "arriveAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "GalaxyMap": {
+        "required": [
+          "systems"
+        ],
+        "type": "object",
+        "properties": {
+          "systems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SystemInfo"
+            }
+          },
+          "enemyHome": {
+            "type": "string"
+          }
+        }
+      },
+      "GameOutcome": {
+        "required": [
+          "winner",
+          "reason",
+          "teamScore",
+          "enemyScore",
+          "contributions"
+        ],
+        "type": "object",
+        "properties": {
+          "winner": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "teamScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "enemyScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "contributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlayerContribution"
+            }
+          }
+        }
+      },
+      "Holding": {
+        "required": [
+          "planet"
+        ],
+        "type": "object",
+        "properties": {
+          "planet": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "mines": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "hasShipyard": {
+            "type": "boolean"
+          },
+          "hasDefense": {
+            "type": "boolean"
+          },
+          "ships": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "damage": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "damagedAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "queue": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueueItem"
+            }
+          }
+        }
+      },
+      "JoinGameRequest": {
+        "required": [
+          "code",
+          "playerName"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "playerName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "JoinGameResponse": {
+        "required": [
+          "gameId",
+          "playerId",
+          "playerToken"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "playerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "playerToken": {
+            "type": "string"
+          }
+        }
+      },
+      "LobbyPlayer": {
+        "required": [
+          "id",
+          "name",
+          "isHost"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isHost": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LobbyResponse": {
+        "required": [
+          "code",
+          "mode",
+          "started",
+          "players"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "started": {
+            "type": "boolean"
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LobbyPlayer"
+            }
+          }
+        }
+      },
+      "PlanetId": {
+        "type": "string"
+      },
+      "PlanetInfo": {
+        "required": [
+          "id",
+          "name",
+          "isObjective",
+          "richness"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isObjective": {
+            "type": "boolean"
+          },
+          "richness": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "PlayerContribution": {
+        "required": [
+          "player",
+          "points"
+        ],
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "string"
+          },
+          "points": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PlayerId": {
+        "type": "string"
+      },
+      "PlayerView": {
+        "required": [
+          "version",
+          "gameTime",
+          "timeLeftSeconds",
+          "teamScore",
+          "enemyScore",
+          "stockpile",
+          "fleets",
+          "reports"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "gameTime": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "timeLeftSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "teamScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "enemyScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "stockpile": {
+            "$ref": "#/components/schemas/Resources"
+          },
+          "fleets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FleetView"
+            }
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BattleReport"
+            }
+          },
+          "ownPlanets": {
+            "type": "array"
+          },
+          "holdings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Holding"
+            }
+          },
+          "upgrades": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "QueueItem": {
+        "required": [
+          "id",
+          "building",
+          "element",
+          "ship",
+          "level",
+          "startAt",
+          "finishAt",
+          "cost"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "building": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BuildingType"
+              }
+            ]
+          },
+          "element": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Element"
+              }
+            ]
+          },
+          "ship": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ShipType"
+              }
+            ]
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "finishAt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/Resources"
+          }
+        }
+      },
+      "Resources": {
+        "required": [
+          "iron",
+          "hydrogen",
+          "titanium",
+          "helium3"
+        ],
+        "type": "object",
+        "properties": {
+          "iron": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hydrogen": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "titanium": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "helium3": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hasNegative": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SendFleetBody": {
+        "required": [
+          "from",
+          "ships",
+          "to",
+          "cargo"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ships": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cargo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Resources"
+              }
+            ]
+          }
+        }
+      },
+      "ShipType": {
+        "type": "integer"
+      },
+      "Side": {
+        "enum": [
+          "Team",
+          "Enemy"
+        ]
+      },
+      "SystemId": {
+        "type": "string"
+      },
+      "SystemInfo": {
+        "required": [
+          "id",
+          "name",
+          "x",
+          "y",
+          "z",
+          "planets"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SystemId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "x": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "y": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "z": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "planets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanetInfo"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "SpaceGame.Server"
+    },
+    {
+      "name": "LobbyEndpoints"
+    },
+    {
+      "name": "PlayEndpoints"
+    },
+    {
+      "name": "ReportEndpoints"
+    },
+    {
+      "name": "OutcomeEndpoints"
+    }
+  ]
+}

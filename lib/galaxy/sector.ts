@@ -55,6 +55,7 @@ const sectorRng = (sectorX: number, sectorY: number) => {
 	return random;
 };
 
+// takes a random source and returns a function that picks a count with it
 const countFrom = (random: () => number) =>
 	MIN_STARS + Math.floor(random() * STAR_COUNT_SPREAD);
 
@@ -70,7 +71,7 @@ export type SectorStar = {
 	y: number;
 };
 
-/** the same stars every time for a given sector; positions are in light-years */
+/** Seeded so the map is stable between visits; positions are in light-years. */
 export function sectorStars(sectorX: number, sectorY: number): SectorStar[] {
 	const random = sectorRng(sectorX, sectorY);
 	const count = countFrom(random);

@@ -65,23 +65,23 @@ function galacticXY(
 }
 
 export const SYSTEMS: SystemSpec[] = STARS.map(
-	([name, raH, raM, decD, decM, ly, spec, tempK, radius], index) => {
+	([name, raH, raM, decD, decM, ly, spec, tempK, radius], index) => { // callback run for each event or item
 		// build one system per catalogue star, attaching the planets known for that star
-		const id = index + 1;
+		const systemId = index + 1;
 		const [x, y] = galacticXY(raH, raM, decD, decM, ly);
 		const bodies: BodySpec[] = [];
 
-		const add = (b: Omit<BodySpec, "id" | "seed" | "radius">) => {
-			const n = bodies.length + 1;
+		const add = (body: Omit<BodySpec, "id" | "seed" | "radius">) => {
+			const bodyNumber = bodies.length + 1;
 			bodies.push({
-				...b,
-				radius: bodyRadius(b.kind, b.diameterKm),
-				id: id * 100 + n,
-				seed: SEED_BASE + id * 100 + n,
+				...body,
+				radius: bodyRadius(body.kind, body.diameterKm),
+				id: systemId * 100 + bodyNumber,
+				seed: SEED_BASE + systemId * 100 + bodyNumber,
 			});
 		};
 
-		if (name === "Sol") for (const b of SOL_BODIES) add(b);
+		if (name === "Sol") for (const body of SOL_BODIES) add(body);
 
 		for (const [
 			star,
@@ -104,8 +104,8 @@ export const SYSTEMS: SystemSpec[] = STARS.map(
 		}
 
 		return {
-			id,
-			seed: SEED_BASE + id,
+			id: systemId,
+			seed: SEED_BASE + systemId,
 			name,
 			spec,
 			tempK,
@@ -120,11 +120,8 @@ export const SYSTEMS: SystemSpec[] = STARS.map(
 );
 
 export const BODY_BY_SEED = new Map(
+	// flatten every system's bodies, then pair each body with its seed for the Map
 	SYSTEMS.flatMap((system) => system.bodies).map((body) => [body.seed, body]),
 );
 
-export const STAR_BY_SEED = new Map(SYSTEMS.map((s) => [s.seed, s]));
-
-/** one line for the planet panel: where this world's data comes from */
-export const bodyNote = (seed: number) =>
-	BODY_BY_SEED.get(seed)?.note ?? "Undiscovered: generated to fill the gaps";
+export const STAR_BY_SEED = new Map(SYSTEMS.map((system) => [system.seed, system]));

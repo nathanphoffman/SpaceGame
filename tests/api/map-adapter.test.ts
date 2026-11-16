@@ -1,0 +1,66 @@
+import { describe, expect, it } from "vitest";
+import { seedOf, toGameState } from "@/lib/api/adapters/mapAdapter";
+import { galaxyMapSchema, outcomeSchema, playerViewSchema } from "@/lib/api/adapters/schemas";
+import { galaxyMapFixture, playerViewFixture, wireMapFixture, wireViewFixture } from "../fixtures/apiMap";
+
+describe("map adapter", () => {
+	const { game, ids } = toGameState(galaxyMapFixture, playerViewFixture);
+
+	it("parses the wire format with the generated schemas into the UI shape", () => {
+		expect(galaxyMapSchema.parse(wireMapFixture)).toEqual(galaxyMapFixture);
+		expect(playerViewSchema.parse({ ...wireViewFixture, holdings: [] })).toEqual(playerViewFixture);
+	});
+
+	it("turns Resources objects, string numbers and enum ordinals into names and numbers", () => {
+		const holding = playerViewSchema.parse(wireViewFixture).holdings[0];
+
+		expect(holding.mines).toEqual({ Iron: 1 });
+		expect(holding.queue[0]).toMatchObject({ building: "Mine", element: "Iron", ship: null, cost: { Iron: 5, Helium3: 0 } });
+	});
+
+	it("rejects bodies that do not match the schema", () => {
+		expect(() => playerViewSchema.parse({ ...wireViewFixture, stockpile: { Iron: 10 } })).toThrow();
+	});
+
+	it("turns systems into SystemDTOs with sectors", () => {
+		expect(game.systems.map((system) => system.name)).toEqual(["Alpha", "Beta"]);
+		expect([game.systems[0].sectorX, game.systems[0].sectorY]).toEqual([10, 10]);
+		expect([game.systems[1].sectorX, game.systems[1].sectorY]).toEqual([11, 9]);
+	});
+
+	it("turns planets into PlanetDTOs inside their system with growing orbits", () => {
+		expect(game.planets).toHaveLength(3);
+		const [first, second] = game.planets;
+		expect(first.systemId).toBe(game.systems[0].id);
+		expect(second.orbit).toBeGreaterThan(first.orbit);
+		expect(second.shared).toBe(true);
+	});
+
+	it("maps fleets to milliseconds and numeric planet ids", () => {
+		const fleet = game.fleets[0];
+		expect(ids.idOf(fleet.originId)).toBe("a1");
+		expect(ids.idOf(fleet.targetId)).toBe("b1");
+		expect(fleet.departAt).toBe(1_200_000);
+		expect(fleet.arriveAt).toBe(1_500_000);
+		expect(game.nowMs).toBe(1_000_000);
+	});
+
+	it("gives the same seed for the same id", () => {
+		expect(seedOf("a1")).toBe(seedOf("a1"));
+		expect(seedOf("a1")).not.toBe(seedOf("a2"));
+	});
+});
+
+describe("outcome and upgrades parsing", () => {
+	it("reads upgrade levels from PlayerView.Upgrades", () => {
+		const view = playerViewSchema.parse({ ...wireViewFixture, upgrades: { 0: 2 } });
+
+		expect(Object.values(view.upgrades)).toContain(2);
+	});
+
+	it("parses the outcome response", () => {
+		const outcome = outcomeSchema.parse({ winner: "Team", reason: "done", teamScore: 5, enemyScore: 3, contributions: [{ player: "Ann", points: 4 }] });
+
+		expect(outcome.contributions[0]).toMatchObject({ player: "Ann", points: 4 });
+	});
+});

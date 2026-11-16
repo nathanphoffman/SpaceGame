@@ -6,6 +6,31 @@ const MIN_GAP = 3.4; // stars closer than this (in %) are pushed apart
 const NUDGE_PASSES = 60;
 const SAME_SPOT = 0.001; // closer than this, stars have no direction to be pushed in
 
+type Point = { id: number; x: number; y: number };
+
+/** Pushes every pair of stars that is closer than MIN_GAP apart, once. */
+function nudgeApart(points: Point[]): void {
+	for (let index = 0; index < points.length; index++) {
+		for (let other = index + 1; other < points.length; other++) {
+			pushPair(points[index], points[other]);
+		}
+	}
+}
+
+function pushPair(first: Point, second: Point): void {
+	const deltaX = second.x - first.x;
+	const deltaY = second.y - first.y;
+	const gap = Math.hypot(deltaX, deltaY);
+
+	if (gap >= MIN_GAP) return;
+	const push = (MIN_GAP - gap) / 2;
+	const [ux, uy] = gap > SAME_SPOT ? [deltaX / gap, deltaY / gap] : [1, 0];
+	first.x -= ux * push;
+	first.y -= uy * push;
+	second.x += ux * push;
+	second.y += uy * push;
+}
+
 /**
  * Where each star of one sector goes on the local map, as % of the (square) map box. Real light-year
  * positions are scaled so the whole sector fits; stars that would overlap (Alpha Centauri and Proxima
@@ -23,28 +48,7 @@ export function mapPositions(
 		y: MAP_CENTRE - (s.y - centre.y) * scale,
 	})); // north is up
 
-	for (let pass = 0; pass < NUDGE_PASSES; pass++) {
-		for (let index = 0; index < points.length; index++) {
-			for (
-				let otherIndex = index + 1;
-				otherIndex < points.length;
-				otherIndex++
-			) {
-				const deltaX = points[otherIndex].x - points[index].x,
-					deltaY = points[otherIndex].y - points[index].y;
-				const gap = Math.hypot(deltaX, deltaY);
-
-				if (gap >= MIN_GAP) continue;
-				const push = (MIN_GAP - gap) / 2;
-				const [ux, uy] =
-					gap > SAME_SPOT ? [deltaX / gap, deltaY / gap] : [1, 0];
-				points[index].x -= ux * push;
-				points[index].y -= uy * push;
-				points[otherIndex].x += ux * push;
-				points[otherIndex].y += uy * push;
-			}
-		}
-	}
+	for (let pass = 0; pass < NUDGE_PASSES; pass++) nudgeApart(points);
 
 	const clamp = (value: number) => Math.min(MAP_MAX, Math.max(MAP_MIN, value));
 

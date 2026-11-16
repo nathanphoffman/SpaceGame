@@ -89,7 +89,7 @@ function startDrag(
 	const start = { x: event.clientX, y: event.clientY };
 	let last = start;
 
-	const move = (drag: PointerEvent) => {
+	const move = (drag: PointerEvent) => { // callback run for each event or item
 		// while dragging, move the map by how far the pointer travelled since the last event
 
 		if (

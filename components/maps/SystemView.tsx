@@ -18,7 +18,7 @@ export default function SystemView({
 	game,
 	system,
 	viewed,
-	nowMs: now,
+	nowMs,
 	onSelect,
 }: Props) {
 	const container = useRef<HTMLDivElement>(null);
@@ -35,7 +35,7 @@ export default function SystemView({
 
 	useEffect(() => {
 		const event = new SystemEngine(container.current!, {
-			onPlanet: (planetId) => {
+			onPlanet: (planetId) => { // callback run for each event or item
 				const p = latest.current.planets.find(
 					(xPosition) => xPosition.id === planetId,
 				);
@@ -56,7 +56,7 @@ export default function SystemView({
 		engine.current?.update(
 			game,
 			system,
-			now,
+			nowMs,
 			viewed.systemId === system.id ? viewed.id : null,
 		);
 	}, [game, system, viewed]); // eslint-disable-line react-hooks/exhaustive-deps -- `now` is left out on purpose: the engine keeps its own clock between server updates

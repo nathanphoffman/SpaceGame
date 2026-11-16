@@ -48,7 +48,7 @@ function createScene(params: PlanetParams) {
 	return { scene, camera, planet };
 }
 
-/** keeps the renderer and camera matched to the size of the element; returns the function that stops watching */
+/** Resizing must refit the canvas or the planet looks stretched; returns the function that stops watching. */
 function followSize(
 	element: HTMLElement,
 	renderer: THREE.WebGLRenderer,
@@ -69,7 +69,7 @@ function followSize(
 	return () => watcher.disconnect();
 }
 
-/** draws and spins the planet, skipping frames above the frame-rate cap; returns the function that stops the loop */
+/** Capped frame rate saves battery on fast screens; returns the function that stops the loop. */
 function startLoop(render: () => void, spin: (seconds: number) => void) {
 	let frame = 0;
 	let last = performance.now();

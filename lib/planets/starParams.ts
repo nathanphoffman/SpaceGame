@@ -205,7 +205,7 @@ export function starParams(seed: number): StarParams {
 	// add up the weights of every star kind, so one random roll can be mapped onto them
 	let roll =
 		random() *
-		STAR_KINDS.reduce((total, candidate) => total + candidate.weight, 0);
+		STAR_KINDS.reduce((total, candidate) => total + candidate.weight, 0); // weights are relative, so the total is the roll range
 	const kind =
 		STAR_KINDS.find((candidate) => (roll -= candidate.weight) < 0) ??
 		STAR_KINDS[0];

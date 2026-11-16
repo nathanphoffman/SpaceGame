@@ -46,7 +46,7 @@ export function bodyRadius(kind: PlanetKind, kilometres: number) {
 /** "Fe30 O28 Si18" -> composition list, biggest share first */
 export function parseComposition(text: string) {
 	return text
-		.split(/\s+/)
+		.split(/\s+/) // split on any run of whitespace
 		.map((token) => {
 			// split the composition text like "Fe30 O28" on spaces
 			// split a token such as Fe30 into its element letters and its percentage

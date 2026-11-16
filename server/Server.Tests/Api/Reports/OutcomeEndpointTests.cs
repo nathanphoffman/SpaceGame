@@ -1,0 +1,106 @@
+using System.Net;
+using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using SpaceGame.Core;
+using SpaceGame.Server.Game;
+using GameOutcome = SpaceGame.Server.Game.GameOutcome;
+using SpaceGame.Server.Lobby;
+
+namespace SpaceGame.Server.Tests;
+
+[Trait("Category", "Postgres")]
+public class OutcomeEndpointTests
+{
+    private static string OutcomeUrl(CreateGameResponse game) => $"/api/games/{game.GameId}/outcome";
+
+    private static string StateUrl(CreateGameResponse game) => $"/api/games/{game.GameId}/state";
+
+    [PostgresFact]
+    public async Task Outcome_is_404_while_the_game_runs()
+    {
+        var (factory, client, game) = await PlayApi.StartedAsync();
+        await using var _ = factory;
+        var response = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, OutcomeUrl(game), game.PlayerToken));
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [PostgresFact]
+    public async Task Outcome_needs_a_token()
+    {
+        var (factory, client, game) = await PlayApi.StartedAsync();
+        await using var _ = factory;
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(OutcomeUrl(game))).StatusCode);
+    }
+
+    [PostgresFact]
+    public async Task Outcome_after_the_game_ends_has_winner_scores_and_contributions()
+    {
+        var (factory, client, game) = await PlayApi.StartedAsync();
+        await using var _ = factory;
+        using var endingFactory = factory.WithWebHostBuilder(b =>
+            b.ConfigureServices(s => s.Replace(ServiceDescriptor.Singleton<IGameEngine>(new FakeEngine { EventKind = EventNotifications.GameEndedKind }))));
+        var ending = endingFactory.CreateClient();
+        (await ending.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, StateUrl(game), game.PlayerToken))).EnsureSuccessStatusCode();
+
+        var outcome = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, OutcomeUrl(game), game.PlayerToken));
+        var body = await outcome.Content.ReadFromJsonAsync<GameOutcome>();
+        Assert.Equal(HttpStatusCode.OK, outcome.StatusCode);
+        Assert.Equal(("team", "score", 12, 4), (body!.Winner, body.Reason, body.TeamScore, body.EnemyScore));
+        Assert.Equal(["Ann", "Bo"], body.Contributions.Select(c => c.Player));
+    }
+
+    [PostgresFact]
+    public async Task The_outcome_is_not_listed_as_a_battle_report()
+    {
+        var (factory, client, game) = await PlayApi.StartedAsync();
+        await using var _ = factory;
+        using var endingFactory = factory.WithWebHostBuilder(b =>
+            b.ConfigureServices(s => s.Replace(ServiceDescriptor.Singleton<IGameEngine>(new FakeEngine { EventKind = EventNotifications.GameEndedKind }))));
+        var ending = endingFactory.CreateClient();
+        (await ending.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, StateUrl(game), game.PlayerToken))).EnsureSuccessStatusCode();
+
+        var reports = await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, $"/api/games/{game.GameId}/reports", game.PlayerToken));
+        Assert.Empty((await reports.Content.ReadFromJsonAsync<List<BattleReport>>())!);
+    }
+
+    private static async Task<HttpResponseMessage> OutcomeAfterEndingWith(FakeEngine engine)
+    {
+        var (factory, client, game) = await PlayApi.StartedAsync();
+        await using var _ = factory;
+        using var endingFactory = factory.WithWebHostBuilder(b =>
+            b.ConfigureServices(s => s.Replace(ServiceDescriptor.Singleton<IGameEngine>(engine))));
+        (await endingFactory.CreateClient().SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, StateUrl(game), game.PlayerToken))).EnsureSuccessStatusCode();
+
+        return await client.SendAsync(LobbyApiFactory.WithToken(HttpMethod.Get, OutcomeUrl(game), game.PlayerToken));
+    }
+
+    [PostgresFact]
+    public async Task Missing_outcome_data_gives_an_unknown_outcome_not_an_error()
+    {
+        var engine = new FakeEngine { EventKind = EventNotifications.GameEndedKind, OmittedKeys = ["winner", "reason", "teamScore", "enemyScore", "contributions"] };
+        var response = await OutcomeAfterEndingWith(engine);
+        var body = await response.Content.ReadFromJsonAsync<GameOutcome>();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal((OutcomeRecorder.Unknown, OutcomeRecorder.Unknown, 0, 0), (body!.Winner, body.Reason, body.TeamScore, body.EnemyScore));
+        Assert.Empty(body.Contributions);
+    }
+
+    [PostgresFact]
+    public async Task Malformed_outcome_data_gives_zero_scores_and_no_contributions()
+    {
+        var engine = new FakeEngine
+        {
+            EventKind = EventNotifications.GameEndedKind,
+            DataOverrides = new() { ["teamScore"] = "lots", ["contributions"] = "{not json" },
+        };
+
+        var response = await OutcomeAfterEndingWith(engine);
+        var body = await response.Content.ReadFromJsonAsync<GameOutcome>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(("team", 0), (body!.Winner, body.TeamScore));
+        Assert.Empty(body.Contributions);
+    }
+}

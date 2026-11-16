@@ -145,7 +145,7 @@ function composeShares(picked: [string, number][], random: () => number) {
 
 	shares[0] =
 		Math.round(
-			(shares[0] + (PERCENT - shares.reduce((sum, value) => sum + value, 0))) *
+			(shares[0] + (PERCENT - shares.reduce((sum, value) => sum + value, 0))) * // fold rounding leftovers into the first share
 				TENTHS,
 		) / TENTHS; // sum to exactly 100
 
@@ -182,7 +182,7 @@ function buildStats(seed: number, params: PlanetParams): PlanetStats {
 			params.kind === "gas"
 				? "He"
 				: random() < TITANIUM_SHARE_OF_JACKPOTS
-					? "Ti"
+					? "Ti" // pick the element symbol by planet type
 					: "U"; // gas giants hold helium; other planets titanium or uranium
 
 		return {
