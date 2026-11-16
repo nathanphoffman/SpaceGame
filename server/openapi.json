@@ -387,6 +387,46 @@
   },
   "components": {
     "schemas": {
+      "AutoOrder": {
+        "required": [
+          "building",
+          "element",
+          "ship"
+        ],
+        "type": "object",
+        "properties": {
+          "building": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BuildingType"
+              }
+            ]
+          },
+          "element": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Element"
+              }
+            ]
+          },
+          "ship": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ShipType"
+              }
+            ]
+          }
+        }
+      },
       "BattleReport": {
         "required": [
           "id",
@@ -439,7 +479,6 @@
           "element",
           "shipType",
           "count",
-          "upgradeType",
           "ships",
           "cargo"
         ],
@@ -508,12 +547,6 @@
             ],
             "format": "int32"
           },
-          "upgradeType": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
           "ships": {
             "type": [
               "null",
@@ -557,6 +590,13 @@
             ]
           }
         }
+      },
+      "Control": {
+        "enum": [
+          "Mine",
+          "Ally",
+          "Hostile"
+        ]
       },
       "CreateGameRequest": {
         "required": [
@@ -825,6 +865,30 @@
               "format": "int32"
             }
           },
+          "shipyardLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "defenseLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "miningLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
           "hasShipyard": {
             "type": "boolean"
           },
@@ -860,6 +924,12 @@
               "string"
             ],
             "format": "int64"
+          },
+          "auto": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoOrder"
+            }
           },
           "queue": {
             "type": "array",
@@ -954,6 +1024,21 @@
             "items": {
               "$ref": "#/components/schemas/LobbyPlayer"
             }
+          }
+        }
+      },
+      "PlanetControl": {
+        "required": [
+          "planet",
+          "control"
+        ],
+        "type": "object",
+        "properties": {
+          "planet": {
+            "$ref": "#/components/schemas/PlanetId"
+          },
+          "control": {
+            "$ref": "#/components/schemas/Control"
           }
         }
       },
@@ -1091,15 +1176,10 @@
               "$ref": "#/components/schemas/Holding"
             }
           },
-          "upgrades": {
-            "type": "object",
-            "additionalProperties": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
+          "territory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanetControl"
             }
           }
         }

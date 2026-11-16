@@ -133,6 +133,7 @@ function StarButton({ system, at, owned, selected, onOpen }: StarProps) {
 	return (
 		<button
 			className={`gnode ${selected ? "sel" : ""} ${owned > 0 ? "home" : ""}`}
+			data-control={system.control}
 			style={{ left: `${at.x}%`, top: `${at.y}%` }}
 			onClick={onOpen}
 			title={`${system.name} · ${star.spectral} ${star.label} · ${star.temp} K · ${radius} R☉`}
@@ -145,7 +146,9 @@ function StarButton({ system, at, owned, selected, onOpen }: StarProps) {
 					["--b" as string]: star.bright,
 				}}
 
-			/>
+			>
+				{system.control && <span className="ring" />}
+			</span>
 			<span className="label">
 				{system.name}
 				{owned > 0 && <b className="mine"> ● {owned}</b>}

@@ -16,29 +16,23 @@ public sealed record BuildingSpec(
     public long SecondsAtLevel(int level) => (long)Math.Round(BuildSeconds * Math.Pow(TimeGrowth, level - 1));
 }
 
-/// <summary>Stats of one upgrade. Level N costs <c>Cost * CostGrowth^(N-1)</c>; each level adds <paramref name="BonusPerLevel"/> (a fraction).</summary>
-public sealed record UpgradeSpec(
-    UpgradeType Type, int MaxLevel, Resources Cost, long BuildSeconds, double CostGrowth, double BonusPerLevel)
-{
-    /// <summary>Cost to research the given level (1-based).</summary>
-    public Resources CostAtLevel(int level) => Cost.Scale(Math.Pow(CostGrowth, level - 1));
-}
-
-/// <summary>Mine numbers: output per hour is <c>BaseOutputPerHour * richness / 100</c>, times <c>OutputGrowth^(level-1)</c>.</summary>
-public sealed record MineRules(double BaseOutputPerHour, double OutputGrowth, int MaxRichness = 100)
+/// <summary>Mine numbers: output per hour is <c>BaseOutputPerHour * richness / 100</c>, times <c>OutputGrowth^(level-1)</c>, times <c>1 + MiningBonusPerLevel * the planet's Mining level</c>.</summary>
+public sealed record MineRules(double BaseOutputPerHour, double OutputGrowth, int MaxRichness = 100, double MiningBonusPerLevel = 0.30)
 {
     /// <summary>Output per hour of a mine of this level on a planet with this richness (before upgrades).</summary>
     public double OutputPerHour(int level, int richness) =>
         BaseOutputPerHour * richness / MaxRichness * Math.Pow(OutputGrowth, level - 1);
 }
 
-/// <summary>Every ship, building and upgrade of the game, as data, so balance changes never touch the rules code.</summary>
+/// <summary>Every ship and building of the game, as data, so balance changes never touch the rules code.</summary>
 public sealed record Catalog(
     IReadOnlyList<ShipSpec> Ships,
     IReadOnlyList<BuildingSpec> Buildings,
-    IReadOnlyList<UpgradeSpec> Upgrades,
-    MineRules Mine)
+    MineRules Mine,
+    double ShipyardSpeedPerLevel = 0.25)
 {
+
+    private const int NoLimit = int.MaxValue; // shipyard, defense and mining levels never stop
 
     /// <summary>The starting numbers from SPEC.md.</summary>
     public static readonly Catalog Default = new(
@@ -52,14 +46,9 @@ public sealed record Catalog(
         ],
         [
             new(BuildingType.Mine, 3, new(50, 0, 0, 0), 20 * GameSeconds.Minute, 1.6, 1.5),
-            new(BuildingType.Shipyard, 1, new(100, 0, 0, 0), 30 * GameSeconds.Minute, 1.0, 1.0),
-            new(BuildingType.Defense, 1, new(100, 0, 20, 0), GameSeconds.Hour, 1.0, 1.0),
-        ],
-        [
-            new(UpgradeType.Engines, 3, new(0, 0, 40, 10), 2 * GameSeconds.Hour, 1.5, 0.25),
-            new(UpgradeType.Weapons, 1, new(0, 0, 100, 40), 4 * GameSeconds.Hour, 1.0, 1),
-            new(UpgradeType.Armor, 1, new(0, 0, 80, 30), 3 * GameSeconds.Hour, 1.0, 1),
-            new(UpgradeType.Mining, 3, new(0, 0, 50, 20), 2 * GameSeconds.Hour, 1.5, 0.30),
+            new(BuildingType.Shipyard, NoLimit, new(100, 0, 0, 0), 30 * GameSeconds.Minute, 1.6, 1.3),
+            new(BuildingType.Defense, NoLimit, new(100, 0, 20, 0), GameSeconds.Hour, 1.6, 1.3),
+            new(BuildingType.Mining, NoLimit, new(0, 0, 50, 20), 2 * GameSeconds.Hour, 1.6, 1.3),
         ],
         new MineRules(BaseOutputPerHour: 20, OutputGrowth: 1.3));
 
@@ -68,7 +57,4 @@ public sealed record Catalog(
 
     /// <summary>The building stats for a type.</summary>
     public BuildingSpec Building(BuildingType type) => Buildings.Single(building => building.Type == type);
-
-    /// <summary>The upgrade stats for a type.</summary>
-    public UpgradeSpec Upgrade(UpgradeType type) => Upgrades.Single(u => u.Type == type);
 }

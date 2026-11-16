@@ -21,26 +21,10 @@ public class BuildingRulesTests
     public void InvalidBuildIsRejected(BuildBuilding command, string error) => Assert.Equal(error, Error(Game(), command));
 
     [Fact]
-    public void ShipyardCanOnlyBeBuiltOnce()
-    {
-        var (state, r) = Do(Game(), new BuildBuilding(Earth, BuildingType.Shipyard, null));
-        Assert.True(r.Ok);
-        Assert.Equal("This planet already has a shipyard.", Error(state, new BuildBuilding(Earth, BuildingType.Shipyard, null)));
-    }
-
-    [Fact]
-    public void FinishedDefenseCannotBeBuiltAgain() =>
-        Assert.Equal("This planet already has a defense.",
-            Error(Game(holding: new Holding(Earth) { HasDefense = true }), new BuildBuilding(Earth, BuildingType.Defense, null)));
-
-    [Fact]
     public void MineStopsAtLevelThree()
     {
-        var state = Game();
-
-        for (var i = 0; i < 3; i++) state = Do(state, new BuildBuilding(Earth, BuildingType.Mine, Element.Iron)).State;
+        var state = Game(holding: new Holding(Earth) { Mines = new Dictionary<Element, int> { [Element.Iron] = 3 } });
         Assert.Equal("The Iron mine is already at its top level.", Error(state, new BuildBuilding(Earth, BuildingType.Mine, Element.Iron)));
-        Assert.Equal(3, At(state).Queue.Count);
     }
 
     [Fact]

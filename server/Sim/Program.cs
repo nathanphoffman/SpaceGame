@@ -1,5 +1,5 @@
-// Battle simulator: dotnet run --project server/Sim -- fight "10 fighter" "2 battleship" --runs 1000 [--defense] [--weapons] [--seed S]
-//   dotnet run --project server/Sim -- waves "10 fighter" --timescale 168 --waves 6 --defense
+// Battle simulator: dotnet run --project server/Sim -- fight "10 fighter" "2 battleship" --runs 1000 [--defense LEVEL] [--seed S]
+//   dotnet run --project server/Sim -- waves "10 fighter" --timescale 168 --waves 6 --defense 2
 using SpaceGame.Sim;
 
 try

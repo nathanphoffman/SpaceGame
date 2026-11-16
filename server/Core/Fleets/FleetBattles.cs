@@ -26,8 +26,8 @@ internal static partial class FleetBattles
         var defenderSide = Opposite(attacker.Side);
         var attackSide = new BattleSide(ShipsOf(state, attacker.Owner, attacker.Side, attacker.Ships, attacker.Damage));
         var defendSide = new BattleSide([.. defenders.SelectMany(g => ShipsOf(state, g.Owner, defenderSide, g.Ships, g.Damage))]);
-        var bonus = attacker.Side == Side.Enemy && HasDefenseBuilding(state, planet) ? state.Config.DefenseBonus : 0;
-        var result = BattleResolver.Resolve(attackSide, defendSide, bonus, dice);
+        var rerolls = attacker.Side == Side.Enemy ? DefenseRerolls(state, planet) : 0;
+        var result = BattleResolver.Resolve(attackSide, defendSide, rerolls, dice);
 
         events.Add(ReportEvent(attacker, attackSide, defendSide, result));
         var after = Survive(state, planet, defenders, result.Defenders, defenderSide, attacker.ArriveAt);

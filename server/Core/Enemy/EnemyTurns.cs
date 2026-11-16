@@ -70,7 +70,7 @@ internal static class EnemyTurns
     private static Fleet LaunchedFleet(GameState state, PlanetId target, Dictionary<ShipType, int> ships, long atSeconds)
     {
         var home = state.EnemyHome!.Value;
-        var speed = TravelRules.FleetSpeed(state.Config.Catalog, ships, 0);
+        var speed = TravelRules.FleetSpeed(state.Config.Catalog, ships);
         var departAt = atSeconds + state.Config.PrepSeconds;
         var arriveAt = departAt + WorldDistance.FlightSeconds(state.Config.Travel, home, target, speed);
 
@@ -102,7 +102,7 @@ internal static class EnemyTurns
     private static GameState Attack(GameState state, LaunchAttack attack, long atSeconds)
     {
         var fleet = state.Fleets.Single(f => f.Id == attack.Fleet);
-        var speed = TravelRules.FleetSpeed(state.Config.Catalog, fleet.Ships, 0);
+        var speed = TravelRules.FleetSpeed(state.Config.Catalog, fleet.Ships);
         var departAt = atSeconds + state.Config.PrepSeconds;
         var arriveAt = departAt + WorldDistance.FlightSeconds(state.Config.Travel, fleet.To, attack.Target, speed);
 

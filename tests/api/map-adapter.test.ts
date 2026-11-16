@@ -51,13 +51,7 @@ describe("map adapter", () => {
 	});
 });
 
-describe("outcome and upgrades parsing", () => {
-	it("reads upgrade levels from PlayerView.Upgrades", () => {
-		const view = playerViewSchema.parse({ ...wireViewFixture, upgrades: { 0: 2 } });
-
-		expect(Object.values(view.upgrades)).toContain(2);
-	});
-
+describe("outcome parsing", () => {
 	it("parses the outcome response", () => {
 		const outcome = outcomeSchema.parse({ winner: "Team", reason: "done", teamScore: 5, enemyScore: 3, contributions: [{ player: "Ann", points: 4 }] });
 

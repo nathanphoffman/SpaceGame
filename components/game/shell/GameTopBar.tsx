@@ -1,5 +1,6 @@
 "use client";
 
+import { ElementIcon } from "@/components/game/shell/ElementIcon";
 import { useState } from "react";
 import { HowToPlay } from "@/components/game/shell/HowToPlay";
 import { useEscape } from "@/components/game/shell/useEscape";
@@ -58,7 +59,7 @@ export function GameTopBar({ view }: { view: PlayerViewDto }) {
 			<div className="spacer" />
 			{Object.entries(view.stockpile).map(([element, amount]) => (
 				<div key={element} className="res">
-					<b>{element}</b> <span>{Math.floor(amount)}</span>
+					<ElementIcon element={element} /> <b>{element}</b> <span>{Math.floor(amount)}</span>
 				</div>
 			))}
 

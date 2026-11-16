@@ -10,14 +10,13 @@ public class TravelRulesTests
         ships.ToDictionary(x => x.Item1, x => x.Item2);
 
     [Theory]
-    [InlineData(ShipType.Scout, 3, ShipType.Dreadnought, 1, 0, 0.6)] // slowest ship sets the pace
-    [InlineData(ShipType.Scout, 1, ShipType.Dreadnought, 0, 0, 3.0)] // zero-count ships do not slow the fleet
-    [InlineData(ShipType.Hauler, 1, ShipType.Scout, 0, 2, 1.5)] // engine upgrades raise speed
-    public void FleetSpeedFollowsSlowestShip(ShipType a, int na, ShipType b, int nb, int engines, double expected) =>
-        Assert.Equal(expected, TravelRules.FleetSpeed(C, Ships((a, na), (b, nb)), engines), 6);
+    [InlineData(ShipType.Scout, 3, ShipType.Dreadnought, 1, 0.6)] // slowest ship sets the pace
+    [InlineData(ShipType.Scout, 1, ShipType.Dreadnought, 0, 3.0)] // zero-count ships do not slow the fleet
+    public void FleetSpeedFollowsSlowestShip(ShipType a, int na, ShipType b, int nb, double expected) =>
+        Assert.Equal(expected, TravelRules.FleetSpeed(C, Ships((a, na), (b, nb))), 6);
 
     [Fact]
-    public void EmptyFleetHasNoSpeed() => Assert.Equal(0, TravelRules.FleetSpeed(C, Ships(), 0));
+    public void EmptyFleetHasNoSpeed() => Assert.Equal(0, TravelRules.FleetSpeed(C, Ships()));
 
     [Theory]
     [InlineData(40, 1000, 3500, 3700, 1300)] // Sun to Pluto: about an hour plus prep

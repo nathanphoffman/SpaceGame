@@ -35,18 +35,36 @@ public class BattleResolverTests
     }
 
     [Fact]
-    public void DefenderBonusLowersNeededRollButNeverBelowTwo()
+    public void ADefenderMissIsRolledAgainOncePerReroll()
     {
-        // Fighter hits on 5; with bonus 1 it hits on 4. Attacker rolls 1 (miss), defender rolls 4 (hit).
-        var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 1, new ScriptedDice(1, 4));
+        // Fighters hit on 5. The attacker rolls 1 (miss). The defender rolls 2 (miss), rerolls and gets 5 (hit).
+        var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 1, new ScriptedDice(1, 2, 5));
         Assert.False(r.AttackersWon);
         Assert.Empty(r.Attackers.Ships);
         Assert.Single(r.Defenders.Ships);
+        Assert.Equal(1, r.Rounds);
+    }
 
-        // Huge bonus: needed roll stays 2, so a 1 still misses and a 2 hits.
-        var r2 = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 9, new ScriptedDice(1, 1, 1, 2));
-        Assert.Empty(r2.Attackers.Ships);
-        Assert.Equal(2, r2.Rounds);
+    [Fact]
+    public void EachRerollLevelGivesOneMoreChance()
+    {
+        // With 2 rerolls the defender gets three rolls for the shot: 1, 4, 5 -> the third one hits.
+        var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 2, new ScriptedDice(1, 1, 4, 5));
+        Assert.Empty(r.Attackers.Ships);
+        Assert.Equal(1, r.Rounds);
+
+        // With only 1 reroll the same two misses end the round and a second round is needed.
+        var once = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 1, new ScriptedDice(1, 1, 4, 1, 1, 5));
+        Assert.Equal(2, once.Rounds);
+    }
+
+    [Fact]
+    public void AttackersNeverGetRerolls()
+    {
+        // The attacker's single shot is rolled once: a 4 misses and is not rerolled even though the defenders have levels.
+        var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Scout), 3, new ScriptedDice(4, 5));
+        Assert.Equal(2, r.Rounds);
+        Assert.True(r.AttackersWon);
     }
 
     [Fact]

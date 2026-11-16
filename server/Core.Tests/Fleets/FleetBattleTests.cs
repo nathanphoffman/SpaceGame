@@ -63,16 +63,23 @@ public class FleetBattleTests
         Assert.True(Assert.Single(after.Fleets).Parked);
     }
 
+    private sealed class ScriptedDice(params int[] rolls) : IDice
+    {
+        private int _next;
+
+        public int Roll() => rolls[_next++];
+    }
+
     [Fact]
-    public void DefenseBuildingLowersTheDefendersRoll()
+    public void DefenseLevelLetsEveryDefendingShipRerollAMiss()
     {
         var state = FleetGame();
         var player = state.PlayerById(Me)!;
-        var defended = state.WithPlayer(player.WithHolding(player.HoldingAt(StartingKit.EarthId)! with { HasDefense = true }));
-
-        // Fighters hit on 5; with the bonus the defenders hit on 4, so a roll of 4 kills the lone attacker.
+        var defended = state.WithPlayer(player.WithHolding(player.HoldingAt(StartingKit.EarthId)! with { DefenseLevel = 1 }));
         var arriving = defended with { Fleets = [EnemyArriving(1, StartingKit.EarthId, 100)] };
-        var (after, _) = Engine.Advance(arriving, 100, new FixedDice(4));
+
+        // The lone attacker misses (1). The first defender fighter misses (2) and rerolls a hit (6); the other defenders' rolls are not needed to win.
+        var (after, _) = Engine.Advance(arriving, 100, new ScriptedDice(1, 2, 6, 1, 1, 1, 1, 1, 1));
         Assert.Empty(after.Fleets);
     }
 }

@@ -17,10 +17,10 @@ public static class BattleResolver
 
     /// <summary>
     /// Fights simultaneous rounds until a side has no ships left (or nobody can hit anymore).
-    /// <paramref name="defenderBonus"/> lowers the defenders' needed roll. If both sides are wiped out
+    /// Each defending shot that misses is rolled again, up to <paramref name="defenderRerolls"/> more times. If both sides are wiped out
     /// in the same round, or nobody has weapons, the attackers have not won.
     /// </summary>
-    public static BattleResult Resolve(BattleSide attackers, BattleSide defenders, int defenderBonus, IDice dice)
+    public static BattleResult Resolve(BattleSide attackers, BattleSide defenders, int defenderRerolls, IDice dice)
     {
         var att = attackers.Ships.ToList();
         var def = defenders.Ships.ToList();
@@ -29,7 +29,7 @@ public static class BattleResolver
         while (att.Count > 0 && def.Count > 0 && (HasWeapons(att) || HasWeapons(def)))
         {
             var hitsOnDefenders = CountHits(att, 0, dice);
-            var hitsOnAttackers = CountHits(def, defenderBonus, dice);
+            var hitsOnAttackers = CountHits(def, defenderRerolls, dice);
 
             def = ApplyHits(def, hitsOnDefenders);
             att = ApplyHits(att, hitsOnAttackers);
@@ -44,20 +44,30 @@ public static class BattleResolver
     private static bool IsArmed(BattleShip ship) => ship.HitsOn > 0 && ship.Shots > 0;
 
     // Rolls each armed ship's shots and counts how many hit.
-    private static int CountHits(List<BattleShip> ships, int bonus, IDice dice)
+    private static int CountHits(List<BattleShip> ships, int rerolls, IDice dice)
     {
         var hits = 0;
 
         foreach (var ship in ships.Where(IsArmed))
         {
-            var needed = Math.Max(MinHitNumber, ship.HitsOn - bonus);
+            var needed = Math.Max(MinHitNumber, ship.HitsOn);
 
             for (var shot = 0; shot < ship.Shots; shot++)
 
-                if (dice.Roll() >= needed) hits++;
+                if (Hits(needed, rerolls, dice)) hits++;
         }
 
         return hits;
+    }
+
+    // One shot: a miss may be rolled again once per reroll the side has.
+    private static bool Hits(int needed, int rerolls, IDice dice)
+    {
+        for (var attempt = 0; attempt <= rerolls; attempt++)
+
+            if (dice.Roll() >= needed) return true;
+
+        return false;
     }
 
     /// <summary>Unarmed ships soak hits first, then Fighters, Battleships, Dreadnoughts.</summary>

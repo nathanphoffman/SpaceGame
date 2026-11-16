@@ -1,6 +1,8 @@
-import { type FleetDTO, MS_PER_SECOND, FLEET_STATUS, MISSION, PLANET_KIND, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
+import { type ControlKind, type FleetDTO, MS_PER_SECOND, FLEET_STATUS, MISSION, PLANET_KIND, type GameState, type PlanetDTO, type SystemDTO } from "@/lib/defs";
 import { sectorOf } from "@/lib/galaxy/sector";
 import type { FleetViewDto, GalaxyMapDto, PlayerViewDto } from "./schemas";
+
+const STRONGEST_FIRST: ControlKind[] = ["Mine", "Ally", "Hostile"];
 
 const FIRST_ORBIT_AU = 1; // the API has no orbit distance, so planets are spaced one AU apart in listed order
 const HASH_MULTIPLIER = 31;
@@ -25,15 +27,22 @@ function makeIdMap(ids: string[]): IdMap {
 	return { numberOf: (id) => numbers.get(id) ?? -1, idOf: (num) => ids[num] };
 }
 
-function systemsOf(map: GalaxyMapDto, ids: IdMap): SystemDTO[] {
+/** The control of a whole system: your own base shows first, then an ally's, then a known enemy planet. */
+function systemControl(planetIds: string[], controls: Map<string, ControlKind>): ControlKind | undefined {
+	const here = planetIds.map((id) => controls.get(id));
+
+	return STRONGEST_FIRST.find((kind) => here.includes(kind));
+}
+
+function systemsOf(map: GalaxyMapDto, ids: IdMap, controls: Map<string, ControlKind>): SystemDTO[] {
 	return map.systems.map((system) => {
 		const [sectorX, sectorY] = sectorOf(system.x, system.y);
 
-		return { id: ids.numberOf(system.id), name: system.name, x: system.x, y: system.y, seed: seedOf(system.id), sectorX, sectorY };
+		return { id: ids.numberOf(system.id), name: system.name, x: system.x, y: system.y, seed: seedOf(system.id), sectorX, sectorY, control: systemControl(system.planets.map((planet) => planet.id), controls) };
 	});
 }
 
-function planetsOf(map: GalaxyMapDto, ids: IdMap): PlanetDTO[] {
+function planetsOf(map: GalaxyMapDto, ids: IdMap, controls: Map<string, ControlKind>): PlanetDTO[] {
 	return map.systems.flatMap((system) => // callback: one rendered entry per item
 		system.planets.map((planet, index) => ({
 			id: ids.numberOf(planet.id),
@@ -46,6 +55,7 @@ function planetsOf(map: GalaxyMapDto, ids: IdMap): PlanetDTO[] {
 			ships: {},
 			defense: 0,
 			seed: seedOf(planet.id),
+			control: controls.get(planet.id),
 			shared: planet.isObjective,
 		})),
 	);
@@ -72,10 +82,11 @@ function fleetOf(fleet: FleetViewDto, ids: IdMap): FleetDTO {
 /** Build the GameState the existing map components take from the API's map and the player's view. */
 export function toGameState(map: GalaxyMapDto, view: PlayerViewDto): { game: GameState; ids: IdMap } {
 	const ids = makeIdMap(map.systems.flatMap((system) => [system.id, ...system.planets.map((planet) => planet.id)])); // planet ids may be strings, the map wants stable numbers
+	const controls = new Map(view.territory.map((entry) => [entry.planet, entry.control]));
 	const game: GameState = {
 		nowMs: view.gameTime * MS_PER_SECOND,
-		systems: systemsOf(map, ids),
-		planets: planetsOf(map, ids),
+		systems: systemsOf(map, ids, controls),
+		planets: planetsOf(map, ids, controls),
 		queue: [],
 		fleets: view.fleets.map((fleet) => fleetOf(fleet, ids)),
 	};

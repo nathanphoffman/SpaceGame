@@ -12,12 +12,12 @@ Every SPEC.md number lives in a config record under `Rules/`.
 | Time | Flight time in a system / between systems | `GameConfig.Travel` (`TravelConfig.SecondsPerAu`, `SecondsPerLySquared`), formulas in `Rules/TravelRules.cs` |
 | Time | Ship speeds | `Catalog.Default` ships (`Rules/Catalog.cs`) |
 | Resources | Mine output, level growth | `Catalog.Mine` (`MineRules`), mine entry in `Catalog.Buildings` |
-| Buildings | Mine, Shipyard, Defense cost and time | `Catalog.Default` buildings |
-| Buildings | Defense bonus (one number lower) | `GameConfig.DefenseBonus` |
+| Buildings | Mine, Shipyard, Defense, Mining cost and time | `Catalog.Default` buildings |
+| Buildings | Defense level: one reroll of a missed shot per level, for every defending ship | `Holding.DefenseLevel`, `Rules/Battle.cs` |
 | Ships | Hit number, shots, HP, speed, cost, build time, cargo | `Catalog.Default` ships |
 | Battle | Dice rounds, hit order | `Rules/Battle.cs` |
 | Battle | Healing at a shipyard | `GameConfig.HealSeconds`, `Rules/ShipDamage.cs` |
-| Upgrades | Engines, Weapons, Armor, Mining | `Catalog.Default` upgrades, applied in `Rules/Upgrades.cs` |
+| Upgrades | Per planet, no top level: Defense, Shipyard (+25% build speed per level above 1), Mining (+30% mine output per level) | `Catalog.Default` buildings, `Catalog.ShipyardSpeedPerLevel`, `MineRules.MiningBonusPerLevel` |
 | Fog of war | One hop, scouts two hops | `Fleets/Visibility.cs`, `World/StarHops.cs` |
 | Enemy AI | Tick, income, garrison, escort | `EnemyConfig.TickSeconds`, `IncomePerPlanetPerTick`, `HomeGarrisonFighters`, `EscortFighters` |
 | Enemy AI | Attack at 1.5x strength | `EnemyConfig.AttackStrengthRatio` |

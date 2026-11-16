@@ -1,4 +1,4 @@
-import { fleetIcon } from "@/components/ui";
+import { FleetSymbol } from "@/components/game/shell/ShipIcon";
 import { FLEET_CLASS, FLEET_ENEMY_CLASS } from "@/lib/constants";
 import type { FleetDTO } from "@/lib/defs";
 import { countdownText, prepLeftMs } from "@/lib/galaxy/flight";
@@ -12,7 +12,7 @@ export default function FleetMark({ fleet, nowMs, angle }: { fleet: FleetDTO; no
 
 	return (
 		<>
-			<img src={fleetIcon(fleet)} alt="" />
+			<FleetSymbol fleet={fleet} />
 			{prep > 0 && (
 				<small className="fleet-prep" style={{ transform: `rotate(${-angle}deg)` }}>
 					{countdownText(prep)}

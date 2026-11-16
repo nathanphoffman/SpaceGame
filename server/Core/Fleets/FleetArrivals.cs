@@ -48,7 +48,7 @@ public static class FleetArrivals
         foreach (var (type, count) in fleet.Ships) ships[type] = ships.GetValueOrDefault(type) + count;
 
         var healed = ShipDamage.Healed(
-            state.Config, holding, type => Upgrades.BattleShipFor(state.Config.Catalog, player, type).Hp, atSeconds);
+            state.Config, holding, type => state.Config.Catalog.Ship(type).Hp, atSeconds);
         var damage = ShipDamage.Merge(healed, fleet.Damage);
 
         return state.WithPlayer((player with { Stock = stock }).WithHolding(holding with { Ships = ships, Damage = damage, DamagedAt = atSeconds }));

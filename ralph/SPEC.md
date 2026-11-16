@@ -13,7 +13,7 @@ Everything else is rebuilt: the server in C# (ASP.NET Core, EF Core, Postgres, S
 ## Done means
 - [ ] A host can create a game (week mode or a 1-hour test mode), share a link and code, up to 8 friends join by name, and the host starts it.
 - [ ] The galaxy is ~24 real systems around Sol. Enemy home is at the far edge. 10 objective planets sit between Earth and the enemy.
-- [ ] Players can build mines, shipyards and Defense buildings, queue ships, research the 4 upgrades, send fleets, scout, colonize, trade with Haulers, and fight with the dice battle rules below.
+- [ ] Players can build mines, shipyards and Defense buildings, queue ships, upgrade a planet's Defense, Shipyard and Mining, send fleets, scout, colonize, trade with Haulers, and fight with the dice battle rules below.
 - [ ] The enemy AI colonizes, builds ships and attacks; its attacks on Earth grow over time and scale with the player count.
 - [ ] Fog of war and warnings work as written below, and a Discord webhook (optional per game) gets an alert for every spotted enemy fleet.
 - [ ] Scoring, the 500-point target, the 1-week limit, the instant win (enemy home taken) and instant loss (Earth taken) all work, including the end screen.
@@ -27,7 +27,7 @@ Everything else is rebuilt: the server in C# (ASP.NET Core, EF Core, Postgres, S
 ### Time
 - One game = 7 days = 604,800 game seconds. Core works only in game seconds since the start. The server maps real time to game time with `TimeScale` (1 in week mode, 168 in the 1-hour test mode).
 - Every trip has **5 minutes of launch and crew prep**, shown as part of the trip's timer, then the flight time.
-- Flight time inside a system: crossing the whole system (Sun to Pluto, about 40 AU) takes about 1 hour for speed 1.0. Between systems the time grows with the square of the distance in light years: about 4 hours to the nearest star, 1 to 2 days to the enemy home world, for speed 1.0. Tune the constants once the galaxy exists. Divide by the ship's speed and by the Engines upgrade.
+- Flight time inside a system: crossing the whole system (Sun to Pluto, about 40 AU) takes about 1 hour for speed 1.0. Between systems the time grows with the square of the distance in light years: about 4 hours to the nearest star, 1 to 2 days to the enemy home world, for speed 1.0. Tune the constants once the galaxy exists. Divide by the ship's speed.
 - Ships: Scout speed 3.0, Fighter 1.5, Hauler 1.0, Colony ship 1.0, Battleship 1.0, Dreadnought 0.6. A fleet moves at its slowest ship.
 - Fleets can only fight at a planet when both sides are there. No fights in flight. A fleet in flight can be recalled (it returns to where it came from, using the time already flown).
 
@@ -39,7 +39,7 @@ Earth is rich in Iron, Hydrogen and Titanium and has almost no Helium-3; the gas
 
 ### Planets and buildings
 - Planets are owned by one player, the enemy, or nobody. **Earth is the exception:** every player has their own holding there (their own mines, shipyard, defense) and treats it as their own base. Earth can never be captured by a player; it is lost if the enemy wins a battle there.
-- Buildings (per planet, per holding): a **Mine** per element the planet has (levels 1 to 3), a **Shipyard** (builds ships on that planet), a **Defense building** (all of the owner's side's defenders fighting on that planet hit one number lower, roll of 1 always misses).
+- Buildings (per planet, per holding): a **Mine** per element the planet has (levels 1 to 3), a **Shipyard** (builds ships on that planet), a **Defense building**: every level gives each of the owner's side's defending ships one reroll of a missed shot (a roll of 1 always misses). A planet does one thing at a time: a mine level, a ship, or an upgrade.
 - Build queue per planet. Buildings and ships cost resources from the player's stockpile up front and take time.
 - Starting numbers (tune in the balance pass): Mine L1 Fe 50, build 20 min, output 10 per hour times richness/100 times 2, each level costs x1.6 and takes x1.5, output x1.3. Shipyard Fe 100, 30 min. Defense Fe 100 Ti 20, 1 h.
 - Colonizing: a Colony ship at a planet with no owner, or an enemy-owned planet with no enemy ships present, can claim it (the ship is used up). Claiming an enemy planet destroys everything on it first. Players cannot take planets from each other.
@@ -58,11 +58,11 @@ Earth is rich in Iron, Hydrogen and Titanium and has almost no Helium-3; the gas
 - Fleets of every side at the planet fight as two sides: the defenders (owner side, plus every allied player's ships there) and the attackers. Friendly fleets that arrive before the battle is resolved fight together.
 - Rounds repeat until one side has no ships with weapons left and no ships at all. Each round, both sides roll at the same time: each weapon ship rolls one d6 per shot. A roll of 1 always misses. A roll equal or higher than the ship's number is a hit.
 - Each hit removes 1 HP from an enemy ship. Hits are assigned to enemy ships in this order: ships without weapons first, then Fighters, Battleships, Dreadnoughts (cheapest first, so a screen of cheap ships protects the big ones). Damage on a ship stays until it dies; surviving ships stay damaged and heal fully only while at a planet with a shipyard of their owner (over the next hour).
-- The Defense building lowers the defenders' needed roll by 1 (a 3+ Dreadnought hits on 2+).
+- Each Defense level gives every defending ship one reroll per missed shot (level 2 = two rerolls).
 - All randomness comes from an `IDice` so tests can script it and the simulator can seed it.
 
-### Upgrades (4, per player)
-Engines (3 levels, +25% speed per level), Weapons (1 level: all your ships hit one number lower, a roll of 1 still misses), Armor (1 level: +1 HP for Fighters and Battleships), Mining (3 levels, +30% output per level). Costs use Ti and He and take hours; set them in the config.
+### Upgrades (3, per planet, no top level)
+Defense (rerolls, see Battle), Shipyard (+25% ship build speed per level above 1) and Mining (+30% output of every mine on that planet per level). Each level costs x1.6 more and takes x1.3 longer. There are no ship upgrades. Upgrades go through the planet's one queue.
 
 ### Visibility and warnings (fog of war)
 - The map (systems, planets, composition) is public. Ships and fleets are not.

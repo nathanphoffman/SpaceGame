@@ -6,10 +6,10 @@ public static class MineOutput
     /// <summary>Thousandths of a unit, so rates stay whole numbers.</summary>
     public const int MilliPerUnit = 1000;
 
-    /// <summary>Output of one mine in thousandths of a unit per hour, with the Mining upgrade applied.</summary>
-    public static int MilliPerHour(Catalog catalog, int mineLevel, int richness, int miningUpgradeLevel)
+    /// <summary>Output of one mine in thousandths of a unit per hour, with the planet's Mining level applied.</summary>
+    public static int MilliPerHour(Catalog catalog, int mineLevel, int richness, int miningLevel)
     {
-        var bonus = 1 + catalog.Upgrade(UpgradeType.Mining).BonusPerLevel * miningUpgradeLevel;
+        var bonus = 1 + catalog.Mine.MiningBonusPerLevel * miningLevel;
         var perHour = catalog.Mine.OutputPerHour(mineLevel, richness) * bonus;
 
         return (int)Math.Round(perHour * MilliPerUnit);

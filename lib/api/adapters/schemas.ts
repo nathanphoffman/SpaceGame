@@ -16,7 +16,7 @@ type Wire = number | string;
 export type Counts = Record<string, number>;
 
 // Order of the C# enums in CONTRACTS.md (the wire sends their ordinals).
-const BUILDING_NAMES = ["Mine", "Shipyard", "Defense"];
+const BUILDING_NAMES = ["Mine", "Shipyard", "Defense", "Mining"];
 const ELEMENT_NAMES = ["Iron", "Hydrogen", "Titanium", "Helium3"];
 const SHIP_NAMES = ["Scout", "Hauler", "Colony", "Fighter", "Battleship", "Dreadnought"];
 
@@ -66,19 +66,29 @@ export type QueueItemDto = {
 	cost: Counts;
 };
 
+export type AutoOrderDto = { building: string | null; element: string | null; ship: string | null };
+
 export type HoldingDto = {
 	planet: string;
 	mines: Counts;
 	hasShipyard: boolean;
 	hasDefense: boolean;
+	/** Planet levels: 0 means not built. Defense gives each defending ship a reroll per level. */
+	shipyardLevel: number;
+	defenseLevel: number;
+	miningLevel: number;
 	ships: Counts;
 	queue: QueueItemDto[];
+	/** Orders this planet repeats by itself (a mine level or a ship). */
+	auto: AutoOrderDto[];
 };
 
 export type ContributionDto = { player: string; points: number; battlesWon: number; planetsCaptured: number };
 export type OutcomeDto = { winner: string; reason: string; teamScore: number; enemyScore: number; contributions: ContributionDto[] };
 
 export type BattleReportDto = { id: string; time: number; planet: string; attackersWon: boolean; rounds: number };
+
+export type TerritoryDto = { planet: string; control: "Mine" | "Ally" | "Hostile" };
 
 export type PlayerViewDto = {
 	version: number;
@@ -87,9 +97,9 @@ export type PlayerViewDto = {
 	teamScore: number;
 	enemyScore: number;
 	stockpile: Counts;
-	upgrades: Counts;
 	fleets: FleetViewDto[];
 	holdings: HoldingDto[];
+	territory: TerritoryDto[];
 	reports: BattleReportDto[];
 };
 
@@ -134,8 +144,16 @@ const holdingOf = (holding: WireHolding): HoldingDto => ({
 	mines: countsOf(holding.mines),
 	hasShipyard: holding.hasShipyard ?? false,
 	hasDefense: holding.hasDefense ?? false,
+	shipyardLevel: num(holding.shipyardLevel ?? 0),
+	defenseLevel: num(holding.defenseLevel ?? 0),
+	miningLevel: num(holding.miningLevel ?? 0),
 	ships: countsOf(holding.ships),
 	queue: (holding.queue ?? []).map(queueItemOf),
+	auto: (holding.auto ?? []).map((order) => ({
+		building: nameOf(BUILDING_NAMES, order.building),
+		element: nameOf(ELEMENT_NAMES, order.element),
+		ship: nameOf(SHIP_NAMES, order.ship),
+	})),
 });
 
 const reportOf = (report: WireReport): BattleReportDto => ({ ...report, time: num(report.time), rounds: num(report.rounds) });
@@ -147,9 +165,9 @@ const viewOf = (wire: WireView): PlayerViewDto => ({
 	teamScore: num(wire.teamScore),
 	enemyScore: num(wire.enemyScore),
 	stockpile: resourcesOf(wire.stockpile),
-	upgrades: countsOf(wire.upgrades),
 	fleets: wire.fleets.map(fleetOf),
 	holdings: (wire.holdings ?? []).map(holdingOf),
+	territory: wire.territory ?? [],
 	reports: wire.reports.map(reportOf),
 });
 

@@ -16,16 +16,15 @@ public sealed record TravelConfig(
 /// <summary>Pure travel-time rules, kept free of state so the server and the simulator quote the same trips.</summary>
 public static class TravelRules
 {
-    /// <summary>Speed of a fleet: its slowest ship, times the Engines upgrade bonus.</summary>
-    public static double FleetSpeed(Catalog catalog, IReadOnlyDictionary<ShipType, int> ships, int enginesLevel)
+    /// <summary>Speed of a fleet: its slowest ship.</summary>
+    public static double FleetSpeed(Catalog catalog, IReadOnlyDictionary<ShipType, int> ships)
     {
         // Speeds of the ship types actually sent, used to find the slowest.
         var counted = ships.Where(ship => ship.Value > 0).Select(ship => catalog.Ship(ship.Key).Speed).ToList();
 
         if (counted.Count == 0) return 0;
-        var bonus = 1 + catalog.Upgrade(UpgradeType.Engines).BonusPerLevel * enginesLevel;
 
-        return counted.Min() * bonus;
+        return counted.Min();
     }
 
     /// <summary>Flight seconds inside one system.</summary>

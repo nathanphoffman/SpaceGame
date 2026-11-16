@@ -32,8 +32,8 @@ export const playerViewFixture: PlayerViewDto = {
 	enemyScore: 0,
 	stockpile: { Iron: 10, Hydrogen: 0, Titanium: 0, Helium3: 0 },
 	holdings: [],
+	territory: [],
 	reports: [],
-	upgrades: {},
 	fleets: [
 		{
 			id: "f1",
@@ -66,7 +66,6 @@ export const wireViewFixture = {
 	enemyScore: 0,
 	stockpile: wireResources(10),
 	reports: [],
-	upgrades: {},
 	fleets: [{ ...playerViewFixture.fleets[0], launchAt: "900", ships: { Scout: 2 }, cargo: wireResources() }],
 	holdings: [
 		{

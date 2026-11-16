@@ -17,11 +17,11 @@ public static class CommandParser
         {
             "buildBuilding" => BuildBuilding(body),
             "queueShip" => QueueShip(body),
-            "startUpgrade" => StartUpgrade(body),
             "sendFleet" => SendFleet(body),
             "recallFleet" => Need(body.Target.Fleet, "fleet", id => new RecallFleet(new FleetId(id))),
             "colonize" => Need(body.Target.Planet, "planet", id => new Colonize(new PlanetId(id))),
             "cancelQueueItem" => CancelQueueItem(body),
+            "toggleAuto" => ToggleAuto(body),
             _ => Fail($"Unknown command type '{body.Type}'."),
         };
     }
@@ -64,8 +64,23 @@ public static class CommandParser
             : Fail("Count must be at least 1.");
     }
 
-    private static ParsedCommand StartUpgrade(CommandBody b) =>
-        Enum<UpgradeType>(b.Choice.UpgradeType, "upgradeType", out var type, out var error) ? Ok(new StartUpgrade(type)) : Fail(error!);
+    // Auto is a mine (with its element) or a ship type, on one planet.
+    private static ParsedCommand ToggleAuto(CommandBody b)
+    {
+        if (Missing(b.Target.Planet, "planet", out var error)) return Fail(error!);
+        var planet = new PlanetId(b.Target.Planet!);
+
+        if (b.Choice.ShipType is not null)
+        {
+            return Enum<ShipType>(b.Choice.ShipType, "shipType", out var ship, out error)
+                ? Ok(new ToggleAuto(planet, new AutoOrder(null, null, ship)))
+                : Fail(error!);
+        }
+
+        return Enum<Element>(b.Choice.Element, "element", out var element, out error)
+            ? Ok(new ToggleAuto(planet, new AutoOrder(Core.BuildingType.Mine, element, null)))
+            : Fail(error!);
+    }
 
     private static ParsedCommand CancelQueueItem(CommandBody b) =>
         Missing(b.Target.Planet, "planet", out var error) || Missing(b.Target.ItemId, "itemId", out error)

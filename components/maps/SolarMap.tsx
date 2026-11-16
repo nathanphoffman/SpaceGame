@@ -207,6 +207,7 @@ function PlanetNode({
 				style={{ width: size, height: size }}
 			/>
 			<span className={`dot ${planet.kind}`} />
+			{planet.control && <span className="ring" data-control={planet.control} />}
 			{guarded && (
 				<img className="guard" src={SHIPS.fighter.icon} alt="guarded" />
 			)}

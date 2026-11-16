@@ -35,7 +35,6 @@ public class CatalogTests
 
         foreach (var t in Enum.GetValues<BuildingType>()) Assert.Equal(t, C.Building(t).Type);
 
-        foreach (var t in Enum.GetValues<UpgradeType>()) Assert.Equal(t, C.Upgrade(t).Type);
     }
 
     [Fact]
@@ -62,14 +61,8 @@ public class CatalogTests
     }
 
     [Fact]
-    public void UpgradesMatchSpec()
-    {
-        Assert.Equal((3, 0.25), (C.Upgrade(UpgradeType.Engines).MaxLevel, C.Upgrade(UpgradeType.Engines).BonusPerLevel));
-        Assert.Equal(1, C.Upgrade(UpgradeType.Weapons).MaxLevel);
-        Assert.Equal(1, C.Upgrade(UpgradeType.Armor).MaxLevel);
-        Assert.Equal((3, 0.30), (C.Upgrade(UpgradeType.Mining).MaxLevel, C.Upgrade(UpgradeType.Mining).BonusPerLevel));
-        Assert.All(C.Upgrades, u => Assert.True(u.BuildSeconds >= 3600 && u.Cost.Titanium > 0));
-    }
+    public void ShipyardDefenseAndMiningHaveNoTopLevel() =>
+        Assert.All([BuildingType.Shipyard, BuildingType.Defense, BuildingType.Mining], type => Assert.Equal(int.MaxValue, C.Building(type).MaxLevel));
 
     [Fact]
     public void ConfigCarriesTheCatalog() => Assert.Same(C, new GameConfig().Catalog);

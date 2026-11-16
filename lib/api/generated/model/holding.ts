@@ -4,6 +4,7 @@
  * SpaceGame.Server | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { AutoOrder } from './autoOrder';
 import type { HoldingDamage } from './holdingDamage';
 import type { HoldingMines } from './holdingMines';
 import type { HoldingShips } from './holdingShips';
@@ -13,11 +14,18 @@ import type { QueueItem } from './queueItem';
 export interface Holding {
   planet: PlanetId;
   mines?: HoldingMines;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  shipyardLevel?: number | string;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  defenseLevel?: number | string;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  miningLevel?: number | string;
   hasShipyard?: boolean;
   hasDefense?: boolean;
   ships?: HoldingShips;
   damage?: HoldingDamage;
   /** @pattern ^-?(?:0|[1-9]\d*)$ */
   damagedAt?: number | string;
+  auto?: AutoOrder[];
   queue?: QueueItem[];
 }

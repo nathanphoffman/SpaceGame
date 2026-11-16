@@ -13,12 +13,12 @@ public static class WaveReport
     private const int DefaultTimeScale = 168;
     private const int DefaultWaves = 6;
 
-    /// <summary>Parses <c>waves "10 fighter" [--timescale N] [--waves N] [--players N] [--runs N] [--defense] [--weapons] [--seed S]</c>.</summary>
+    /// <summary>Parses <c>waves "10 fighter" [--timescale N] [--waves N] [--players N] [--runs N] [--defense LEVEL] [--seed S]</c>.</summary>
     public static IReadOnlyList<WaveRow> Run(string[] args)
     {
         if (args.Length < 2 || args[0] != "waves")
 
-            throw new ArgumentException("Usage: waves \"<count> <ship>, ...\" [--timescale N] [--waves N] [--players N] [--runs N] [--defense] [--weapons] [--seed S]");
+            throw new ArgumentException("Usage: waves \"<count> <ship>, ...\" [--timescale N] [--waves N] [--players N] [--runs N] [--defense LEVEL] [--seed S]");
 
         var options = new List<string> { "fight", "1 fighter", args[1] };
         var timeScale = DefaultTimeScale;

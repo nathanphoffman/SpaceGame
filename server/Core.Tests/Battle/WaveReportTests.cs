@@ -18,7 +18,7 @@ public class WaveReportTests
     [Fact]
     public void RunBiggerWavesAreHarderToHold()
     {
-        var rows = WaveReport.Run([WavesCommand, "6 fighter", "--waves", "6", "--runs", "200", "--defense"]);
+        var rows = WaveReport.Run([WavesCommand, "6 fighter", "--waves", "6", "--runs", "200", "--defense", "1"]);
 
         Assert.True(rows[0].DefenderWinPercent > rows[^1].DefenderWinPercent);
     }

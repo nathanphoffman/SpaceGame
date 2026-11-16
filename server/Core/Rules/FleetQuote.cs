@@ -9,7 +9,7 @@ internal static class FleetQuote
 
         if (problem is not null) return new(false, problem, nowSeconds, nowSeconds);
         var player = state.PlayerById(playerId)!;
-        var speed = TravelRules.FleetSpeed(state.Config.Catalog, send.Ships, player.UpgradeLevel(UpgradeType.Engines));
+        var speed = TravelRules.FleetSpeed(state.Config.Catalog, send.Ships);
         var flight = WorldDistance.FlightSeconds(state.Config.Travel, send.From, send.To, speed);
 
         return TravelRules.Quote(nowSeconds, state.Config.PrepSeconds, flight);

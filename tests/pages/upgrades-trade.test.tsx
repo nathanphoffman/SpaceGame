@@ -2,31 +2,43 @@ import { describe, expect, it } from "vitest";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TradePanel } from "@/components/game/panels/TradePanel";
-import { UpgradePanel } from "@/components/game/panels/ShipyardPanel";
-import { startUpgradeBody } from "@/lib/api/game/commands";
+import { UpgradePanel } from "@/components/game/panels/UpgradePanel";
+import { buildBuildingBody } from "@/lib/api/game/commands";
 import { playerViewSchema } from "@/lib/api/adapters/schemas";
 import { sendFleetCommand } from "@/lib/api/game/fleetOrders";
 import { wireViewFixture } from "../fixtures/apiMap";
 
 const wrap = (node: React.ReactNode) => renderToString(<QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>);
-const holding = { planet: "a1", mines: {}, hasShipyard: true, hasDefense: false, ships: { Hauler: 2 }, queue: [] };
+const holding = { planet: "a1", mines: {}, hasShipyard: true, hasDefense: false, shipyardLevel: 1, defenseLevel: 0, miningLevel: 0, ships: { Hauler: 2 }, queue: [], auto: [] };
 
-describe("upgrades", () => {
-	it("shows the four upgrades with their levels", () => {
-		const html = wrap(<UpgradePanel gameId="g1" levels={{ Weapons: 2 }} />);
+describe("planet upgrades", () => {
+	it("offers exactly Defense, Shipyard and Mining, with levels", () => {
+		const html = wrap(<UpgradePanel gameId="g1" planetId="a1" holding={{ ...holding, defenseLevel: 3, miningLevel: 0 }} />);
 
-		expect(html).toContain("Upgrade Engines (level 0)");
-		expect(html).toContain("Upgrade Weapons (level 2)");
-		expect(html).toContain("Upgrade Armor");
-		expect(html).toContain("Upgrade Mining");
+		expect(html).toContain("Upgrade Defense (level 3)");
+		expect(html).toContain("Upgrade Shipyard (level 1)");
+		expect(html).toContain("Upgrade Mining (level 0)");
+		expect(html).not.toContain("Engines");
+		expect(html).not.toContain("Weapons");
+		expect(html).not.toContain("Armor");
 	});
 
-	it("builds the start upgrade command", () => {
-		expect(startUpgradeBody("Armor")).toMatchObject({ type: "startUpgrade", upgradeType: "Armor" });
+	it("says Build for a Defense or Shipyard that does not exist yet", () => {
+		const html = wrap(<UpgradePanel gameId="g1" planetId="a1" holding={{ ...holding, shipyardLevel: 0 }} />);
+
+		expect(html).toContain("Build Shipyard");
+		expect(html).toContain("Build Defense");
 	});
 
-	it("defaults missing upgrade levels to none", () => {
-		expect(playerViewSchema.parse({ ...wireViewFixture, upgrades: undefined }).upgrades).toEqual({});
+	it("sends a build command for the upgrade's building", () => {
+		expect(buildBuildingBody("a1", "Mining")).toMatchObject({ type: "buildBuilding", planet: "a1", buildingType: "Mining", element: null });
+	});
+
+	it("reads the planet levels from the player view", () => {
+		const wire = { ...wireViewFixture, holdings: [{ planet: "a1", shipyardLevel: 2, defenseLevel: 5, miningLevel: 1 }] };
+		const parsed = playerViewSchema.parse(wire).holdings[0];
+
+		expect([parsed.shipyardLevel, parsed.defenseLevel, parsed.miningLevel]).toEqual([2, 5, 1]);
 	});
 });
 

@@ -26,8 +26,10 @@ public sealed record Resources(int Iron, int Hydrogen, int Titanium, int Helium3
 
     /// <summary>Multiplies every component by <paramref name="factor"/>, rounding to the nearest whole number.</summary>
     public Resources Scale(double factor) => new(
-        (int)Math.Round(Iron * factor), (int)Math.Round(Hydrogen * factor),
-        (int)Math.Round(Titanium * factor), (int)Math.Round(Helium3 * factor));
+        Scaled(Iron, factor), Scaled(Hydrogen, factor), Scaled(Titanium, factor), Scaled(Helium3, factor));
+
+    // Very high levels cost more than any stockpile can hold; clamping keeps the number from wrapping to something cheap.
+    private static int Scaled(int amount, double factor) => (int)Math.Min(int.MaxValue / 2, Math.Round(amount * factor));
 
     /// <summary>Multiplies every component by left whole number.</summary>
     public static Resources operator *(Resources left, int n) => new(left.Iron * n, left.Hydrogen * n, left.Titanium * n, left.Helium3 * n);

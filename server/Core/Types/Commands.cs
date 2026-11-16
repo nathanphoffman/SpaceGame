@@ -3,14 +3,11 @@ namespace SpaceGame.Core;
 /// <summary>A player order. Applied with <see cref="IGameEngine.Apply"/>.</summary>
 public abstract record GameCommand;
 
-/// <summary>Build a building on a planet (Element is set for mines).</summary>
+/// <summary>Build or upgrade something on a planet (Element is set for mines). Shipyard, Defense and Mining go up one level each time.</summary>
 public sealed record BuildBuilding(PlanetId Planet, BuildingType Type, Element? Element) : GameCommand;
 
 /// <summary>Queue ships at a planet's shipyard.</summary>
 public sealed record QueueShip(PlanetId Planet, ShipType Type, int Count) : GameCommand;
-
-/// <summary>Start researching an upgrade.</summary>
-public sealed record StartUpgrade(UpgradeType Type) : GameCommand;
 
 /// <summary>Send ships (and optional cargo for Haulers) from one planet to another.</summary>
 public sealed record SendFleet(PlanetId From, IReadOnlyDictionary<ShipType, int> Ships, PlanetId To, Resources? Cargo) : GameCommand;

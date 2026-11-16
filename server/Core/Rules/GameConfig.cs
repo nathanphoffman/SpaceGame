@@ -13,11 +13,8 @@ public sealed record GameConfig(
     private const long SecondsPerWeek = GameSeconds.Week;
     private const long DefaultPrepSeconds = 5 * 60;
 
-    /// <summary>Every ship, building and upgrade.</summary>
+    /// <summary>Every ship and building.</summary>
     public Catalog Catalog { get; init; } = Catalog.Default;
-
-    /// <summary>How much a Defense building lowers the roll the team's defenders need to hit.</summary>
-    public int DefenseBonus { get; init; } = 1;
 
     /// <summary>Seconds a shipyard needs to repair a stack of damaged ships completely.</summary>
     public long HealSeconds { get; init; } = GameSeconds.Hour;

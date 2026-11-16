@@ -41,8 +41,11 @@ public class QueueCancelTests
     [Fact]
     public void MineLevelsCancelNewestFirst()
     {
-        var state = Do(Game(), new BuildBuilding(Earth, BuildingType.Mine, Element.Iron)).State;
-        state = Do(state, new BuildBuilding(Earth, BuildingType.Mine, Element.Iron)).State;
+        var cost = new Resources(50, 0, 0, 0);
+        var state = Game(holding: new Holding(Earth)
+        {
+            Queue = [new QueueItem("q1", BuildingType.Mine, Element.Iron, null, 1, 0, 20 * Minute, cost), new QueueItem("q2", BuildingType.Mine, Element.Iron, null, 2, 20 * Minute, 50 * Minute, cost)],
+        });
         Assert.Equal("Cancel the later levels of this mine first.", Error(state, new CancelQueueItem(Earth, "q1")));
         Assert.True(Do(state, new CancelQueueItem(Earth, "q2")).Result.Ok);
     }

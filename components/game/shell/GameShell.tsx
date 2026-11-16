@@ -64,7 +64,7 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 			<SolarMap game={game} system={system} viewed={viewed} nowMs={nowMs} onSelect={(planet) => setPickedId(ids.idOf(planet.id))} />
 			</div>
 			<div className="game-side">
-			{picked && <PlanetDetails gameId={gameId} planet={picked} holding={holding} gameTime={data.view.gameTime} upgrades={data.view.upgrades} />}
+			{picked && <PlanetDetails gameId={gameId} planet={picked} holding={holding} gameTime={data.view.gameTime} />}
 			{holding && <FleetSendDialog key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
 			{holding && <TradePanel key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
 			<AttackWarnings fleets={data.view.fleets} gameTime={data.view.gameTime} spotted={live.spotted} />

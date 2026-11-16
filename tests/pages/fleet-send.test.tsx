@@ -8,7 +8,7 @@ import { playerViewFixture } from "../fixtures/apiMap";
 
 afterEach(() => vi.unstubAllGlobals());
 
-const holding = { planet: "a1", mines: {}, hasShipyard: true, hasDefense: false, ships: { Hauler: 2, Scout: 1 }, queue: [] };
+const holding = { planet: "a1", mines: {}, hasShipyard: true, hasDefense: false, shipyardLevel: 1, defenseLevel: 0, miningLevel: 0, ships: { Hauler: 2, Scout: 1 }, queue: [], auto: [] };
 
 const wrap = (node: React.ReactNode) => renderToString(<QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>);
 

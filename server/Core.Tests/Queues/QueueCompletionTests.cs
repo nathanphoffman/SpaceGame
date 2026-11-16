@@ -8,13 +8,11 @@ public class QueueCompletionTests
     public void AdvanceCompletesDueItemsInTimeOrder()
     {
         var state = Do(Game(holding: WithYard()), new QueueShip(Earth, ShipType.Fighter, 2)).State;
-        state = Do(state, new BuildBuilding(Earth, BuildingType.Defense, null)).State;
         var (done, events) = GameEngineFactory.Create().Advance(state, 25 * Minute, new FixedDice());
         Assert.Equal([10 * Minute, 20 * Minute], events.Select(e => e.Time));
         Assert.All(events, e => Assert.Equal("ShipBuilt", e.Kind));
         Assert.Equal(2, At(done).Ships[ShipType.Fighter]);
-        Assert.Single(At(done).Queue);
-        Assert.False(At(done).HasDefense);
+        Assert.Empty(At(done).Queue);
     }
 
     [Fact]
@@ -32,9 +30,10 @@ public class QueueCompletionTests
     public void BuildingFlagsAreSetWhenDone()
     {
         var state = Do(Game(), new BuildBuilding(Earth, BuildingType.Shipyard, null)).State;
-        state = Do(state, new BuildBuilding(Earth, BuildingType.Defense, null)).State;
         var (done, _) = GameEngineFactory.Create().Advance(state, 10 * 3600, new FixedDice());
         Assert.True(At(done).HasShipyard);
-        Assert.True(At(done).HasDefense);
+        state = Do(done, new BuildBuilding(Earth, BuildingType.Defense, null), 10 * 3600).State;
+        var (later, _) = GameEngineFactory.Create().Advance(state, 20 * 3600, new FixedDice());
+        Assert.True(At(later).HasDefense);
     }
 }

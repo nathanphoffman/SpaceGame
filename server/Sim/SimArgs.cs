@@ -7,33 +7,29 @@ public sealed record SimArgs(
     IReadOnlyDictionary<ShipType, int> Attackers,
     IReadOnlyDictionary<ShipType, int> Defenders,
     int Runs,
-    bool Defense,
-    bool Weapons,
+    int DefenseLevel,
     int Seed)
 {
     private const int DefaultRuns = 1000;
     private const int DefaultSeed = 1;
     private const int FirstOptionIndex = 3;
 
-    /// <summary>Parses <c>fight "10 fighter" "2 battleship, 1 scout" [--runs N] [--defense] [--weapons] [--seed S]</c>.</summary>
+    /// <summary>Parses <c>fight "10 fighter" "2 battleship, 1 scout" [--runs N] [--defense LEVEL] [--seed S]</c>.</summary>
     public static SimArgs Parse(string[] args)
     {
         if (args.Length < FirstOptionIndex || args[0] != "fight")
 
-            throw new ArgumentException("Usage: fight \"<count> <ship>, ...\" \"<count> <ship>, ...\" [--runs N] [--defense] [--weapons] [--seed S]");
+            throw new ArgumentException("Usage: fight \"<count> <ship>, ...\" \"<count> <ship>, ...\" [--runs N] [--defense LEVEL] [--seed S]");
 
         var runs = DefaultRuns;
         var seed = DefaultSeed;
-        var defense = false;
-        var weapons = false;
+        var defense = 0;
 
         for (var i = FirstOptionIndex; i < args.Length; i++)
         {
             switch (args[i])
             {
-                case "--defense": defense = true; break;
-
-                case "--weapons": weapons = true; break;
+                case "--defense": defense = ReadNumber(args, ref i, "--defense"); break;
 
                 case "--runs": runs = ReadNumber(args, ref i, "--runs"); break;
 
@@ -45,7 +41,9 @@ public sealed record SimArgs(
 
         if (runs < 1) throw new ArgumentException("--runs must be at least 1.");
 
-        return new SimArgs(ParseFleet(args[1]), ParseFleet(args[2]), runs, defense, weapons, seed);
+        if (defense < 0) throw new ArgumentException("--defense cannot be negative.");
+
+        return new SimArgs(ParseFleet(args[1]), ParseFleet(args[2]), runs, defense, seed);
     }
 
     /// <summary>Parses <c>"10 fighter, 2 battleship"</c> into ship counts.</summary>

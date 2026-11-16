@@ -17,10 +17,19 @@ public class CommandParserOrderTests
     }
 
     [Fact]
-    public void Start_upgrade()
+    public void Toggle_auto_for_a_ship_or_a_mine()
     {
-        Assert.Equal(new StartUpgrade(UpgradeType.Armor), Parse("""{"type":"startUpgrade","upgradeType":"Armor"}""").Command);
-        Assert.Null(Parse("""{"type":"startUpgrade","upgradeType":"Magic"}""").Command);
+        Assert.Equal(new ToggleAuto(new PlanetId("p1"), new AutoOrder(null, null, ShipType.Fighter)), Parse("""{"type":"toggleAuto","planet":"p1","shipType":"Fighter"}""").Command);
+        Assert.Equal(new ToggleAuto(new PlanetId("p1"), new AutoOrder(BuildingType.Mine, Element.Iron, null)), Parse("""{"type":"toggleAuto","planet":"p1","buildingType":"Mine","element":"Iron"}""").Command);
+        Assert.Null(Parse("""{"type":"toggleAuto","planet":"p1"}""").Command);
+    }
+
+    [Fact]
+    public void Build_an_upgrade_by_building_type()
+    {
+        Assert.Equal(new BuildBuilding(new PlanetId("p1"), BuildingType.Defense, null), Parse("""{"type":"buildBuilding","planet":"p1","buildingType":"Defense"}""").Command);
+        Assert.Equal(new BuildBuilding(new PlanetId("p1"), BuildingType.Mining, null), Parse("""{"type":"buildBuilding","planet":"p1","buildingType":"Mining"}""").Command);
+        Assert.Null(Parse("""{"type":"startUpgrade","upgradeType":"Armor"}""").Command);
     }
 
     [Fact]

@@ -7,7 +7,7 @@ namespace SpaceGame.Server.Api;
 public sealed record CommandTarget(string? Planet, string? From, string? To, string? Fleet, string? ItemId);
 
 /// <summary>The named choices of a command. Enum values are plain names ("Mine", "Fighter"), so a number or a typo is rejected, not guessed.</summary>
-public sealed record CommandChoice(string? BuildingType, string? Element, string? ShipType, int? Count, string? UpgradeType);
+public sealed record CommandChoice(string? BuildingType, string? Element, string? ShipType, int? Count);
 
 /// <summary>What a send-fleet order carries.</summary>
 public sealed record FleetPayload(Dictionary<string, int>? Ships, Resources? Cargo);

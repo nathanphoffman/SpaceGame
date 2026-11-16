@@ -927,12 +927,12 @@ button {
 		filter 0.12s,
 		box-shadow 0.12s;
 }
-button:hover:not(:disabled) {
+button:hover:not(:disabled):not(.snode):not(.gnode) {
 	filter: brightness(1.15);
 	transform: translateY(-1px);
 	box-shadow: 0 4px 14px #4cc2ff44;
 }
-button:active:not(:disabled) {
+button:active:not(:disabled):not(.snode):not(.gnode) {
 	transform: translateY(0);
 }
 button:disabled {
@@ -945,4 +945,140 @@ button.ghost {
 }
 .map {
 	box-shadow: inset 0 0 40px #000a;
+}
+
+/* Ownership rings: dotted blue = yours, green = an ally's, red = a known enemy planet. */
+.ring {
+	position: absolute;
+	pointer-events: none;
+	border: 2px dotted var(--ring, var(--accent));
+	border-radius: 50%;
+	filter: drop-shadow(0 0 3px var(--ring, var(--accent)));
+}
+[data-control="Mine"] {
+	--ring: #4cc2ff;
+}
+[data-control="Ally"] {
+	--ring: #5be08a;
+}
+[data-control="Hostile"] {
+	--ring: #ff6b6b;
+}
+.gnode .star .ring {
+	inset: -9px;
+}
+.snode .ring {
+	top: 50%;
+	left: 50%;
+	width: calc(var(--body) + 14px);
+	height: calc(var(--body) + 14px);
+	transform: translate(-50%, -50%);
+}
+
+/* Buttons in a group get space between them and a calmer look. */
+.btn-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 6px 0 10px;
+}
+.btn-row button {
+	padding: 6px 12px;
+	border-radius: 8px;
+	font-size: 13px;
+	background: linear-gradient(180deg, #1f2d4d, #17223d);
+	color: var(--text);
+	border: 1px solid #34457a;
+	box-shadow: 0 2px 6px #0005;
+}
+.btn-row button:hover:not(:disabled) {
+	border-color: var(--accent);
+	box-shadow:
+		0 0 0 1px var(--accent) inset,
+		0 4px 14px #4cc2ff33;
+}
+.btn-row button:disabled {
+	background: #121a2b;
+	border-color: var(--line);
+}
+.panel h3 {
+	margin: 12px 0 4px;
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--dim);
+}
+.element-icon {
+	vertical-align: middle;
+	overflow: visible;
+}
+.topbar .res .element-icon {
+	margin-right: 2px;
+}
+
+/* A button on auto gets a light that runs around its edge, like a build order on repeat in an old RTS. */
+@property --auto-angle {
+	syntax: "<angle>";
+	initial-value: 0deg;
+	inherits: false;
+}
+.btn-row button {
+	position: relative;
+}
+.btn-row button.auto-on::before {
+	content: "";
+	position: absolute;
+	inset: -3px;
+	border-radius: 11px;
+	padding: 2px;
+	background: conic-gradient(from var(--auto-angle), transparent 0 55%, #4cc2ff 80%, #ffffff 100%);
+	-webkit-mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask-composite: exclude;
+	animation: auto-spin 1.8s linear infinite;
+	pointer-events: none;
+}
+@keyframes auto-spin {
+	to {
+		--auto-angle: 360deg;
+	}
+}
+.btn-row button .element-icon {
+	margin-right: 6px;
+	margin-left: -2px;
+}
+
+/* Ship symbols: blue for the team, red for the enemy. */
+.fleet {
+	color: #6fd0ff;
+}
+.fleet.enemy {
+	color: var(--bad);
+}
+.fleet svg {
+	width: 100%;
+	height: 100%;
+	filter: drop-shadow(0 0 4px currentColor);
+}
+.ship-icon {
+	vertical-align: middle;
+	margin-right: 6px;
+	margin-left: -2px;
+}
+
+/* Map planets and stars only grow a little under the pointer; they never move. */
+.snode,
+.gnode {
+	background: none !important;
+	box-shadow: none !important;
+}
+.snode img.thumb,
+.gnode .star {
+	transition: transform 0.15s ease;
+}
+.snode:hover img.thumb,
+.gnode:hover .star {
+	transform: scale(1.12);
 }

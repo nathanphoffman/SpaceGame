@@ -32,8 +32,6 @@ export interface CommandBody {
      */
   count: number | string | null;
   /** @nullable */
-  upgradeType: string | null;
-  /** @nullable */
   ships: CommandBodyShips;
   cargo: null | Resources;
 }

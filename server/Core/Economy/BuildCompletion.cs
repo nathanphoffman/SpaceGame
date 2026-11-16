@@ -15,7 +15,7 @@ public static class Economy
             foreach (var (element, level) in holding.Mines)
             {
                 var milli = MineOutput.MilliPerHour(state.Config.Catalog, level, planet?.RichnessOf(element) ?? 0,
-                    player.UpgradeLevel(UpgradeType.Mining));
+                    holding.MiningLevel);
                 rate += MineOutput.RateFor(element, milli);
             }
         }
@@ -48,22 +48,26 @@ public static class BuildCompletion
 
         while (true)
         {
-            var research = player.Research;
             var due = NextDue(player, nowSeconds);
-
-            if (research is { } job && job.FinishAt <= nowSeconds && (due is null || job.FinishAt <= due.Value.Item.FinishAt))
-            {
-                player = Upgrades.FinishResearch(player, state, job, events);
-
-                continue;
-            }
 
             if (due is null) break;
 
             var stock = player.Stock.AdvanceTo(due.Value.Item.FinishAt, Economy.RatePerHourMilli(state, player));
             player = Finish(player with { Stock = stock }, due.Value.Holding, due.Value.Item);
             events.Add(EventFor(player.Id, due.Value.Holding.Planet, due.Value.Item));
+            player = AutoQueue.Run(state, player, player.HoldingAt(due.Value.Holding.Planet)!, due.Value.Item.FinishAt);
         }
+
+        return StartIdleAutos(state, player, nowSeconds);
+    }
+
+    // Planets on auto that are idle at `nowSeconds` pick up work as soon as the player can afford it.
+    private static PlayerState StartIdleAutos(GameState state, PlayerState start, long nowSeconds)
+    {
+        var player = start;
+
+        foreach (var holding in start.Holdings.Where(h => h.Auto.Count > 0 && h.Queue.Count == 0))
+            player = AutoQueue.Run(state, player, player.HoldingAt(holding.Planet)!, nowSeconds);
 
         return player with { Stock = player.Stock.AdvanceTo(nowSeconds, Economy.RatePerHourMilli(state, player)) };
     }
@@ -87,8 +91,9 @@ public static class BuildCompletion
         return player.WithHolding(item.Building switch
         {
             BuildingType.Mine => rest with { Mines = With(rest.Mines, item.Element!.Value, item.Level) },
-            BuildingType.Shipyard => rest with { HasShipyard = true },
-            BuildingType.Defense => rest with { HasDefense = true },
+            BuildingType.Shipyard => rest with { ShipyardLevel = item.Level },
+            BuildingType.Defense => rest with { DefenseLevel = item.Level },
+            BuildingType.Mining => rest with { MiningLevel = item.Level },
             _ => rest with { Ships = With(rest.Ships, item.Ship!.Value, rest.Ships.GetValueOrDefault(item.Ship.Value) + 1) },
         });
     }

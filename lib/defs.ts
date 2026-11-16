@@ -275,6 +275,9 @@ type FleetStatus = keyof typeof FLEET_STATUS;
 type Mission = keyof typeof MISSION;
 type QueueKind = keyof typeof QUEUE_KIND;
 
+/** who holds a planet or star system, from the player's point of view */
+export type ControlKind = "Mine" | "Ally" | "Hostile";
+
 export type SystemDTO = {
 	id: number;
 	name: string;
@@ -283,6 +286,7 @@ export type SystemDTO = {
 	seed: number;
 	sectorX: number;
 	sectorY: number;
+	control?: ControlKind; // your base wins over an ally's, which wins over a known enemy planet
 };
 
 export type PlanetDTO = {
@@ -296,6 +300,7 @@ export type PlanetDTO = {
 	ships: Record<string, number>;
 	defense: number;
 	seed: number;
+	control?: ControlKind;
 	shared: boolean; // safe haven: everyone can have a base here and it can't be attacked
 };
 

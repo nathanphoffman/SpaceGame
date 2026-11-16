@@ -59,7 +59,7 @@ internal sealed class GameEngine : IGameEngine
             (not null, _) => (state, new CommandResult(false, GameOver)),
             (_, BuildBuilding build) => BuildQueues.QueueBuilding(state, player, build, nowSeconds),
             (_, QueueShip ships) => BuildQueues.QueueShips(state, player, ships, nowSeconds),
-            (_, StartUpgrade upgrade) => Upgrades.BeginResearch(state, player, upgrade, nowSeconds),
+            (_, ToggleAuto auto) => AutoQueue.Toggle(state, player, auto, nowSeconds),
             (_, CancelQueueItem cancel) => QueueCancel.Cancel(state, player, cancel, nowSeconds),
             (_, SendFleet send) => FleetOrders.Send(state, player, send, nowSeconds),
             (_, RecallFleet recall) => FleetOrders.Recall(state, player, recall, nowSeconds),
@@ -78,7 +78,7 @@ internal sealed class GameEngine : IGameEngine
         {
             OwnPlanets = [.. holdings.Select(h => h.Planet)],
             Holdings = holdings,
-            Upgrades = Enum.GetValues<UpgradeType>().ToDictionary(type => type, type => own?.UpgradeLevel(type) ?? 0),
+            Territory = Core.Territory.For(state, player, nowSeconds),
         };
     }
 

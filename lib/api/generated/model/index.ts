@@ -5,11 +5,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './autoOrder';
 export * from './battleReport';
 export * from './buildingType';
 export * from './commandBody';
 export * from './commandBodyShips';
 export * from './commandResult';
+export * from './control';
 export * from './createGameRequest';
 export * from './createGameResponse';
 export * from './element';
@@ -27,13 +29,13 @@ export * from './joinGameRequest';
 export * from './joinGameResponse';
 export * from './lobbyPlayer';
 export * from './lobbyResponse';
+export * from './planetControl';
 export * from './planetId';
 export * from './planetInfo';
 export * from './planetInfoRichness';
 export * from './playerContribution';
 export * from './playerId';
 export * from './playerView';
-export * from './playerViewUpgrades';
 export * from './queueItem';
 export * from './resources';
 export * from './sendFleetBody';

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildBuildingBody, cancelQueueItemBody, commandBody, queueShipBody, sendCommand, startUpgradeBody } from "@/lib/api/game/commands";
+import { buildBuildingBody, cancelQueueItemBody, commandBody, queueShipBody, sendCommand } from "@/lib/api/game/commands";
 import { PlanetDetails } from "@/components/game/panels/PlanetDetails";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -19,8 +19,10 @@ describe("build command body", () => {
 	});
 });
 
+const ownedHolding = { planet: "a2", mines: {}, hasShipyard: false, hasDefense: false, shipyardLevel: 1, defenseLevel: 0, miningLevel: 0, ships: {}, queue: [], auto: [] };
+
 describe("PlanetDetails", () => {
-	it("shows richness, the objective flag and the six build buttons", () => {
+	it("shows no build, ship or upgrade buttons on a planet without a base", () => {
 		const planet = galaxyMapFixture.systems[0].planets[1];
 		const html = renderToString(
 			<QueryClientProvider client={new QueryClient()}>
@@ -29,30 +31,44 @@ describe("PlanetDetails", () => {
 		);
 
 		expect(html).toContain("Alpha II");
+		expect(html).not.toContain("Shipyard");
+		expect(html).not.toContain("Build Dreadnought");
+		expect(html).not.toContain("Upgrade Mining");
+		expect(html).not.toContain("Nothing queued.");
+	});
+
+	it("shows richness, the objective flag and the six build buttons", () => {
+		const planet = galaxyMapFixture.systems[0].planets[1];
+		const html = renderToString(
+			<QueryClientProvider client={new QueryClient()}>
+				<PlanetDetails gameId="g1" planet={planet} holding={ownedHolding} />
+			</QueryClientProvider>,
+		);
+
+		expect(html).toContain("Alpha II");
 		expect(html).toContain("Objective planet");
 		expect(html).toContain("Helium3: 80");
 		expect(html).toContain("Mine Titanium");
-		expect(html).toContain("Shipyard");
-		expect(html).toContain("Defense");
+		expect(html).toContain("Upgrade Shipyard");
+		expect(html).toContain("Build Defense");
 	});
 
 	it("shows ship and upgrade buttons", () => {
 		const planet = galaxyMapFixture.systems[0].planets[1];
 		const html = renderToString(
 			<QueryClientProvider client={new QueryClient()}>
-				<PlanetDetails gameId="g1" planet={planet} />
+				<PlanetDetails gameId="g1" planet={planet} holding={ownedHolding} />
 			</QueryClientProvider>,
 		);
 
 		expect(html).toContain("Build Dreadnought");
-		expect(html).toContain("Upgrade Engines");
+		expect(html).toContain("Upgrade Mining");
 	});
 });
 
-describe("ship and upgrade bodies", () => {
-	it("queues ships and starts upgrades", () => {
+describe("ship bodies", () => {
+	it("queues ships", () => {
 		expect(queueShipBody("a1", "Fighter", 2)).toMatchObject({ type: "queueShip", planet: "a1", shipType: "Fighter", count: 2 });
-		expect(startUpgradeBody("Armor")).toMatchObject({ type: "startUpgrade", upgradeType: "Armor" });
 	});
 });
 
@@ -68,7 +84,8 @@ describe("sending a command", () => {
 
 describe("queue and holding", () => {
 	const holding = {
-		planet: "a2", mines: { Iron: 2 }, hasShipyard: true, hasDefense: false, ships: { Scout: 3 },
+		planet: "a2", mines: { Iron: 2 }, hasShipyard: true, hasDefense: false, shipyardLevel: 1, defenseLevel: 0, miningLevel: 0, ships: { Scout: 3 },
+		auto: [],
 		queue: [{ id: "q1", building: null, element: null, ship: "Fighter", level: 1, startAt: 0, finishAt: 90, cost: { Iron: 50 } }],
 	};
 
@@ -81,7 +98,7 @@ describe("queue and holding", () => {
 		);
 
 		expect(html).toContain("Owner: you");
-		expect(html).toContain("Iron mine L2, Shipyard");
+		expect(html).toContain("Iron mine L2, Shipyard L1");
 		expect(html).toContain("Scout 3");
 		expect(html).toContain("Fighter ship (cost Iron 50, 60s left)");
 		expect(html).toContain("Cancel");
@@ -94,7 +111,7 @@ describe("queue and holding", () => {
 	it("says when nothing is queued", () => {
 		const html = renderToString(
 			<QueryClientProvider client={new QueryClient()}>
-				<PlanetDetails gameId="g1" planet={galaxyMapFixture.systems[0].planets[0]} />
+				<PlanetDetails gameId="g1" planet={galaxyMapFixture.systems[0].planets[0]} holding={ownedHolding} />
 			</QueryClientProvider>,
 		);
 

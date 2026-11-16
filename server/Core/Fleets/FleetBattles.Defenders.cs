@@ -18,9 +18,8 @@ internal static partial class FleetBattles
 
         foreach (var (id, holding) in bases)
         {
-            var player = state.PlayerById(id)!;
             var healed = ShipDamage.Healed(
-                state.Config, holding!, type => Upgrades.BattleShipFor(catalog, player, type).Hp, attacker.ArriveAt);
+                state.Config, holding!, type => catalog.Ship(type).Hp, attacker.ArriveAt);
 
             defenders.Add(new Garrison(null, id, holding!.Ships, healed));
         }
@@ -28,7 +27,7 @@ internal static partial class FleetBattles
         return [.. defenders.Where(g => g.Ships.Values.Sum() > 0)];
     }
 
-    // True when any player has a defense building on the planet.
-    private static bool HasDefenseBuilding(GameState state, PlanetId planet) =>
-        state.Players.Any(p => p.HoldingAt(planet)?.HasDefense == true);
+    // The best defense level any player has on the planet: every defending ship may reroll a miss that many times.
+    private static int DefenseRerolls(GameState state, PlanetId planet) =>
+        state.Players.Select(p => p.HoldingAt(planet)?.DefenseLevel ?? 0).DefaultIfEmpty(0).Max();
 }

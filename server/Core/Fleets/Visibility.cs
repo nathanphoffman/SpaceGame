@@ -83,6 +83,6 @@ public static class Visibility
     }
 
     // A fleet watches from where it left until it lands.
-    private static PlanetId Position(Fleet fleet, long nowSeconds) =>
+    internal static PlanetId Position(Fleet fleet, long nowSeconds) =>
         fleet.Parked || nowSeconds >= fleet.ArriveAt ? fleet.To : fleet.From;
 }
