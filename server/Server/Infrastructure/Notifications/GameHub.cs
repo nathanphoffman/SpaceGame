@@ -28,17 +28,26 @@ public sealed class GameHub : Hub
     }
 }
 
+/// <summary>Names of the messages the hub sends to clients.</summary>
+public static class ClientEvents
+{
+    public const string StateChanged = "StateChanged";
+    public const string FleetSpotted = "FleetSpotted";
+    public const string BattleResolved = "BattleResolved";
+    public const string GameEnded = "GameEnded";
+}
+
 public sealed class SignalRGameNotifier(IHubContext<GameHub> hub) : IGameNotifier
 {
     public Task StateChangedAsync(Guid gameId, long version) =>
-        hub.Clients.Group(GameHub.Group(gameId)).SendAsync("StateChanged", version);
+        hub.Clients.Group(GameHub.Group(gameId)).SendAsync(ClientEvents.StateChanged, version);
 
     public Task FleetSpottedAsync(Guid gameId, string fleetId, string targetPlanetId, long arrivesAtGameTime, string strengthHint) =>
-        hub.Clients.Group(GameHub.Group(gameId)).SendAsync("FleetSpotted", fleetId, targetPlanetId, arrivesAtGameTime, strengthHint);
+        hub.Clients.Group(GameHub.Group(gameId)).SendAsync(ClientEvents.FleetSpotted, fleetId, targetPlanetId, arrivesAtGameTime, strengthHint);
 
     public Task BattleResolvedAsync(Guid gameId, string reportId) =>
-        hub.Clients.Group(GameHub.Group(gameId)).SendAsync("BattleResolved", reportId);
+        hub.Clients.Group(GameHub.Group(gameId)).SendAsync(ClientEvents.BattleResolved, reportId);
 
     public Task GameEndedAsync(Guid gameId, string outcome) =>
-        hub.Clients.Group(GameHub.Group(gameId)).SendAsync("GameEnded", outcome);
+        hub.Clients.Group(GameHub.Group(gameId)).SendAsync(ClientEvents.GameEnded, outcome);
 }

@@ -11,51 +11,49 @@ public class EnemyTests
     private static readonly EnemyConfig Rich = new(IncomePerPlanetPerTick: 1000);
 
     private static GameState NewGame(EnemyConfig? enemy = null) =>
-        Engine.NewGame(new GameSetup(1, [new PlayerSetup(new PlayerId("p1"), "Ann")], new GameConfig { Enemy = enemy ?? new EnemyConfig() }));
-
-    private static GameState AdvanceEnemyState(GameState state, long nowSeconds) => Engine.Advance(state, nowSeconds, Dice).State;
+        Engine.NewGame(new GameSetup(1, [new PlayerSetup(new PlayerId("p1"), TestNames.Ann)], new GameConfig { Enemy = enemy ?? new EnemyConfig() }));
 
     [Fact]
-    public void FirstTick_ParksTheHomeGarrisonAtTheEnemyHome()
+    public void FirstTickParksTheHomeGarrisonAtTheEnemyHome()
     {
-        var state = AdvanceEnemyState(NewGame(), Hour);
+        var state = Engine.Advance(NewGame(), Hour, Dice).State;
 
         Assert.Equal(state.Config.Enemy.HomeGarrisonFighters, EnemyBrain.HomeFighters(state));
     }
 
     [Fact]
-    public void Tick_AddsIncomePerOwnedPlanetToTheBudget()
+    public void TickAddsIncomePerOwnedPlanetToTheBudget()
     {
         var config = new EnemyConfig(HomeGarrisonFighters: 0, EscortFighters: 100);
-        var state = AdvanceEnemyState(NewGame(config), Hour);
+        var state = Engine.Advance(NewGame(config), Hour, Dice).State;
 
         Assert.Equal(config.IncomePerPlanetPerTick, state.EnemyBudget);
         Assert.Equal(Hour, state.EnemyLastTick);
     }
 
     [Fact]
-    public void Garrison_RegrowsFromTheBudgetAfterLosses()
+    public void GarrisonRegrowsFromTheBudgetAfterLosses()
     {
         var config = new EnemyConfig(EscortFighters: 100);
-        var state = AdvanceEnemyState(NewGame(config), Hour);
+        var state = Engine.Advance(NewGame(config), Hour, Dice).State;
         var home = state.Fleets.Single();
         var weakened = state with { Fleets = [home with { Ships = new Dictionary<ShipType, int> { [ShipType.Fighter] = 7 }, }] };
 
-        Assert.Equal(config.HomeGarrisonFighters, EnemyBrain.HomeFighters(AdvanceEnemyState(weakened, 2 * Hour)));
+        Assert.Equal(config.HomeGarrisonFighters, EnemyBrain.HomeFighters(Engine.Advance(weakened, 2 * Hour, Dice).State));
     }
 
     [Fact]
-    public void Garrison_NeverGrowsPastTheTarget()
+    public void GarrisonNeverGrowsPastTheTarget()
     {
-        var state = AdvanceEnemyState(NewGame(), 5 * Hour);
+        var state = Engine.Advance(NewGame(), 5 * Hour, Dice).State;
 
         Assert.Equal(state.Config.Enemy.HomeGarrisonFighters, EnemyBrain.HomeFighters(state));
     }
 
     [Fact]
-    public void Expedition_LaunchesOnceTheBudgetCoversColonyAndEscort()
+    public void ExpeditionLaunchesWhenBudgetCoversCost()
     {
-        var state = AdvanceEnemyState(NewGame(Rich), 3 * Hour);
+        var state = Engine.Advance(NewGame(Rich), 3 * Hour, Dice).State;
         var launched = state.Fleets.Single(f => !f.Parked);
 
         Assert.Equal(Side.Enemy, launched.Side);
@@ -64,7 +62,7 @@ public class EnemyTests
     }
 
     [Fact]
-    public void Expedition_HeadsForTheUnclaimedSystemNearestEarth()
+    public void ExpeditionHeadsForTheUnclaimedSystemNearestEarth()
     {
         var target = EnemyBrain.ExpeditionTarget(NewGame())!.Value;
         var earthSystem = StarCatalog.Systems.Single(s => s.Id == WorldDistance.SystemOf(StartingKit.EarthId));
@@ -77,29 +75,29 @@ public class EnemyTests
     }
 
     [Fact]
-    public void Colony_ClaimsThePlanetOnArrivalAndKeepsTheEscortThere()
+    public void ColonyClaimsThePlanetOnArrival()
     {
-        var launched = AdvanceEnemyState(NewGame(Rich), 3 * Hour);
+        var launched = Engine.Advance(NewGame(Rich), 3 * Hour, Dice).State;
         var fleet = launched.Fleets.Single(f => !f.Parked);
-        var state = AdvanceEnemyState(launched, fleet.ArriveAt + Hour);
+        var state = Engine.Advance(launched, fleet.ArriveAt + Hour, Dice).State;
 
         Assert.Contains(fleet.To, state.EnemyPlanets);
         Assert.Contains(state.Fleets, f => f.Parked && f.To == fleet.To && !f.Ships.ContainsKey(ShipType.Colony));
     }
 
     [Fact]
-    public void Advance_IsDeterministicForTheSameSeed()
+    public void AdvanceIsDeterministicForTheSameSeed()
     {
-        var first = JsonSerializer.Serialize(AdvanceEnemyState(NewGame(), 40 * Hour));
-        var second = JsonSerializer.Serialize(AdvanceEnemyState(NewGame(), 40 * Hour));
+        var first = JsonSerializer.Serialize(Engine.Advance(NewGame(), 40 * Hour, Dice).State);
+        var second = JsonSerializer.Serialize(Engine.Advance(NewGame(), 40 * Hour, Dice).State);
 
         Assert.Equal(first, second);
     }
 
     [Fact]
-    public void EnemyState_RoundTripsThroughJson()
+    public void EnemyStateRoundTripsThroughJson()
     {
-        var state = AdvanceEnemyState(NewGame(Rich), 3 * Hour);
+        var state = Engine.Advance(NewGame(Rich), 3 * Hour, Dice).State;
         var copy = JsonSerializer.Deserialize<GameState>(JsonSerializer.Serialize(state))!;
 
         Assert.Equal(state.EnemyBudget, copy.EnemyBudget);

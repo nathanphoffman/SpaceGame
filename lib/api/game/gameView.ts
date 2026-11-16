@@ -10,9 +10,9 @@ const parseView = (body: unknown): PlayerViewDto => playerViewSchema.parse(body)
 
 const parseOutcome = (body: unknown): OutcomeDto => outcomeSchema.parse(body);
 
-/** Final result from `GET /outcome`; only requested once the game is finished. */
-export function useOutcome(gameId: string, finished: boolean): OutcomeDto | undefined {
-	return useGetOutcome(gameId, { query: { select: parseOutcome, enabled: finished } }).data;
+/** Final result from `GET /outcome`; pass the game id only once the game is finished, undefined means do not request. */
+export function useOutcome(finishedGameId: string | undefined): OutcomeDto | undefined {
+	return useGetOutcome(finishedGameId ?? "", { query: { select: parseOutcome, enabled: finishedGameId !== undefined } }).data;
 }
 
 export type GameData = { map: GalaxyMapDto; view: PlayerViewDto; fetchedAtMs: number };

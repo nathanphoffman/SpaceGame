@@ -52,19 +52,19 @@ describe("fleet panels", () => {
 describe("scout range hint", () => {
 	const flying = { ...playerViewFixture.fleets[0], side: "Team" as const, arriveAt: 2000 };
 
-	it("shows the sight range from the API", () => {
-		const html = wrap(<FleetList gameId="g1" fleets={[{ ...flying, sightHops: 2 }]} gameTime={1000} />);
+	it.each([
+		[2, "Sees systems within 2 jumps."],
+		[1, "Sees systems within 1 jump."],
+	])("shows the sight range for %i hops", (sightHops, text) => {
+		const html = wrap(<FleetList gameId="g1" fleets={[{ ...flying, sightHops }]} gameTime={1000} />);
 
-		expect(html).toContain("Sees systems within 2 jumps.");
+		expect(html).toContain(text);
+		expect(scoutRangeHint(sightHops)).toBe(text);
 	});
 
 	it("says nothing for fleets without scouting range", () => {
 		const html = wrap(<FleetList gameId="g1" fleets={[{ ...flying, sightHops: 0 }]} gameTime={1000} />);
 
 		expect(html).not.toContain("Sees systems");
-	});
-
-	it("uses the singular for one jump", () => {
-		expect(scoutRangeHint(1)).toBe("Sees systems within 1 jump.");
 	});
 });

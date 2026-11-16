@@ -24,13 +24,12 @@ describe("fleet flight from server times", () => {
 		expect(countdownText(65_000)).toBe("1:05");
 	});
 
-	it("is half way mid-flight and has no countdown", () => {
-		expect(flightOf(game, fleet(), 10 * MIN).k).toBe(0.5);
-		expect(prepLeftMs(fleet(), 10 * MIN)).toBe(0);
-	});
-
-	it("stays at the target after arrival", () => {
-		expect(flightOf(game, fleet(), 20 * MIN).k).toBe(1);
+	it.each([
+		["is half way mid-flight and has no countdown", 10, 0.5],
+		["stays at the target after arrival", 20, 1],
+	])("%s", (_name, minutes, k) => {
+		expect(flightOf(game, fleet(), minutes * MIN).k).toBe(k);
+		expect(prepLeftMs(fleet(), minutes * MIN)).toBe(0);
 	});
 
 	it("keeps in step with the server clock using an offset", () => {

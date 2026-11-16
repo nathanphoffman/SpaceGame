@@ -6,7 +6,7 @@ public class NewGameTravelTests
     private static readonly IGameEngine Engine = GameEngineFactory.Create();
 
     private static GameState TravelGame(int seed = 1) =>
-        Engine.NewGame(new GameSetup(seed, [new PlayerSetup(Me, "Ann"), new PlayerSetup(new PlayerId("p2"), "Bo")], new GameConfig()));
+        Engine.NewGame(new GameSetup(seed, [new PlayerSetup(Me, TestNames.Ann), new PlayerSetup(new PlayerId("p2"), "Bo")], new GameConfig()));
 
     private static SendFleet Send(PlanetId to) =>
         new(StartingKit.EarthId, new Dictionary<ShipType, int> { [ShipType.Scout] = 1 }, to, null);
@@ -16,17 +16,15 @@ public class NewGameTravelTests
         return WorldDistance.FlightSeconds(new TravelConfig(), StartingKit.EarthId, to, 1.0);
     }
 
-    [Fact]
-    public void NearestStarTakesAboutFourHours()
+    [Theory]
+    [InlineData(false, 3, 5)] // nearest star: about four hours
+    [InlineData(true, 24, 48)] // enemy home: one to two days
+    public void FarTripsTakeHours(bool enemyHome, int minHours, int maxHours)
     {
-        var nearest = StarCatalog.Systems.Skip(1).MinBy(s => s.LightYears)!.Planets[0].Id;
-        Assert.InRange(FlightSeconds(nearest), 3 * 3600, 5 * 3600);
-    }
-
-    [Fact]
-    public void EnemyHomeTakesOneToTwoDays()
-    {
-        Assert.InRange(FlightSeconds(TravelGame().EnemyHome!.Value), 24 * 3600, 48 * 3600);
+        var to = enemyHome
+            ? TravelGame().EnemyHome!.Value
+            : StarCatalog.Systems.Skip(1).MinBy(s => s.LightYears)!.Planets[0].Id;
+        Assert.InRange(FlightSeconds(to), minHours * 3600, maxHours * 3600);
     }
 
     [Fact]

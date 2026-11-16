@@ -6,10 +6,10 @@ public class EnemyReasonTests
     private const long Hour = 3600;
 
     private static GameState NewGame(EnemyConfig enemy) =>
-        Engine.NewGame(new GameSetup(1, [new PlayerSetup(new PlayerId("p1"), "Ann")], new GameConfig { Enemy = enemy }));
+        Engine.NewGame(new GameSetup(1, [new PlayerSetup(new PlayerId("p1"), TestNames.Ann)], new GameConfig { Enemy = enemy }));
 
     [Fact]
-    public void EveryOrderOverManyTicks_HasAReason()
+    public void EveryOrderOverManyTicksHasAReason()
     {
         var enemy = new EnemyConfig(IncomePerPlanetPerTick: 1000, FirstEarthAttackSeconds: Hour * 3);
         var state = NewGame(enemy);
@@ -24,18 +24,18 @@ public class EnemyReasonTests
     }
 
     [Fact]
-    public void Advance_KeepsEachOrdersReasonInAnEvent()
+    public void AdvanceKeepsEachOrdersReasonInAnEvent()
     {
         var state = NewGame(new EnemyConfig(IncomePerPlanetPerTick: 1000));
 
         var events = Engine.Advance(state, Hour, new SeqDice()).Events.Where(e => e.Kind == "EnemyOrder").ToList();
 
         Assert.NotEmpty(events);
-        Assert.All(events, e => Assert.False(string.IsNullOrWhiteSpace(e.Data["reason"])));
+        Assert.All(events, e => Assert.False(string.IsNullOrWhiteSpace(e.Data[TestNames.Reason])));
     }
 
     [Fact]
-    public void EarthAttackOrder_HasAReason()
+    public void EarthAttackOrderHasAReason()
     {
         var state = NewGame(new EnemyConfig());
         var order = EarthAttackSchedule.Due(state, state.Config.Enemy.FirstEarthAttackSeconds);

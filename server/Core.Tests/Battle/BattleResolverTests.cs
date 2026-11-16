@@ -15,7 +15,7 @@ public class BattleResolverTests
     private static BattleSide Side(params ShipType[] types) => new(types.Select(BattleShipOf).ToList());
 
     [Fact]
-    public void OneOnOneFighters_BothHit_BothDie_AttackersDoNotWin()
+    public void OneOnOneFightersBothHitBothDieAttackersDoNotWin()
     {
         var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 0, new ScriptedDice(5, 6));
         Assert.False(r.AttackersWon);
@@ -35,7 +35,7 @@ public class BattleResolverTests
     }
 
     [Fact]
-    public void DefenderBonus_LowersNeededRoll_ButNeverBelowTwo()
+    public void DefenderBonusLowersNeededRollButNeverBelowTwo()
     {
         // Fighter hits on 5; with bonus 1 it hits on 4. Attacker rolls 1 (miss), defender rolls 4 (hit).
         var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Fighter), 1, new ScriptedDice(1, 4));
@@ -50,7 +50,7 @@ public class BattleResolverTests
     }
 
     [Fact]
-    public void DreadnoughtAgainstFighterSwarm_DamagePersistsAcrossRounds()
+    public void DreadnoughtAgainstFighterSwarmDamagePersistsAcrossRounds()
     {
         var fighters = Enumerable.Repeat(ShipType.Fighter, 4).ToArray();
 
@@ -75,7 +75,7 @@ public class BattleResolverTests
     }
 
     [Fact]
-    public void DrawOut_CountsEveryRound()
+    public void DrawOutCountsEveryRound()
     {
         // Battleships hit on 4+; each has 4 HP and 2 shots. Both sides hit once per round: dead in 4 rounds? 1 hit/round = 4 rounds.
         var dice = new ScriptedDice([4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1]);
@@ -87,7 +87,7 @@ public class BattleResolverTests
     }
 
     [Fact]
-    public void AlliedShipsFightTogether_AsOneSide()
+    public void AlliedShipsFightTogetherAsOneSide()
     {
         // Round 1: the two defending Fighters both hit the Battleship. Round 2: it kills them.
         var r = BattleResolver.Resolve(Side(ShipType.Battleship), Side(ShipType.Fighter, ShipType.Fighter), 0,
@@ -96,18 +96,12 @@ public class BattleResolverTests
         Assert.Equal(2, r.Attackers.Ships.Single().Hp);
     }
 
-    [Fact]
-    public void NobodyArmed_StopsWithoutWinner()
+    [Theory]
+    [InlineData(ShipType.Scout, ShipType.Hauler, false, 0)] // nobody armed: stops without a winner
+    [InlineData(ShipType.Fighter, ShipType.Hauler, true, 1)] // unarmed defenders are destroyed
+    public void UnarmedDefendersNeverFightBack(ShipType attacker, ShipType defender, bool attackersWon, int rounds)
     {
-        var r = BattleResolver.Resolve(Side(ShipType.Scout), Side(ShipType.Hauler), 0, new ScriptedDice());
-        Assert.False(r.AttackersWon);
-        Assert.Equal(0, r.Rounds);
-    }
-
-    [Fact]
-    public void UnarmedDefenders_AreDestroyedByArmedAttackers()
-    {
-        var r = BattleResolver.Resolve(Side(ShipType.Fighter), Side(ShipType.Hauler), 0, new ScriptedDice(6));
-        Assert.True(r.AttackersWon);
+        var r = BattleResolver.Resolve(Side(attacker), Side(defender), 0, new ScriptedDice(6));
+        Assert.Equal((attackersWon, rounds), (r.AttackersWon, r.Rounds));
     }
 }

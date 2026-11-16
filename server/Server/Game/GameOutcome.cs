@@ -17,7 +17,7 @@ public sealed record GameOutcome(string Winner, string Reason, int TeamScore, in
 /// </summary>
 public static class OutcomeRecorder
 {
-    public const string OutcomeKind = "GameEnded";
+    public const string OutcomeKind = EventKinds.GameEnded;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 

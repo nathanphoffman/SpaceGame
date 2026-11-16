@@ -1,5 +1,6 @@
 using SpaceGame.Core;
 using SpaceGame.Server.Auth;
+using SpaceGame.Server.Game;
 using SpaceGame.Server.Persistence;
 
 namespace SpaceGame.Server.Lobby;
@@ -8,17 +9,16 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
 {
     public const int MaxPlayers = 8;
     public const int MaxNameLength = 30;
-    private static readonly string NameLengthMessage = $"Player name must be 1 to {MaxNameLength} characters.";
     public const string WeekMode = "week";
     public const string TestMode = "test";
-    public const string LobbyStatus = "lobby";
-    public const string RunningStatus = "running";
-    public const string FinishedStatus = "finished";
+    public const string LobbyStatus = GameStatus.Lobby;
+    public const string RunningStatus = GameStatus.Running;
+    public const string FinishedStatus = GameStatus.Finished;
     public const string GameNotFound = "Game not found.";
 
     public async Task<ServiceResult<CreateGameResponse>> CreateAsync(CreateGameRequest req)
     {
-        var error = ValidateCreate(req);
+        var error = LobbyRules.ValidateCreate(req);
 
         if (error is not null)
         {
@@ -41,7 +41,7 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
 
         if (name.Length is 0 or > MaxNameLength)
         {
-            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status400BadRequest, NameLengthMessage);
+            return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status400BadRequest, LobbyRules.NameLengthMessage);
         }
 
         var game = await repo.LoadByCodeAsync(JoinCodes.Normalize(req.Code));
@@ -51,7 +51,7 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
             return ServiceResult<JoinGameResponse>.Fail(StatusCodes.Status404NotFound, "No game has that code.");
         }
 
-        var refusal = JoinRefusal(game, await repo.PlayersAsync(game.Id), name);
+        var refusal = LobbyRules.JoinRefusal(game, await repo.PlayersAsync(game.Id), name);
 
         if (refusal is not null)
         {
@@ -62,24 +62,6 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
         var token = await AddGuestAsync(game.Id, playerId, name);
 
         return ServiceResult<JoinGameResponse>.Success(new(game.Id, playerId, token));
-    }
-
-    // Returns why the player cannot join this lobby, or null when they can.
-    private static string? JoinRefusal(LoadedGame game, IReadOnlyList<PlayerRow> players, string name)
-    {
-        if (game.Status != LobbyStatus)
-        {
-            return "That game has already started.";
-        }
-
-        if (players.Count >= MaxPlayers)
-        {
-            return "That game is full.";
-        }
-
-        return players.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
-            ? "That name is already taken in this game."
-            : null;
     }
 
     public async Task<ServiceResult<LobbyResponse>> LobbyAsync(Guid gameId)
@@ -138,26 +120,6 @@ public sealed class LobbyService(GameRepository repo, GameWriter writer, IGameEn
             return ServiceResult<bool>.Fail(StatusCodes.Status409Conflict, "The game was changed at the same time. Try again.");
         }
     }
-
-    // Returns the first problem found with the create request, or null when it is valid.
-    private static string? ValidateCreate(CreateGameRequest req)
-    {
-        if (string.IsNullOrWhiteSpace(req.Name) || req.Name.Trim().Length > MaxNameLength)
-        {
-            return NameLengthMessage;
-        }
-
-        if (req.Mode is not (WeekMode or TestMode))
-        {
-            return "Mode must be \"week\" or \"test\".";
-        }
-
-        return IsValidWebhook(req.DiscordWebhookUrl) ? null : "Discord webhook must be an https URL.";
-    }
-
-    private static bool IsValidWebhook(string? url) =>
-        string.IsNullOrWhiteSpace(url)
-        || (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps);
 
     private static GameSetup SetupFor(int seed, IReadOnlyList<PlayerSetup> players)
     {

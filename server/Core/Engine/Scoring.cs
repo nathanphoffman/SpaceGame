@@ -13,7 +13,7 @@ public static class Scoring
         var captured = new GameEvent(atSeconds, "PlanetCaptured", new Dictionary<string, string>
         {
             ["side"] = side.ToString(),
-            ["planet"] = planet.Value,
+            [EventKeys.Planet] = planet.Value,
             ["points"] = points.ToString(),
         });
 

@@ -41,17 +41,13 @@ public class ColonizeTests
         Assert.Equal(before + 70, after.PlayerById(Me)!.Stock.Amount.Hydrogen);
     }
 
-    [Fact]
-    public void ColonizeWithoutAColonyShipFails()
+    [Theory]
+    [InlineData(ShipType.Fighter, false)] // no colony ship
+    [InlineData(ShipType.Colony, true)] // planet the team already holds
+    public void ColonizeFailsWithoutAColonyShipOrOnOwnPlanet(ShipType ship, bool ownPlanet)
     {
-        var (_, result) = Do(WithFleets(Parked(Side.Team, ShipType.Fighter, 3)), new Colonize(Target));
-        Assert.False(result.Ok);
-    }
-
-    [Fact]
-    public void ColonizeAPlanetTheTeamHoldsFails()
-    {
-        var (_, result) = Do(WithFleets(Parked(Side.Team, ShipType.Colony, 1)), new Colonize(StartingKit.EarthId));
+        var planet = ownPlanet ? StartingKit.EarthId : Target;
+        var (_, result) = Do(WithFleets(Parked(Side.Team, ship, 3)), new Colonize(planet));
         Assert.False(result.Ok);
     }
 

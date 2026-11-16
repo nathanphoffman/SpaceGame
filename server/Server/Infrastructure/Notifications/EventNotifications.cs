@@ -6,8 +6,8 @@ namespace SpaceGame.Server.Game;
 /// <summary>Maps game events (and the saved version) to notifier calls.</summary>
 public static class EventNotifications
 {
-    public const string FleetSpottedKind = "FleetSpotted";
-    public const string GameEndedKind = "GameEnded";
+    public const string FleetSpottedKind = EventKinds.FleetSpotted;
+    public const string GameEndedKind = EventKinds.GameEnded;
 
     // Sends one state-changed message, then one message per report and per spotted/ended event.
     public static async Task PublishAsync(IGameNotifier notifier, Guid gameId, long version, IReadOnlyList<GameEvent> events, IReadOnlyList<ReportRow> reports)

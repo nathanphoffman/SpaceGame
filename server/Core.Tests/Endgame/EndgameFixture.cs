@@ -13,7 +13,7 @@ internal static class EndgameFixture
     internal static GameState TeamHolds(GameState state) =>
         state.WithPlayer(state.PlayerById(Me)! is var p ? p with { Holdings = [.. p.Holdings, new Holding(Objective)] } : p);
 
-    internal static GameEvent Ended(IReadOnlyList<GameEvent> events) => Assert.Single(events, e => e.Kind == "GameEnded");
+    internal static GameEvent Ended(IReadOnlyList<GameEvent> events) => Assert.Single(events, e => e.Kind == EventNames.GameEnded);
 
     internal static Fleet ColonyAt(PlanetId planet) =>
         new(new FleetId("x1"), Me, StartingKit.EarthId, planet, 0, 0, 0,

@@ -13,7 +13,7 @@ public class StockpileTests
     [InlineData(3, 100, 0, 33_800)]
     [InlineData(1, 100, 1, 26_000)] // +30% per mining upgrade level
     [InlineData(1, 100, 3, 38_000)]
-    public void MineOutputScalesWithRichnessAndLevels(int level, int richness, int upgrade, long expected) =>
+    public void MineOutputScalesWithRichness(int level, int richness, int upgrade, long expected) =>
         Assert.Equal(expected, MineOutput.MilliPerHour(C, level, richness, upgrade));
 
     [Fact]

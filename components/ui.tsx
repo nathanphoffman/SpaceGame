@@ -1,9 +1,10 @@
+import { MID_ORBIT_AU, TIGHT_ORBIT_AU } from "@/lib/constants";
 import { type FleetDTO, MISSION, SHIPS, type ShipType } from "@/lib/defs";
 
 /** orbit distance: more decimals for the tight orbits of red-dwarf planets */
 const AU_DECIMALS = [
-	[0.1, 3],
-	[10, 2],
+	[TIGHT_ORBIT_AU, 3],
+	[MID_ORBIT_AU, 2],
 ]; // [orbit below this, decimals shown]; further out one decimal is enough
 
 const FAR_AU_DECIMALS = 1;

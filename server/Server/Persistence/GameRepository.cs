@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SpaceGame.Core;
+using SpaceGame.Server.Game;
 
 namespace SpaceGame.Server.Persistence;
 
@@ -14,10 +15,10 @@ public sealed record LoadedGame(Guid Id, string Code, string Mode, int Seed, str
 /// <summary>Reads games, players and reports. Writes live in <see cref="GameWriter"/>.</summary>
 public sealed class GameRepository(GameDbContext db)
 {
-    private const string BattleKind = "BattleResolved";
-    private const string OutcomeKind = "GameEnded";
+    private const string BattleKind = EventKinds.BattleResolved;
+    private const string OutcomeKind = EventKinds.GameEnded;
 
-    private const string RunningStatus = "running";
+    private const string RunningStatus = GameStatus.Running;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     // The lambdas below only say which column to match; LoadWhereAsync does the actual query.

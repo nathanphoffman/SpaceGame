@@ -14,7 +14,7 @@ public class ResourcesTests
     }
 
     [Fact]
-    public void SubtractScaleAndTotalWork()
+    public void ResourceArithmeticWorks()
     {
         var r = new Resources(10, 20, 30, 40);
         Assert.Equal(100, r.Total);

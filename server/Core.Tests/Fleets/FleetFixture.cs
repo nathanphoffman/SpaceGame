@@ -10,7 +10,7 @@ internal static class FleetFixture
     private const long NeverTicks = 1_000_000_000;
 
     public static GameState FleetGame() =>
-        Engine.NewGame(new GameSetup(1, [new PlayerSetup(Me, "Ann")], new GameConfig { Enemy = new EnemyConfig(TickSeconds: NeverTicks) }));
+        Engine.NewGame(new GameSetup(1, [new PlayerSetup(Me, TestNames.Ann)], new GameConfig { Enemy = new EnemyConfig(TickSeconds: NeverTicks) }));
 
     public static SendFleet Send(int fighters = 2, Resources? cargo = null, int haulers = 0)
     {

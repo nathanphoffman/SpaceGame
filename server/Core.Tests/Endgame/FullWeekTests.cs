@@ -22,36 +22,21 @@ public class FullWeekTests
         }
     }
 
-    private static (GameState State, List<GameEvent> Events) SimulateIdleWeek(int seed)
-    {
-        var setup = new GameSetup(seed, [new PlayerSetup(new PlayerId("p1"), "Ann")], new GameConfig());
-        var state = Engine.NewGame(setup);
-        var dice = new CountingDice(seed);
-        var events = new List<GameEvent>();
-
-        for (var hour = 1L; hour <= setup.Config.WeekSeconds / Hour + 1; hour++)
-        {
-            var step = Engine.Advance(state, hour * Hour, dice);
-            state = step.State;
-            events.AddRange(step.Events);
-        }
-
-        return (state, events);
-    }
-
     [Fact]
     public void IdleWeekEndsTheGame()
     {
-        var (state, events) = SimulateIdleWeek(Seed);
+        var setup = new GameSetup(Seed, [new PlayerSetup(new PlayerId("p1"), TestNames.Ann)], new GameConfig());
+        var (state, events) = Engine.Advance(Engine.NewGame(setup), setup.Config.WeekSeconds + Hour, new CountingDice(Seed));
 
         Assert.NotNull(state.Outcome);
-        Assert.Single(events, e => e.Kind == "GameEnded");
+        Assert.Single(events, e => e.Kind == EventNames.GameEnded);
     }
 
     [Fact]
     public void EnemyAttackOnEarthComesOnSchedule()
     {
-        var (state, _) = SimulateIdleWeek(Seed);
+        var setup = new GameSetup(Seed, [new PlayerSetup(new PlayerId("p1"), TestNames.Ann)], new GameConfig());
+        var (state, _) = Engine.Advance(Engine.NewGame(setup), setup.Config.WeekSeconds + Hour, new CountingDice(Seed));
 
         Assert.NotEmpty(state.EnemyPlanets);
         Assert.True(state.EarthAttacksSent >= 1);
@@ -60,8 +45,9 @@ public class FullWeekTests
     [Fact]
     public void SameSeedGivesTheSameWeek()
     {
-        var first = SimulateIdleWeek(Seed);
-        var second = SimulateIdleWeek(Seed);
+        var setupA = new GameSetup(Seed, [new PlayerSetup(new PlayerId("p1"), TestNames.Ann)], new GameConfig());
+        var first = Engine.Advance(Engine.NewGame(setupA), setupA.Config.WeekSeconds + Hour, new CountingDice(Seed));
+        var second = Engine.Advance(Engine.NewGame(setupA), setupA.Config.WeekSeconds + Hour, new CountingDice(Seed));
 
         Assert.Equal(JsonSerializer.Serialize(first.State), JsonSerializer.Serialize(second.State));
         Assert.Equal(JsonSerializer.Serialize(first.Events), JsonSerializer.Serialize(second.Events));

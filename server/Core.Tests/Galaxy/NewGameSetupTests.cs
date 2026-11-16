@@ -8,20 +8,16 @@ public class NewGameSetupTests
     private static readonly IGameEngine Engine = GameEngineFactory.Create();
 
     private static GameState SetupGame(int seed = 1) =>
-        Engine.NewGame(new GameSetup(seed, [new PlayerSetup(Me, "Ann"), new PlayerSetup(new PlayerId("p2"), "Bo")], new GameConfig()));
+        Engine.NewGame(new GameSetup(seed, [new PlayerSetup(Me, TestNames.Ann), new PlayerSetup(new PlayerId("p2"), "Bo")], new GameConfig()));
 
     [Fact]
-    public void EarthIsTheRealEarth()
+    public void EveryPlayerHoldsTheRealEarth()
     {
-        var earth = SetupGame().PlanetById(StartingKit.EarthId)!;
+        var state = SetupGame();
+        var earth = state.PlanetById(StartingKit.EarthId)!;
         Assert.Equal(StarCatalog.Earth.Id, earth.Id);
         Assert.True(earth.RichnessOf(Element.Iron) > earth.RichnessOf(Element.Helium3));
-    }
-
-    [Fact]
-    public void EveryPlayerHoldsEarth()
-    {
-        Assert.All(SetupGame().Players, p => Assert.NotNull(p.HoldingAt(StartingKit.EarthId)));
+        Assert.All(state.Players, p => Assert.NotNull(p.HoldingAt(StartingKit.EarthId)));
     }
 
     [Fact]

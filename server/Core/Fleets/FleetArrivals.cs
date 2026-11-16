@@ -33,9 +33,9 @@ public static class FleetArrivals
 
         events.Add(new GameEvent(atSeconds, "FleetArrived", new Dictionary<string, string>
         {
-            ["player"] = fleet.Owner.Value,
-            ["fleet"] = fleet.Id.Value,
-            ["planet"] = planet.Value,
+            [EventKeys.Player] = fleet.Owner.Value,
+            [EventKeys.Fleet] = fleet.Id.Value,
+            [EventKeys.Planet] = planet.Value,
         }));
 
         if (player is null || holding is null)

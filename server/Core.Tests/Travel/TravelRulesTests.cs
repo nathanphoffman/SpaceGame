@@ -13,28 +13,23 @@ public class TravelRulesTests
     [InlineData(ShipType.Scout, 3, ShipType.Dreadnought, 1, 0, 0.6)] // slowest ship sets the pace
     [InlineData(ShipType.Scout, 1, ShipType.Dreadnought, 0, 0, 3.0)] // zero-count ships do not slow the fleet
     [InlineData(ShipType.Hauler, 1, ShipType.Scout, 0, 2, 1.5)] // engine upgrades raise speed
-    public void FleetSpeedFollowsSlowestShipAndEngines(ShipType a, int na, ShipType b, int nb, int engines, double expected) =>
+    public void FleetSpeedFollowsSlowestShip(ShipType a, int na, ShipType b, int nb, int engines, double expected) =>
         Assert.Equal(expected, TravelRules.FleetSpeed(C, Ships((a, na), (b, nb)), engines), 6);
 
     [Fact]
     public void EmptyFleetHasNoSpeed() => Assert.Equal(0, TravelRules.FleetSpeed(C, Ships(), 0));
 
-    [Fact]
-    public void SunToPlutoIsAboutOneHourPlusPrep()
+    [Theory]
+    [InlineData(40, 1000, 3500, 3700, 1300)] // Sun to Pluto: about an hour plus prep
+    [InlineData(0.00257, 0, 0, 60, 300)] // Earth to Moon: about five minutes
+    public void InSystemTripsTakePrepPlusFlight(double au, long launch, long minFlight, long maxFlight, long departAt)
     {
-        var flight = TravelRules.FlightSecondsInSystem(T, 40, 1.0);
-        Assert.InRange(flight, 3500, 3700);
-        var quote = TravelRules.Quote(1000, Prep, flight);
-        Assert.Equal(1300, quote.DepartAt);
-        Assert.Equal(1300 + flight, quote.ArriveAt);
-    }
+        var flight = TravelRules.FlightSecondsInSystem(T, au, 1.0);
+        var quote = TravelRules.Quote(launch, Prep, flight);
+        Assert.Equal(departAt, quote.DepartAt);
+        Assert.Equal(departAt + flight, quote.ArriveAt);
 
-    [Fact]
-    public void EarthToMoonIsAboutFiveMinutes()
-    {
-        var flight = TravelRules.FlightSecondsInSystem(T, 0.00257, 1.0);
-        var quote = TravelRules.Quote(0, Prep, flight);
-        Assert.InRange(quote.ArriveAt, 300, 360);
+        if (maxFlight > minFlight) Assert.InRange(flight, minFlight, maxFlight);
     }
 
     [Fact]
@@ -45,12 +40,11 @@ public class TravelRulesTests
         Assert.Equal(slow / 2, fast);
     }
 
-    [Fact]
-    public void NearestStarIsAboutFourHours()
-    {
-        var flight = TravelRules.FlightSecondsBetweenSystems(T, 4.4, 1.0);
-        Assert.InRange(flight, 3.5 * 3600, 4.5 * 3600);
-    }
+    [Theory]
+    [InlineData(4.4, 3.5, 4.5)] // nearest star: about four hours
+    [InlineData(11, 24, 48)] // far enemy home: one to two days
+    public void BetweenSystemTripsTakeHours(double lightYears, double minHours, double maxHours) =>
+        Assert.InRange(TravelRules.FlightSecondsBetweenSystems(T, lightYears, 1.0), minHours * 3600, maxHours * 3600);
 
     [Fact]
     public void BetweenSystemTimeGrowsWithTheSquareOfTheDistance()
@@ -58,13 +52,6 @@ public class TravelRulesTests
         var one = TravelRules.FlightSecondsBetweenSystems(T, 3, 1.0);
         var two = TravelRules.FlightSecondsBetweenSystems(T, 6, 1.0);
         Assert.Equal(one * 4, two);
-    }
-
-    [Fact]
-    public void FarEnemyHomeTakesOneToTwoDays()
-    {
-        var flight = TravelRules.FlightSecondsBetweenSystems(T, 11, 1.0);
-        Assert.InRange(flight, 24 * 3600, 48 * 3600);
     }
 
     [Fact]

@@ -12,7 +12,7 @@ public class EnemyAttackTests
     // A game where the enemy owns `Colony` with a parked fleet, and the player's Earth base has `defenders` fighters.
     private static GameState Setup(int attackers, int defenders)
     {
-        var state = GameEngineFactory.Create().NewGame(new GameSetup(1, [new PlayerSetup(Me, "Ann")], new GameConfig()));
+        var state = GameEngineFactory.Create().NewGame(new GameSetup(1, [new PlayerSetup(Me, TestNames.Ann)], new GameConfig()));
         var earth = state.PlayerById(Me)!.HoldingAt(StartingKit.EarthId)!;
         var fleet = new Fleet(new FleetId("e1"), EnemyConfig.Owner, Colony, Colony, 0, 0, 0, Fighters(attackers), Resources.Zero, Parked: true, Side: Side.Enemy);
 
@@ -21,22 +21,20 @@ public class EnemyAttackTests
         return state.WithPlayer(player) with { EnemyPlanets = [Colony], Fleets = [fleet], EnemyHome = Colony };
     }
 
-    [Fact]
-    public void Attacks_WhenOneAndAHalfTimesAsStrong()
+    [Theory]
+    [InlineData(15, 10, true)]
+    [InlineData(10, 10, false)]
+    public void AttacksOnlyWhenStrongEnough(int attackers, int defenders, bool attacks)
     {
-        var attack = EnemyAttack.Choose(Setup(attackers: 15, defenders: 10));
+        var attack = EnemyAttack.Choose(Setup(attackers, defenders));
 
-        Assert.Equal(StartingKit.EarthId, attack!.Target);
+        Assert.Equal(attacks, attack is not null);
+
+        if (attack is not null) Assert.Equal(StartingKit.EarthId, attack.Target);
     }
 
     [Fact]
-    public void Waits_WhenNotStrongEnough()
-    {
-        Assert.Null(EnemyAttack.Choose(Setup(attackers: 10, defenders: 10)));
-    }
-
-    [Fact]
-    public void Waits_WhenItCannotSeeAnyPlayerPlanet()
+    public void WaitsWhenItCannotSeeAnyPlayerPlanet()
     {
         var state = Setup(15, 0) with { EnemyPlanets = [] };
 
@@ -44,7 +42,7 @@ public class EnemyAttackTests
     }
 
     [Fact]
-    public void Attack_SendsTheFleetTowardsTheTarget()
+    public void AttackSendsTheFleetTowardsTheTarget()
     {
         var state = Setup(15, 0) with { Config = new GameConfig { Enemy = new EnemyConfig(TickSeconds: 100) } };
         var next = GameEngineFactory.Create().Advance(state, 100, new SeqDice()).State;
@@ -56,7 +54,7 @@ public class EnemyAttackTests
     }
 
     [Fact]
-    public void Choice_IsTheSameEveryTime()
+    public void ChoiceIsTheSameEveryTime()
     {
         Assert.Equal(EnemyAttack.Choose(Setup(20, 5)), EnemyAttack.Choose(Setup(20, 5)));
     }

@@ -18,22 +18,18 @@ public class ScoringTests
     {
         var (state, events) = Engine.Advance(FleetGame(), 5 * Hour, new SeqDice());
         Assert.Equal((0, 0), (state.TeamScore, state.EnemyScore));
-        Assert.DoesNotContain(events, e => e.Kind == "ScoreChanged");
+        Assert.DoesNotContain(events, e => e.Kind == TestNames.ScoreChanged);
     }
 
-    [Fact]
-    public void TeamScoresOnePerHourPerObjective()
+    [Theory]
+    [InlineData(true, 3, 0)]
+    [InlineData(false, 0, 2)]
+    public void EachSideScoresOnePerHourPerObjective(bool teamHolds, int teamScore, int enemyScore)
     {
-        var (state, events) = Engine.Advance(TeamHolds(), 3 * Hour + 10, new SeqDice());
-        Assert.Equal((3, 0), (state.TeamScore, state.EnemyScore));
-        Assert.Equal(3, events.Count(e => e.Kind == "ScoreChanged"));
-    }
-
-    [Fact]
-    public void EnemyScoresForItsObjectives()
-    {
-        var (state, _) = Engine.Advance(EnemyHolds(), 2 * Hour, new SeqDice());
-        Assert.Equal((0, 2), (state.TeamScore, state.EnemyScore));
+        var start = teamHolds ? TeamHolds() : EnemyHolds();
+        var (state, events) = Engine.Advance(start, 3 * Hour + 10 - (teamHolds ? 0 : Hour + 10), new SeqDice());
+        Assert.Equal((teamScore, enemyScore), (state.TeamScore, state.EnemyScore));
+        Assert.Equal(teamScore + enemyScore, events.Count(e => e.Kind == TestNames.ScoreChanged));
     }
 
     [Fact]
@@ -56,7 +52,7 @@ public class ScoringTests
         var (_, events) = Engine.Advance(claimed, 200, new SeqDice());
         var captured = Assert.Single(events, e => e.Kind == "PlanetCaptured");
         Assert.Equal("Team", captured.Data["side"]);
-        Assert.Contains(events, e => e.Kind == "ScoreChanged");
+        Assert.Contains(events, e => e.Kind == TestNames.ScoreChanged);
     }
 
     [Fact]

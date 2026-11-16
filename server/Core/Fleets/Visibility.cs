@@ -37,8 +37,8 @@ public static class Visibility
     private static GameEvent Spotted(GameState state, Fleet fleet, long nowSeconds) =>
         new(nowSeconds, "FleetSpotted", new Dictionary<string, string>
         {
-            ["fleet"] = fleet.Id.Value,
-            ["planet"] = fleet.To.Value,
+            [EventKeys.Fleet] = fleet.Id.Value,
+            [EventKeys.Planet] = fleet.To.Value,
             ["arrivesAt"] = fleet.ArriveAt.ToString(),
             ["strength"] = Strength(state.Config.Catalog, fleet).ToString(),
         });

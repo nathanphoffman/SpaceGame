@@ -32,9 +32,11 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("form schemas", () => {
-	it("accepts a valid create form and an empty webhook", () => {
-		const parsed = createGameSchema.safeParse({ name: "Ann", mode: "test", discordWebhookUrl: "" });
-		expect(parsed.success).toBe(true);
+	it.each([
+		["accepts a valid create form and an empty webhook", createGameSchema, { name: "Ann", mode: "test", discordWebhookUrl: "" }, true],
+		["requires a code to join", joinGameSchema, { code: "", playerName: "Bo" }, false],
+	])("%s", (_name, schema, input, ok) => {
+		expect(schema.safeParse(input).success).toBe(ok);
 	});
 
 	it("reports the first error per field", () => {
@@ -44,11 +46,6 @@ describe("form schemas", () => {
 		const errors = fieldErrors(parsed.error);
 		expect(errors.name).toBe("Enter a name");
 		expect(errors.discordWebhookUrl).toBeDefined();
-	});
-
-	it("requires a code to join", () => {
-		const parsed = joinGameSchema.safeParse({ code: "", playerName: "Bo" });
-		expect(parsed.success).toBe(false);
 	});
 });
 

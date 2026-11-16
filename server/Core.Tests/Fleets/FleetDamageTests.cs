@@ -58,21 +58,14 @@ public class FleetDamageTests
         Assert.Equal(100, Earth(after).DamagedAt);
     }
 
-    [Fact]
-    public void ShipyardHealsBeforeTheNextBattle()
+    [Theory]
+    [InlineData(true, 2)] // half an hour heals 2 of the 3 lost hp, so the hit leaves 2 damage
+    [InlineData(false, 0)] // without a shipyard the old damage is fatal
+    public void OnlyAShipyardHealsBeforeTheNextBattle(bool shipyard, int damageLeft)
     {
-        var state = EarthWithDamagedBattleship(shipyard: true) with { Fleets = [EnemyFleet(ShipType.Fighter, StartingKit.EarthId, HalfHour, false)] };
-
-        // Half an hour heals 2 of the 3 lost hp, so the hit leaves the Battleship at 2 hp (damage 2).
+        var state = EarthWithDamagedBattleship(shipyard) with { Fleets = [EnemyFleet(ShipType.Fighter, StartingKit.EarthId, HalfHour, false)] };
         var (after, _) = Engine.Advance(state, HalfHour, new ScriptedDice(6, 6, 6));
-        Assert.Equal(2, Earth(after).Damage[ShipType.Battleship]);
-    }
-
-    [Fact]
-    public void WithoutAShipyardDamageIsFatal()
-    {
-        var state = EarthWithDamagedBattleship(shipyard: false) with { Fleets = [EnemyFleet(ShipType.Fighter, StartingKit.EarthId, HalfHour, false)] };
-        var (after, _) = Engine.Advance(state, HalfHour, new ScriptedDice(6, 6, 6));
-        Assert.Empty(Earth(after).Ships);
+        Assert.Equal(shipyard ? 1 : 0, Earth(after).Ships.GetValueOrDefault(ShipType.Battleship));
+        Assert.Equal(damageLeft, Earth(after).Damage.GetValueOrDefault(ShipType.Battleship));
     }
 }

@@ -14,7 +14,7 @@ public class EndgameOutcomeTests
         Assert.True(result.Ok);
         Assert.Equal("homeCaptured", state.Outcome!.Reason);
         var (_, events) = Engine.Advance(state, 200, new SeqDice());
-        Assert.Equal("Team", Ended(events).Data["winner"]);
+        Assert.Equal("Team", Ended(events).Data[TestNames.Winner]);
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class EndgameOutcomeTests
             new Dictionary<ShipType, int> { [ShipType.Dreadnought] = 5 }, Resources.Zero, Side: Side.Enemy);
         var (state, events) = Engine.Advance(bare with { Fleets = [raid] }, 20, new SeqDice());
         var ended = Ended(events);
-        Assert.Equal(("Enemy", "earthLost"), (ended.Data["winner"], ended.Data["reason"]));
+        Assert.Equal(("Enemy", "earthLost"), (ended.Data[TestNames.Winner], ended.Data[TestNames.Reason]));
         Assert.Equal(10, ended.Time);
         Assert.NotNull(state.Outcome);
     }

@@ -9,17 +9,16 @@ public class BuildingRulesTests
         Assert.Equal("You are not in this game.",
             GameEngineFactory.Create().Apply(Game(), new PlayerId("x"), new BuildBuilding(Earth, BuildingType.Shipyard, null), 0).Result.Error);
 
-    [Fact]
-    public void PlanetWithoutBaseIsRejected() =>
-        Assert.Equal("You have no base on that planet.", Error(Game(), new BuildBuilding(Moon, BuildingType.Shipyard, null)));
+    public static TheoryData<BuildBuilding, string> Rejections => new()
+    {
+        { new BuildBuilding(Moon, BuildingType.Shipyard, null), "You have no base on that planet." },
+        { new BuildBuilding(Earth, BuildingType.Mine, null), "Choose which element the mine digs." },
+        { new BuildBuilding(Earth, BuildingType.Mine, Element.Helium3), "This planet has no Helium3 to mine." },
+    };
 
-    [Fact]
-    public void MineNeedsAnElement() =>
-        Assert.Equal("Choose which element the mine digs.", Error(Game(), new BuildBuilding(Earth, BuildingType.Mine, null)));
-
-    [Fact]
-    public void MineNeedsRichnessOnThePlanet() =>
-        Assert.Equal("This planet has no Helium3 to mine.", Error(Game(), new BuildBuilding(Earth, BuildingType.Mine, Element.Helium3)));
+    [Theory]
+    [MemberData(nameof(Rejections))]
+    public void InvalidBuildIsRejected(BuildBuilding command, string error) => Assert.Equal(error, Error(Game(), command));
 
     [Fact]
     public void ShipyardCanOnlyBeBuiltOnce()

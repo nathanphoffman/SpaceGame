@@ -9,8 +9,8 @@ internal static partial class FleetBattles
     private static GameEvent ReportEvent(Fleet attacker, BattleSide attackSide, BattleSide defendSide, BattleResult result) =>
         new(attacker.ArriveAt, "BattleResolved", new Dictionary<string, string>
         {
-            ["planet"] = attacker.To.Value,
-            ["fleet"] = attacker.Id.Value,
+            [EventKeys.Planet] = attacker.To.Value,
+            [EventKeys.Fleet] = attacker.Id.Value,
             ["attackerSide"] = attacker.Side.ToString(),
             ["attackersWon"] = result.AttackersWon ? "true" : "false",
             ["rounds"] = result.Rounds.ToString(),

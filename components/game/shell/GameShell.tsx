@@ -42,7 +42,7 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 	const localNow = useLocalNow();
 	const [systemId, setSystemId] = useState(game.systems[0]?.id ?? 0);
 	const [pickedId, setPickedId] = useState<string>();
-	useEscape(pickedId !== undefined, () => setPickedId(undefined));
+	useEscape(pickedId !== undefined ? () => setPickedId(undefined) : undefined);
 
 	// every planet in every system, then the one matching the picked id
 	const picked = data.map.systems.flatMap((entry) => entry.planets).find((planet) => planet.id === pickedId);
@@ -79,7 +79,7 @@ export function GameShell({ gameId }: { gameId: string }) {
 	const live = useGameEvents(gameId);
 	const { data, error, refetch } = useGameData(gameId);
 	const finished = live.endedOutcome !== null || (data !== undefined && data.view.timeLeftSeconds <= 0);
-	const outcome = useOutcome(gameId, finished);
+	const outcome = useOutcome(finished ? gameId : undefined);
 
 	useEffect(() => {
 		if (loadSession()?.gameId === gameId) return;

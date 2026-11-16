@@ -1,10 +1,12 @@
+using SpaceGame.Server.Game;
+
 namespace SpaceGame.Server.Persistence;
 
 public sealed class GameRow
 {
     public Guid Id { get; set; }
     public string Code { get; set; } = "";
-    public string Status { get; set; } = "lobby";
+    public string Status { get; set; } = GameStatus.Lobby;
     public string Mode { get; set; } = "week";
     public int Seed { get; set; }
     public long Version { get; set; }

@@ -7,7 +7,7 @@ namespace SpaceGame.Server.Game;
 /// <summary>Turns BattleResolved events into report rows (the payload is a serialized BattleReport).</summary>
 public static class ReportRecorder
 {
-    public const string BattleKind = "BattleResolved";
+    public const string BattleKind = EventKinds.BattleResolved;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 

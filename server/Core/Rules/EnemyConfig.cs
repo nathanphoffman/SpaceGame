@@ -14,17 +14,28 @@ namespace SpaceGame.Core;
 /// <param name="EarthAttackPerExtraPlayer">Extra size per player beyond the first (0.25 is +25%).</param>
 public sealed record EnemyConfig(
     long TickSeconds = GameSeconds.Hour,
-    int IncomePerPlanetPerTick = 40,
-    int HomeGarrisonFighters = 10,
-    int EscortFighters = 4,
-    double AttackStrengthRatio = 1.5,
-    int SightHops = 2,
-    long FirstEarthAttackSeconds = 36 * GameSeconds.Hour,
-    long EarthAttackIntervalSeconds = 18 * GameSeconds.Hour,
-    int FirstEarthAttackFighters = 6,
-    double EarthAttackGrowth = 1.35,
-    double EarthAttackPerExtraPlayer = 0.25)
+    int IncomePerPlanetPerTick = EnemyConfig.DefaultIncome,
+    int HomeGarrisonFighters = EnemyConfig.DefaultGarrison,
+    int EscortFighters = EnemyConfig.DefaultEscort,
+    double AttackStrengthRatio = EnemyConfig.DefaultStrengthRatio,
+    int SightHops = EnemyConfig.DefaultSightHops,
+    long FirstEarthAttackSeconds = EnemyConfig.FirstAttackHours * GameSeconds.Hour,
+    long EarthAttackIntervalSeconds = EnemyConfig.AttackIntervalHours * GameSeconds.Hour,
+    int FirstEarthAttackFighters = EnemyConfig.DefaultFirstAttackFighters,
+    double EarthAttackGrowth = EnemyConfig.DefaultAttackGrowth,
+    double EarthAttackPerExtraPlayer = EnemyConfig.DefaultPerExtraPlayer)
 {
+    public const int FirstAttackHours = 36;
+    internal const int DefaultIncome = 40;
+    internal const int DefaultGarrison = 10;
+    internal const int DefaultEscort = 4;
+    internal const double DefaultStrengthRatio = 1.5;
+    internal const int DefaultSightHops = 2;
+    internal const int DefaultFirstAttackFighters = 6;
+    internal const double DefaultAttackGrowth = 1.35;
+    internal const double DefaultPerExtraPlayer = 0.25;
+    public const int AttackIntervalHours = 18;
+
     /// <summary>The enemy's id as the owner of its fleets.</summary>
     public static readonly PlayerId Owner = new("enemy");
 }

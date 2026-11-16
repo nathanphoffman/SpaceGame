@@ -1,4 +1,5 @@
 // Shared between server and client: game rules and API types.
+import { MAX_STAT_RATING } from "@/lib/constants";
 
 // ---- elements ----
 // Six common building blocks and three rare ones. Planets are made of these; mines extract them.
@@ -25,113 +26,9 @@ const MINE_PREFIX = "mine_";
 
 export const mineType = (element: string) => `${MINE_PREFIX}${element}`;
 
-/** Lets callers treat non-mine buildings as "no element" instead of checking the type themselves; null if not a mine. */
-export const mineElement = (type: string): Element | null => {
-	const element = type.startsWith(MINE_PREFIX)
-		? type.slice(MINE_PREFIX.length)
-		: null;
-
-	return element && element in ELEMENTS ? (element as Element) : null;
-};
-
-const MINE_COST_MULT: Partial<Record<Element, number>> = {
-	Al: 1.2,
-	Ti: 3,
-	U: 5,
-	He: 8,
-};
-
-const SHIPYARD_COST: Resources = { Fe: 200, Si: 100 };
-const SHIPYARD_SECONDS = 20;
-const MINE_BASE_COST: Resources = { Fe: 60, Si: 15 };
-const MINE_BASE_SECONDS = 10;
-const COST_GROWTH_PER_LEVEL = 1.6; // each level costs this many times more than the last
-const TIME_GROWTH_PER_LEVEL = 1.5;
-const SHIPYARD_SPEEDUP_PER_LEVEL = 0.25;
-const MIN_SHIP_SECONDS = 2;
-const MINE_OUTPUT_PER_LEVEL = 0.4;
-const MINE_LEVEL_GROWTH = 1.1; // output grows a little faster than linearly with level
-const MINE_RICHNESS = { base: 0.5, pctDivisor: 25 }; // richer deposits (a bigger share of the planet) produce more
-const SAME_SYSTEM_FLIGHT = { min: 5, base: 5, perAU: 6 };
-const CROSS_SYSTEM_FLIGHT = { base: 15, maxOrbitAU: 12, perOrbitAU: 3 };
 export const MS_PER_SECOND = 1000;
 export const SECONDS_PER_MINUTE = 60;
 export const MINUTES_PER_HOUR = 60;
-const MINE_ICONS = {
-	gas: "/icons/buildings/gas_mine.svg",
-	gem: "/icons/buildings/crystal_mine.svg",
-	metal: "/icons/buildings/metal_mine.svg",
-};
-
-const GAS_MINES = new Set(["H", "O", "He"]);
-const GEM_MINES = new Set(["Si", "C"]);
-
-/** gas, gem or metal mine icon depending on the element */
-const mineIcon = (element: string) =>
-	// pick the icon by element family: gas, then gem, otherwise metal
-	GAS_MINES.has(element)
-		? MINE_ICONS.gas
-		: GEM_MINES.has(element)
-			// the nested ternary keeps the three-way choice in one expression
-			? MINE_ICONS.gem
-			: MINE_ICONS.metal;
-
-export type BuildingInfo = {
-	name: string;
-	icon: string;
-	cost: Resources;
-	time: number;
-	desc: string;
-};
-
-export function buildingInfo(type: string): BuildingInfo | null {
-	if (type === "shipyard") {
-		return {
-			name: "Shipyard",
-			icon: "/icons/buildings/shipyard.svg",
-			cost: SHIPYARD_COST,
-			time: SHIPYARD_SECONDS,
-			desc: "Builds ships faster per level",
-		};
-	}
-
-	const element = mineElement(type);
-
-	if (!element) return null;
-	const multiplier = MINE_COST_MULT[element] ?? 1;
-
-	return {
-		name: `${ELEMENTS[element].name} Mine`,
-		// gas, gem or metal mine icon depending on the element
-		icon: mineIcon(element),
-		cost: Object.fromEntries(
-			Object.entries(MINE_BASE_COST).map(([symbol, amount]) => [
-				symbol,
-				Math.round(amount * multiplier),
-			]),
-		),
-		time: Math.round(MINE_BASE_SECONDS * Math.sqrt(multiplier)),
-		desc: `Extracts ${ELEMENTS[element].name}`,
-	};
-}
-
-export const MAX_BUILDING_LEVEL = 10;
-
-// total cost of building one level of a building, scaled by its current level
-export const buildCost = (type: string, level: number): Resources => {
-	// the cost of a level: the base cost grows by 1.6x for each level already built
-	const base = buildingInfo(type)!.cost;
-
-	return Object.fromEntries(
-		Object.entries(base).map(([element, n]) => [
-			element,
-			Math.round(n * COST_GROWTH_PER_LEVEL ** level),
-		]),
-	);
-};
-
-export const buildSeconds = (type: string, level: number) =>
-	Math.round(buildingInfo(type)!.time * TIME_GROWTH_PER_LEVEL ** level);
 
 // ---- ships ----
 // size is the on-screen icon scale (1 = cruiser). speed and health (1-10) are shown in the UI; combat currently only uses attack and cargo.
@@ -144,7 +41,7 @@ export const SHIPS = {
 		time: 5,
 		attack: 1,
 		cargo: 10,
-		speed: 10,
+		speed: MAX_STAT_RATING,
 		health: 1,
 		desc: "Cheap and very fast, with long-range sensors and almost no weapons. Good for looking at a system before you commit a fleet.",
 	},
@@ -289,7 +186,7 @@ export const SHIPS = {
 		attack: 250,
 		cargo: 1000,
 		speed: 2,
-		health: 10,
+		health: MAX_STAT_RATING,
 		desc: "A late-game flagship. Enormous firepower and armor, and one of the most expensive things you can build.",
 	},
 	miner: {
@@ -356,44 +253,6 @@ export const SHIPS = {
 
 export type ShipType = keyof typeof SHIPS;
 
-export const shipSeconds = (t: ShipType, shipyardLevel: number) =>
-	Math.max(
-		MIN_SHIP_SECONDS,
-		Math.round(
-			SHIPS[t].time / (1 + SHIPYARD_SPEEDUP_PER_LEVEL * shipyardLevel),
-		),
-	);
-
-// ---- production ----
-/** every base trickles a little iron and silicon so nothing can soft-lock */
-const BASE_INCOME: Resources = { Fe: 0.2, Si: 0.1 };
-
-/** richer deposits (bigger share of the planet) produce more per level */
-const mineRate = (level: number, sharePct: number) =>
-	MINE_OUTPUT_PER_LEVEL *
-	level *
-	MINE_LEVEL_GROWTH ** level *
-	(MINE_RICHNESS.base + sharePct / MINE_RICHNESS.pctDivisor);
-
-/** resources per second for a planet, given its buildings and its composition */
-export function productionRates(
-	buildings: Record<string, number>,
-	composition: { symbol: string; pct: number }[],
-): Resources {
-	const out: Resources = { ...BASE_INCOME };
-
-	for (const [type, level] of Object.entries(buildings)) {
-		const el = mineElement(type);
-
-		if (!el || !(level > 0)) continue;
-		const percent = composition.find((c) => c.symbol === el)?.pct ?? 0;
-		out[el] = (out[el] ?? 0) + mineRate(level, percent);
-	}
-
-	return out;
-}
-
-/** x, y: light-years from Sol in the galactic plane */
 // ---- the words used for who owns a planet, what a fleet is doing, and what a client asks the server to do ----
 export const PLANET_KIND = {
 	player: "player",
@@ -409,19 +268,12 @@ export const FLEET_STATUS = {
 } as const;
 
 export const MISSION = { attack: "attack", colonize: "colonize" } as const;
-export const QUEUE_KIND = { building: "building", ship: "ship" } as const;
-export const ACTION = {
-	build: "build",
-	ship: "ship",
-	send: "send",
-	recall: "recall",
-	reset: "reset",
-} as const;
+const QUEUE_KIND = { building: "building", ship: "ship" } as const;
 
 export type Owner = keyof typeof PLANET_KIND;
-export type FleetStatus = keyof typeof FLEET_STATUS;
-export type Mission = keyof typeof MISSION;
-export type QueueKind = keyof typeof QUEUE_KIND;
+type FleetStatus = keyof typeof FLEET_STATUS;
+type Mission = keyof typeof MISSION;
+type QueueKind = keyof typeof QUEUE_KIND;
 
 export type SystemDTO = {
 	id: number;
@@ -431,40 +283,6 @@ export type SystemDTO = {
 	seed: number;
 	sectorX: number;
 	sectorY: number;
-};
-
-type Placed = { systemId: number; orbit: number };
-const SECONDS_PER_LY = 4;
-
-/** Seconds to fly between two planets: short inside a system, longer between stars. */
-export const flightSeconds = (
-	a: Placed,
-	b: Placed,
-	systems: { id: number; x: number; y: number }[],
-// Seconds between two planets: same system uses the short-hop range, otherwise star distance decides.
-) => {
-	// same system means a short hop; otherwise distance between the stars decides
-	if (a.systemId === b.systemId)
-
-		return Math.max(
-			SAME_SYSTEM_FLIGHT.min,
-			Math.round(
-				SAME_SYSTEM_FLIGHT.base +
-					Math.abs(a.orbit - b.orbit) * SAME_SYSTEM_FLIGHT.perAU,
-			),
-		);
-
-	const fromSystem = systems.find((system) => system.id === a.systemId)!;
-	const toSystem = systems.find((system) => system.id === b.systemId)!;
-
-	return Math.round(
-		CROSS_SYSTEM_FLIGHT.base +
-			Math.hypot(fromSystem.x - toSystem.x, fromSystem.y - toSystem.y) *
-				SECONDS_PER_LY +
-			(Math.min(a.orbit, CROSS_SYSTEM_FLIGHT.maxOrbitAU) +
-				Math.min(b.orbit, CROSS_SYSTEM_FLIGHT.maxOrbitAU)) *
-				CROSS_SYSTEM_FLIGHT.perOrbitAU,
-	);
 };
 
 export type PlanetDTO = {
@@ -481,7 +299,7 @@ export type PlanetDTO = {
 	shared: boolean; // safe haven: everyone can have a base here and it can't be attacked
 };
 
-export type QueueDTO = {
+type QueueDTO = {
 	id: string;
 	planetId: number;
 	kind: QueueKind;

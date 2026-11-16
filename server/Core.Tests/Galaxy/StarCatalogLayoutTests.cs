@@ -3,7 +3,7 @@ namespace SpaceGame.Core.Tests;
 public class StarCatalogLayoutTests
 {
     [Fact]
-    public void HasTwentyFourSystemsStartingWithSolAndItsNinePlanets()
+    public void CatalogStartsWithSol()
     {
         Assert.Equal(24, StarCatalog.Systems.Count);
         Assert.Equal("Sol", StarCatalog.Systems[0].Name);

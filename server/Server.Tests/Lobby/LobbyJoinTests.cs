@@ -15,7 +15,7 @@ public class LobbyJoinTests
         await c.PostAsJsonAsync("/api/games/join", new JoinGameRequest(code, name));
 
     [PostgresFact]
-    public async Task JoinIgnoresCodeCaseThenListsPlayerInLobby()
+    public async Task JoinWithLowercaseCodeAddsPlayerToLobby()
     {
         await using var factory = await LobbyApiFactory.CreateAsync();
         var client = factory.CreateClient();

@@ -1,10 +1,3 @@
-# core tasks (round 10)
+# core tasks (round 11)
 
-Owns `server/Core/**`, `server/Core.Tests/**`, `server/Sim/**`. One item per Claude session. Core is pure C#: no I/O, no clock, dice and time are arguments.
-
-- [ ] Quality (call depth): the chain `Advance -> Run -> Resolve -> Fight -> Defenders -> BaseGarrison -> FullHp -> BattleShipFor -> Ship` is 9 calls deep and drives the worst finding (241 test entry points over 6). Flatten it in `server/Core/Fleets/FleetBattles*.cs` and the callers (inline one-use helpers, call `Catalog.Ship` directly) so no chain from `Advance` is deeper than 6. Do not change behaviour; the full-week determinism test must still pass.
-- [ ] Quality (call depth in tests): in `server/Core.Tests/Enemy/EnemyTests.cs` and `server/Core.Tests/Endgame/FullWeekTests.cs`, replace the helpers (`AdvanceEnemyState`, `SimulateIdleWeek`) so they call `GameEngine.Advance` once without extra wrapper levels. Re-run `codequality . --full` and report the call-depth count.
-- [ ] Quality (magic numbers and names): in `server/Core.Tests/Visibility/VisibilityFixture.cs` and `server/Core/Rules/EnemyConfig.cs:26` name the unnamed numbers as constants. Rename test methods whose names contain "And", "Or" or "Then" (about 27, e.g. `Colony_ClaimsThePlanetOnArrivalAndKeepsTheEscortThere`) to one-job names, merging near-duplicates into Theories.
-- [ ] Quality (test count): 352 tests vs about 114 expected. Merge overlapping `[Fact]`s in `server/Core.Tests/**` into `[Theory]`s with `InlineData` where they only differ by values, without losing coverage of any rule in SPEC.md. Aim to remove at least 20 test methods.
-- [ ] Quality (repeated strings): the strings "Tau Ceti", "Barnard's Star" and "GameEnded" repeat 3+ times in Core and Core.Tests; define each once as a constant (Core side: next to the catalog or event names) and use it everywhere.
-- [ ] Re-run `server/Sim` for the 4-player and 8-player waves once more after the flattening and confirm the numbers in the Core README still hold (no config change unless a wave is clearly off).
+Owns `server/Core/**`, `server/Core.Tests/**`, `server/Sim/**`. Nothing left to do: all milestones are done.

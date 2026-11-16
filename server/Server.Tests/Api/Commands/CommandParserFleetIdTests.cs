@@ -18,21 +18,17 @@ public class CommandParserFleetIdTests
     }
 
     [Theory]
-    [InlineData("recallFleet")]
-    [InlineData("colonize")]
-    [InlineData("cancelQueueItem")]
-    public void Missing_ids_are_rejected(string type)
+    [InlineData("""{"type":"recallFleet"}""")]
+    [InlineData("""{"type":"colonize"}""")]
+    [InlineData("""{"type":"cancelQueueItem"}""")]
+    [InlineData("""{"type":null}""")]
+    [InlineData("""{"type":""}""")]
+    [InlineData("""{"type":"selfDestruct"}""")]
+    public void Missing_ids_and_unknown_types_are_rejected(string json)
     {
-        Assert.Null(Parse($$"""{"type":"{{type}}"}""").Command);
+        Assert.Null(Parse(json).Command);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("selfDestruct")]
-    public void Unknown_or_missing_type_is_rejected(string? type)
-    {
-        Assert.Null(Parse($$"""{"type":"{{type}}"}""").Command);
-        Assert.Null(CommandParser.Parse(null).Command);
-    }
+    [Fact]
+    public void Missing_body_is_rejected() => Assert.Null(CommandParser.Parse(null).Command);
 }

@@ -9,7 +9,7 @@ public class GameEngineTests
     private static readonly IGameEngine Engine = GameEngineFactory.Create();
 
     private static GameState EngineGame() =>
-        Engine.NewGame(new GameSetup(1, [new PlayerSetup(Me, "Ann"), new PlayerSetup(new PlayerId("p2"), "Bo")], new GameConfig()));
+        Engine.NewGame(new GameSetup(1, [new PlayerSetup(Me, TestNames.Ann), new PlayerSetup(new PlayerId("p2"), "Bo")], new GameConfig()));
 
     [Fact]
     public void NewGameGivesStartingKit()

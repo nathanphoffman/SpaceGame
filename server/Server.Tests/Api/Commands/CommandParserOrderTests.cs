@@ -16,15 +16,6 @@ public class CommandParserOrderTests
         Assert.Equal(new QueueShip(new PlanetId("p1"), ShipType.Fighter, 3), parsed.Command);
     }
 
-    [Theory]
-    [InlineData("0")]
-    [InlineData("-2")]
-    [InlineData("null")]
-    public void Queue_ship_rejects_bad_count(string count)
-    {
-        Assert.Null(Parse($$"""{"type":"queueShip","planet":"p1","shipType":"Fighter","count":{{count}}}""").Command);
-    }
-
     [Fact]
     public void Start_upgrade()
     {
@@ -41,14 +32,17 @@ public class CommandParserOrderTests
     }
 
     [Theory]
-    [InlineData("\"a\"", "null")]
-    [InlineData("\"a\"", "{}")]
-    [InlineData("\"a\"", """{"Ufo":1}""")]
-    [InlineData("\"a\"", """{"Scout":0}""")]
-    [InlineData("null", """{"Scout":1}""")]
-    public void Send_fleet_rejects_missing_or_invalid_parts(string from, string ships)
+    [InlineData("""{"type":"queueShip","planet":"p1","shipType":"Fighter","count":0}""")]
+    [InlineData("""{"type":"queueShip","planet":"p1","shipType":"Fighter","count":-2}""")]
+    [InlineData("""{"type":"queueShip","planet":"p1","shipType":"Fighter","count":null}""")]
+    [InlineData("""{"type":"sendFleet","from":"a","to":"b","ships":null}""")]
+    [InlineData("""{"type":"sendFleet","from":"a","to":"b","ships":{}}""")]
+    [InlineData("""{"type":"sendFleet","from":"a","to":"b","ships":{"Ufo":1}}""")]
+    [InlineData("""{"type":"sendFleet","from":"a","to":"b","ships":{"Scout":0}}""")]
+    [InlineData("""{"type":"sendFleet","from":null,"to":"b","ships":{"Scout":1}}""")]
+    public void Orders_with_missing_or_invalid_parts_are_rejected(string json)
     {
-        Assert.Null(Parse(Fleet(from, ships)).Command);
+        Assert.Null(Parse(json).Command);
     }
 
     private static string Fleet(string from, string ships) =>

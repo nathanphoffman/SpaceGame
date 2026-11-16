@@ -106,8 +106,8 @@ public static class BuildCompletion
         item.FinishAt, item.Ship is null ? "BuildingCompleted" : "ShipBuilt",
         new Dictionary<string, string>
         {
-            ["player"] = player.Value,
-            ["planet"] = planet.Value,
+            [EventKeys.Player] = player.Value,
+            [EventKeys.Planet] = planet.Value,
             ["what"] = (item.Ship?.ToString() ?? item.Building.ToString())!,
             ["level"] = item.Level.ToString(),
         });

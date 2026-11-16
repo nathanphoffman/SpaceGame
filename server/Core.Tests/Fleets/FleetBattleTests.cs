@@ -25,7 +25,7 @@ public class FleetBattleTests
         var state = Sent() with { };
         state = state with { Fleets = [.. state.Fleets, EnemyParked(1, Target)] };
         var (after, events) = Engine.Advance(state, state.Fleets[0].ArriveAt, new FixedDice(6));
-        var battle = Assert.Single(events, e => e.Kind == "BattleResolved");
+        var battle = Assert.Single(events, e => e.Kind == TestNames.BattleResolved);
         Assert.Equal("true", battle.Data["attackersWon"]);
         Assert.Equal(Target.Value, battle.Data["planet"]);
         var left = Assert.Single(after.Fleets);
@@ -47,7 +47,7 @@ public class FleetBattleTests
         var state = FleetGame();
         state = state with { Fleets = [EnemyArriving(1, StartingKit.EarthId, 100)] };
         var (after, events) = Engine.Advance(state, 100, new FixedDice(6));
-        Assert.Equal("false", Assert.Single(events, e => e.Kind == "BattleResolved").Data["attackersWon"]);
+        Assert.Equal("false", Assert.Single(events, e => e.Kind == TestNames.BattleResolved).Data["attackersWon"]);
         Assert.Empty(after.Fleets);
         Assert.Equal(4, FightersHome(after)); // the unarmed Scout soaked the only hit
     }
@@ -58,7 +58,7 @@ public class FleetBattleTests
         var state = FleetGame();
         state = state with { Fleets = [EnemyArriving(20, StartingKit.EarthId, 100)] };
         var (after, events) = Engine.Advance(state, 100, new FixedDice(6));
-        Assert.Equal("true", Assert.Single(events, e => e.Kind == "BattleResolved").Data["attackersWon"]);
+        Assert.Equal("true", Assert.Single(events, e => e.Kind == TestNames.BattleResolved).Data["attackersWon"]);
         Assert.Equal(0, FightersHome(after));
         Assert.True(Assert.Single(after.Fleets).Parked);
     }

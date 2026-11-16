@@ -25,7 +25,7 @@ public static class Endgame
 
         var contributions = state.Players.Select(p => new Contribution(p.Id.Value, p.Points));
 
-        events.Add(new GameEvent(atSeconds, "GameEnded", new Dictionary<string, string>
+        events.Add(new GameEvent(atSeconds, EventNames.GameEnded, new Dictionary<string, string>
         {
             ["winner"] = winner.ToString(),
             ["reason"] = reason,

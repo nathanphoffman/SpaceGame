@@ -31,7 +31,7 @@ public static class Upgrades
         levels[job.Type] = job.Level;
         events.Add(new GameEvent(job.FinishAt, "UpgradeCompleted", new Dictionary<string, string>
         {
-            ["player"] = player.Id.Value,
+            [EventKeys.Player] = player.Id.Value,
             ["what"] = job.Type.ToString(),
             ["level"] = job.Level.ToString(),
         }));

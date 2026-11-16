@@ -45,7 +45,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 export function GameTopBar({ view }: { view: PlayerViewDto }) {
 	const [helpOpen, setHelpOpen] = useState(false);
 
-	useEscape(helpOpen, () => setHelpOpen(false));
+	useEscape(helpOpen ? () => setHelpOpen(false) : undefined);
 
 	return (
 		<div className="topbar">

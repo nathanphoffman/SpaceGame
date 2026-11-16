@@ -42,26 +42,25 @@ describe("session", () => {
 		expect(loadSession()).toBeNull();
 	});
 
-	it("is safe when storage is unavailable", () => {
-		vi.stubGlobal("localStorage", undefined);
+	it.each([
+		["unavailable", () => undefined],
+		["throwing", () => {
+			const broken = memoryStorage();
+			broken.getItem = () => {
+				throw new TypeError("blocked");
+			};
+
+			broken.setItem = () => {
+				throw new TypeError("full");
+			};
+
+			return broken;
+		}],
+	])("is safe when storage is %s", (_name, makeStorage) => {
+		vi.stubGlobal("localStorage", makeStorage());
 		expect(loadSession()).toBeNull();
 		expect(() => saveSession(session)).not.toThrow();
 		expect(() => clearSession()).not.toThrow();
-	});
-
-	it("is safe when storage throws", () => {
-		const broken = memoryStorage();
-		broken.getItem = () => {
-			throw new TypeError("blocked");
-		};
-
-		broken.setItem = () => {
-			throw new TypeError("full");
-		};
-
-		vi.stubGlobal("localStorage", broken);
-		expect(loadSession()).toBeNull();
-		expect(() => saveSession(session)).not.toThrow();
 	});
 });
 

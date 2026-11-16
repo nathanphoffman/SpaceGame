@@ -21,30 +21,12 @@ public class GalaxyGeneratorTests
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(99)]
-    public void HasTenDistinctObjectives(int seed)
-    {
-        var objectives = GalaxyGenerator.Generate(seed).Objectives;
-        Assert.Equal(GalaxyGenerator.ObjectiveCount, objectives.Select(o => o.Id).Distinct().Count());
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(99)]
-    public void ObjectivesStayWithinThirtyToSeventyPercent(int seed)
+    public void ObjectivesAreDistinctInTheBandAndSpread(int seed)
     {
         var galaxy = GalaxyGenerator.Generate(seed);
         var enemyStar = StarOf(galaxy, galaxy.EnemyHome);
+        Assert.Equal(GalaxyGenerator.ObjectiveCount, galaxy.Objectives.Select(o => o.Id).Distinct().Count());
         Assert.All(galaxy.Objectives, o => Assert.True(GalaxyGenerator.InObjectiveBand(StarOf(galaxy, o), enemyStar)));
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(99)]
-    public void ObjectivesSpreadOverEnoughSystems(int seed)
-    {
-        var galaxy = GalaxyGenerator.Generate(seed);
         Assert.True(galaxy.Objectives.Select(o => o.System).Distinct().Count() >= GalaxyGenerator.MinObjectiveSystems);
     }
 

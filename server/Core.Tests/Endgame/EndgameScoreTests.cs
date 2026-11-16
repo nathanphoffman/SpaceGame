@@ -11,8 +11,8 @@ public class EndgameScoreTests
     {
         var (state, events) = Engine.Advance(TeamHolds(WithScores(499, 0)), Hour + 1, new SeqDice());
         var ended = Ended(events);
-        Assert.Equal("Team", ended.Data["winner"]);
-        Assert.Equal("score", ended.Data["reason"]);
+        Assert.Equal("Team", ended.Data[TestNames.Winner]);
+        Assert.Equal("score", ended.Data[TestNames.Reason]);
         Assert.Equal("500", ended.Data["teamScore"]);
         Assert.Equal(Side.Team, state.Outcome!.Winner);
     }
@@ -21,9 +21,9 @@ public class EndgameScoreTests
     public void EnemyReachingTheTargetWins()
     {
         var (_, events) = Engine.Advance(WithScores(0, 500), 1, new SeqDice());
-        Assert.DoesNotContain(events, e => e.Kind == "GameEnded");
+        Assert.DoesNotContain(events, e => e.Kind == EventNames.GameEnded);
         var state = WithScores(0, 499) with { EnemyPlanets = [.. FleetGame().EnemyPlanets, Objective] };
-        Assert.Equal("Enemy", Ended(Engine.Advance(state, Hour, new SeqDice()).Events).Data["winner"]);
+        Assert.Equal("Enemy", Ended(Engine.Advance(state, Hour, new SeqDice()).Events).Data[TestNames.Winner]);
     }
 
     [Fact]
@@ -35,21 +35,16 @@ public class EndgameScoreTests
         Assert.Equal(2, list[0].GetProperty("points").GetInt32());
     }
 
-    [Fact]
-    public void WeekEndsWithTheHigherScoreWinning()
+    [Theory]
+    [InlineData(5, 3, "Team")]
+    [InlineData(4, 4, "Enemy")] // a tie goes to the enemy
+    public void WeekEndsWithTheHigherScoreWinning(int team, int enemy, string winner)
     {
         var config = FleetGame().Config;
-        var (state, events) = Engine.Advance(WithScores(5, 3), config.WeekSeconds + 50, new SeqDice());
+        var (state, events) = Engine.Advance(WithScores(team, enemy), config.WeekSeconds + 50, new SeqDice());
         var ended = Ended(events);
-        Assert.Equal(("Team", "time"), (ended.Data["winner"], ended.Data["reason"]));
+        Assert.Equal((winner, "time"), (ended.Data[TestNames.Winner], ended.Data[TestNames.Reason]));
         Assert.Equal(config.WeekSeconds, ended.Time);
         Assert.Equal(config.WeekSeconds, state.Outcome!.At);
-    }
-
-    [Fact]
-    public void ATieAtTheEndOfTheWeekGoesToTheEnemy()
-    {
-        var (_, events) = Engine.Advance(WithScores(4, 4), FleetGame().Config.WeekSeconds, new SeqDice());
-        Assert.Equal("Enemy", Ended(events).Data["winner"]);
     }
 }

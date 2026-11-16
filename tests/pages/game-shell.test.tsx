@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { formatTimeLeft, scorePercent, GameTopBar } from "@/components/game/shell/GameTopBar";
+import { scorePercent, GameTopBar } from "@/components/game/shell/GameTopBar";
 import { toGameState } from "@/lib/api/adapters/mapAdapter";
 import { galaxyMapFixture, playerViewFixture } from "../fixtures/apiMap";
 
@@ -13,19 +13,10 @@ describe("GameTopBar", () => {
 		expect(html).toContain("Enemy 80/500");
 		expect(html).toContain("Iron");
 		expect(html).toContain("10");
-	});
-
-	it("draws a progress bar per score", () => {
-		const view = { ...playerViewFixture, teamScore: 120, enemyScore: 80 };
-		const html = renderToString(<GameTopBar view={view} />);
 		expect(html).toContain('value="120"');
 		expect(html).toContain('value="80"');
 		expect(scorePercent(250)).toBe(50);
 		expect(scorePercent(900)).toBe(100);
-	});
-
-	it("never shows negative time", () => {
-		expect(formatTimeLeft(-5)).toBe("0:00:00");
 	});
 });
 

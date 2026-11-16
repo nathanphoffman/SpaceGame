@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SpaceGame.Core;
+using SpaceGame.Server.Game;
 
 namespace SpaceGame.Server.Persistence;
 
@@ -17,7 +18,7 @@ public sealed class GameWriter(GameDbContext dbContext)
             Code = code,
             Mode = mode,
             Seed = seed,
-            Status = "lobby",
+            Status = GameStatus.Lobby,
             Json = new GameJson { Config = JsonSerializer.Serialize(state.Config, Json), State = JsonSerializer.Serialize(state, Json) },
             DiscordWebhook = webhook,
             Times = new GameTimes { CreatedAt = timestamp, UpdatedAt = timestamp },

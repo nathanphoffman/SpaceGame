@@ -24,7 +24,7 @@ public static class ReportEndpoints
 
         var rows = await repo.ReportsAsync(id);
 
-        // Parse each stored row; rows that are not valid battle reports are dropped.
+        // Stored rows are JSON text; a corrupt row must not break the whole list, so it is skipped.
         return Results.Ok(rows.Select(ReportRecorder.Parse).OfType<Core.BattleReport>().ToList());
     }
 
