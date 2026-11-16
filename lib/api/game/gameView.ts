@@ -17,10 +17,13 @@ export function useOutcome(finishedGameId: string | undefined): OutcomeDto | und
 
 export type GameData = { map: GalaxyMapDto; view: PlayerViewDto; fetchedAtMs: number };
 
+/** The state is refetched this often so stock and scores stay fresh even when no live event arrives. */
+const STATE_POLL_MS = 15_000;
+
 /** Map and player view of one game; `fetchedAtMs` is the local time the view arrived, for the clock sync. */
 export function useGameData(gameId: string): { data?: GameData; error?: Error; refetch: () => void } {
 	const map = useGetMap(gameId, { query: { select: parseMap } });
-	const state = useGetState(gameId, { query: { select: parseView } });
+	const state = useGetState(gameId, { query: { select: parseView, refetchInterval: STATE_POLL_MS } });
 	const error = (map.error ?? state.error) as Error | null;
 
 	const refetch = () => {

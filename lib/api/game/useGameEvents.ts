@@ -1,6 +1,6 @@
 "use client";
 
-import { HubConnectionBuilder } from "@microsoft/signalr";
+import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { attachGameEvents, type FleetSpottedEvent } from "@/lib/api/game/gameEvents";
@@ -40,6 +40,7 @@ export function useGameEvents(gameId: string): LiveEvents {
 		const connection = new HubConnectionBuilder()
 			.withUrl(hubUrl(gameId), { accessTokenFactory: () => loadSession()?.token ?? "" })
 			.withAutomaticReconnect(RECONNECT_DELAYS_MS)
+			.configureLogging(LogLevel.Critical) // a connection cancelled while starting is normal; real failures are reported by attachGameEvents
 			.build();
 
 		return attachGameEvents(connection, client, gameId, {

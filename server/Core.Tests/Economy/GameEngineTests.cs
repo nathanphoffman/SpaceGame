@@ -41,6 +41,16 @@ public class GameEngineTests
         Assert.True(view.Stockpile.Iron > 300);
     }
 
+    [Theory]
+    [InlineData(0, GameSeconds.Week)]
+    [InlineData(3600, GameSeconds.Week - 3600)]
+    [InlineData(GameSeconds.Week + 5, 0)]
+    public void ViewShowsTimeLeftInTheWeek(long now, long expectedLeft)
+    {
+        var view = Engine.ViewFor(EngineGame(), Me, now);
+        Assert.Equal(expectedLeft, view.TimeLeftSeconds);
+    }
+
     [Fact]
     public void ViewListsOwnPlanets()
     {

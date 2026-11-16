@@ -74,7 +74,7 @@ internal sealed class GameEngine : IGameEngine
         var stock = own?.Stock.AdvanceTo(nowSeconds, Economy.RatePerHourMilli(state, own));
         IReadOnlyList<Holding> holdings = own?.Holdings ?? [];
 
-        return new(0, nowSeconds, 0, state.TeamScore, state.EnemyScore, stock?.Amount ?? Resources.Zero, Visibility.FleetsFor(state, player, nowSeconds), [])
+        return new(0, nowSeconds, Math.Max(0, state.Config.WeekSeconds - nowSeconds), state.TeamScore, state.EnemyScore, stock?.Amount ?? Resources.Zero, Visibility.FleetsFor(state, player, nowSeconds), [])
         {
             OwnPlanets = [.. holdings.Select(h => h.Planet)],
             Holdings = holdings,

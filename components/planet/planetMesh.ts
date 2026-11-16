@@ -134,7 +134,7 @@ function groundColor(params: PlanetParams, hashed: number): RgbColor {
 }
 
 /** banded colour of a gas giant at a unit-sphere point */
-function gasVertexColor(
+export function gasVertexColor(
 	params: PlanetParams,
 	unitX: number,
 	ny: number,
@@ -161,7 +161,7 @@ function gasVertexColor(
 }
 
 /** surface colour and height lift of a rocky planet at a unit-sphere point */
-function rockyVertex(
+export function rockyVertex(
 	params: PlanetParams,
 	[unitX, ny, nz]: [number, number, number],
 ): { color: RgbColor; lift: number } {
@@ -265,12 +265,12 @@ const RING_SHADE = { base: 0.6, variation: 0.4 };
 const RING_OPACITY = { base: 0.35, variation: 0.55 };
 const NOISE_SLICE_Y = 0.5; // the ring noise is sampled along a thin slice of the 3D noise
 const NOISE_SLICE_GAP_Y = 1.5;
-const ATMOSPHERE_SCALE = 1.07; // the atmosphere shell is this much bigger than the planet
-const ATMOSPHERE_OPACITY = 0.18;
+export const ATMOSPHERE_SCALE = 1.07; // the atmosphere shell is this much bigger than the planet
+export const ATMOSPHERE_OPACITY = 0.18;
 const ATMOSPHERE_SEGMENTS = { around: 48, across: 32 };
 
 /** RGBA of one ring vertex at the given distance from the planet centre */
-function ringVertexColor(
+export function ringVertexColor(
 	rings: NonNullable<PlanetParams["rings"]>,
 	distance: number,
 ): number[] {

@@ -77,11 +77,15 @@ export function attachGameEvents(
 		refresh();
 	});
 
+	// Stopping while the connection is still starting (React does this twice in dev mode) is expected, not a failure.
+	let stopped = false;
+
 	void connection.start().catch((error) => {
-		console.warn("Live updates could not start; polling still works", error);
+		if (!stopped) console.warn("Live updates could not start; polling still works", error);
 	});
 
 	return () => {
+		stopped = true;
 		void connection.stop();
 	};
 }

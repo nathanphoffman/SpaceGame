@@ -104,7 +104,13 @@ public sealed class GameSession(GameRepository repo, GameWriter writer, IGameEng
 
         var version = await writer.SaveAsync(game.Id, state, status, game.Version, clock.UtcNow);
         var reports = await SaveReportsAsync(game.Id, events);
-        await EventNotifications.PublishAsync(notifier, game.Id, version, events, reports);
+
+        // Saving a pure clock advance must not tell clients to refetch: a refetch advances and saves again, which loops forever.
+        if (ended || changed is not null || events.Count > 0)
+        {
+            await EventNotifications.PublishAsync(notifier, game.Id, version, events, reports);
+        }
+
         await DiscordAlerts.SendAsync(discord, game.DiscordWebhook, events);
 
         return new GameSnapshot(game with { State = state, Version = version, Status = status }, now, events);

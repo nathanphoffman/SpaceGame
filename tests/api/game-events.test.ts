@@ -36,6 +36,35 @@ function setup() {
 const isStale = (client: QueryClient, key: string) =>
 	client.getQueryState([key])?.isInvalidated;
 
+describe("attachGameEvents start failures", () => {
+	const failingStart = async (stopBeforeFailing: boolean) => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+		const fake = fakeConnection();
+		fake.connection.start = vi.fn(async () => {
+			throw new Error("negotiation failed");
+		});
+
+		const detach = attachGameEvents(fake.connection, new QueryClient(), "g1", { onFleetSpotted: vi.fn() });
+
+		if (stopBeforeFailing) detach();
+
+		await Promise.resolve();
+		await Promise.resolve();
+		const warned = warn.mock.calls.length;
+		warn.mockRestore();
+
+		return warned;
+	};
+
+	it("warns when the connection really fails to start", async () => {
+		expect(await failingStart(false)).toBe(1);
+	});
+
+	it("stays quiet when the connection is stopped while it is still starting", async () => {
+		expect(await failingStart(true)).toBe(0);
+	});
+});
+
 describe("attachGameEvents", () => {
 	it("starts the connection and stops it on detach", () => {
 		const { fake, detach } = setup();

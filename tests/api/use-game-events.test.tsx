@@ -40,9 +40,11 @@ type Handler = (...args: unknown[]) => void;
 const hub = vi.hoisted(() => ({ handlers: new Map<string, Handler>() }));
 
 vi.mock("@microsoft/signalr", () => ({
+	LogLevel: { Critical: 5 },
 	HubConnectionBuilder: class {
 		withUrl() { return this; }
 		withAutomaticReconnect() { return this; }
+		configureLogging() { return this; }
 		build() {
 			return {
 				on: (method: string, handler: Handler) => void hub.handlers.set(method, handler),

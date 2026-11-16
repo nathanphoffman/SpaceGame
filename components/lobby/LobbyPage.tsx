@@ -12,11 +12,14 @@ import { LobbyView } from "./LobbyView";
 
 const errorText = friendlyError;
 
+/** How often the lobby asks the server who has joined and whether the host started, in case live updates are down. */
+const LOBBY_POLL_MS = 3000;
+
 /** Live lobby: refreshes on SignalR events and moves into the game once it starts. */
 export function LobbyPage({ gameId }: { gameId: string }) {
 	const router = useRouter();
 	useGameEvents(gameId);
-	const query = useGetLobby(gameId, { query: { select: parseLobby } });
+	const query = useGetLobby(gameId, { query: { select: parseLobby, refetchInterval: LOBBY_POLL_MS } });
 	const start = useStartGame();
 	const [copied, setCopied] = useState(false);
 	const started = query.data?.started === true;
@@ -40,7 +43,7 @@ export function LobbyPage({ gameId }: { gameId: string }) {
 			isHost={isHostPlayer(query.data, loadSession()?.playerId)}
 			starting={start.isPending}
 			error={start.error ? errorText(start.error) : undefined}
-			onStart={() => start.mutate({ gameId })}
+			onStart={() => start.mutate({ gameId }, { onSuccess: () => void query.refetch() })}
 			copied={copied}
 			shareLink={joinLink(location.origin, query.data.code)}
 			onCopy={copy}
