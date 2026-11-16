@@ -4,9 +4,6 @@ import { SOL_BODIES } from "@/lib/data/sol";
 import { STARS } from "@/lib/data/stars";
 import type { BodySpec, SystemSpec } from "@/lib/data/types";
 
-/** bump this when the catalog changes: a stored game from an older version is wiped and re-seeded */
-export const GALAXY_VERSION = "local-neighbourhood-3";
-
 /** real bodies and stars get seeds from here up; generated planets use 1..99999 */
 export const SEED_BASE = 1_000_000;
 

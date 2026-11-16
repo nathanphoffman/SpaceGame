@@ -29,8 +29,7 @@ Ids are `readonly record struct` wrappers around a string: `PlayerId`, `PlanetId
 ```csharp
 public enum Element { Iron, Hydrogen, Titanium, Helium3 }
 public enum ShipType { Scout, Hauler, Colony, Fighter, Battleship, Dreadnought }
-public enum BuildingType { Mine, Shipyard, Defense }     // Mine is per Element
-public enum UpgradeType { Engines, Weapons, Armor, Mining }
+public enum BuildingType { Mine, Shipyard, Defense, Mining }     // Mine is per Element; Shipyard, Defense and Mining are per-planet levels with no top
 public enum Side { Team, Enemy }
 
 public sealed record Resources(int Iron, int Hydrogen, int Titanium, int Helium3);   // with + - and comparison helpers
@@ -46,7 +45,6 @@ public sealed record GameState(/* galaxy, planets, holdings, fleets, queues, sto
 public abstract record GameCommand;
 public sealed record BuildBuilding(PlanetId Planet, BuildingType Type, Element? Element) : GameCommand;
 public sealed record QueueShip(PlanetId Planet, ShipType Type, int Count) : GameCommand;
-public sealed record StartUpgrade(UpgradeType Type) : GameCommand;
 public sealed record SendFleet(PlanetId From, IReadOnlyDictionary<ShipType, int> Ships, PlanetId To, Resources? Cargo) : GameCommand;
 public sealed record RecallFleet(FleetId Fleet) : GameCommand;
 public sealed record Colonize(PlanetId Planet) : GameCommand;     // uses one Colony ship of the player at that planet
@@ -81,7 +79,7 @@ All JSON. Errors are `ProblemDetails`. Player calls send `Authorization: Bearer 
 - `POST /api/games/{gameId}/start` (host only)
 - `GET /api/games/{gameId}/map` -> `GalaxyMap` (public, cacheable)
 - `GET /api/games/{gameId}/state` -> `PlayerView` (with `version`, `gameTime`, `timeLeftSeconds`, scores, own planets, stockpile, queues, upgrades, visible fleets, recent reports)
-- `POST /api/games/{gameId}/commands` body is one command as `{ type: "buildBuilding" | "queueShip" | "startUpgrade" | "sendFleet" | "recallFleet" | "colonize" | "cancelQueueItem", ... }` -> `CommandResult`
+- `POST /api/games/{gameId}/commands` body is one command as `{ type: "buildBuilding" | "queueShip" | "toggleAuto" | "sendFleet" | "recallFleet" | "colonize" | "cancelQueueItem", ... }` -> `CommandResult`
 - `POST /api/games/{gameId}/quote` body a `sendFleet` command -> `FlightQuote`
 - `GET /api/games/{gameId}/reports` -> list of `BattleReport`; `GET /api/games/{gameId}/reports/{id}`
 

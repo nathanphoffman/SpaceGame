@@ -1,4 +1,5 @@
 import { planetThumb, thumbDisplaySize } from "@/components/planet/planetThumb";
+import { ShipIcon } from "@/components/game/shell/ShipIcon";
 import { fmtAU } from "@/components/ui";
 import FleetMark, { fleetClass } from "./FleetMark";
 import {
@@ -6,7 +7,6 @@ import {
 	type FleetDTO,
 	type GameState,
 	type PlanetDTO,
-	SHIPS,
 	type SystemDTO,
 } from "@/lib/defs";
 
@@ -209,7 +209,7 @@ function PlanetNode({
 			<span className={`dot ${planet.kind}`} />
 			{planet.control && <span className="ring" data-control={planet.control} />}
 			{guarded && (
-				<img className="guard" src={SHIPS.fighter.icon} alt="guarded" />
+				<span className="guard"><ShipIcon ship="Fighter" size={14} /></span>
 			)}
 
 			<span className="label">

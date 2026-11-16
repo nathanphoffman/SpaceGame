@@ -3,9 +3,6 @@ import { HTTP_NO_CONTENT } from "@/lib/api/core/httpStatus";
 
 const DEFAULT_BASE_URL = "";
 
-export const HTTP_POST = "POST";
-export const GAMES_PATH = "/api/games";
-
 export type ProblemDetails = {
 	type?: string;
 	title?: string;

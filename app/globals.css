@@ -459,8 +459,13 @@ input[type="number"] {
 	position: absolute;
 	right: -6px;
 	bottom: -4px;
-	width: 14px !important;
-	height: 14px !important;
+	width: 14px;
+	height: 14px;
+	line-height: 0;
+	color: #6fd0ff;
+}
+.snode .guard .ship-icon {
+	margin: 0;
 }
 .snode .thumb {
 	pointer-events: none;

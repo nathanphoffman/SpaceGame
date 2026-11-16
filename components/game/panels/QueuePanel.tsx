@@ -2,6 +2,7 @@
 
 import { cancelQueueItemBody, DEFENSE, MINING, SHIPYARD } from "@/lib/api/game/commands";
 import type { HoldingDto, QueueItemDto } from "@/lib/api/adapters/schemas";
+import { formatTimeLeft } from "@/components/game/shell/GameTopBar";
 import { CommandButtons } from "@/components/game/commands/CommandButtons";
 
 function joinCounts(counts: Record<string, number>): string {
@@ -52,7 +53,7 @@ function QueueRow({ gameId, planetId, item, gameTime }: { gameId: string; planet
 
 	return (
 		<li>
-			{`${itemLabel(item)} (cost ${joinCounts(item.cost) || "free"}, ${secondsLeft}s left)`}
+			{`${itemLabel(item)} (cost ${joinCounts(item.cost) || "free"}, ${formatTimeLeft(secondsLeft)} left)`}
 			<CommandButtons gameId={gameId} options={cancel} />
 		</li>
 	);

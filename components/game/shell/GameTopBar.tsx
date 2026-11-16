@@ -43,7 +43,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 }
 
 /** Game clock, team and enemy score toward the win score, and the stockpile of each element. */
-export function GameTopBar({ view }: { view: PlayerViewDto }) {
+export function GameTopBar({ view, timeLeftSeconds = view.timeLeftSeconds }: { view: PlayerViewDto; timeLeftSeconds?: number }) {
 	const [helpOpen, setHelpOpen] = useState(false);
 
 	useEscape(helpOpen ? () => setHelpOpen(false) : undefined);
@@ -51,7 +51,7 @@ export function GameTopBar({ view }: { view: PlayerViewDto }) {
 	return (
 		<div className="topbar">
 			<h1>Space Game</h1>
-			<span title="Time left">⏱ {formatTimeLeft(view.timeLeftSeconds)}</span>
+			<span title="Time left">⏱ {formatTimeLeft(timeLeftSeconds)}</span>
 			<ScoreBar label="Team" score={view.teamScore} />
 			<ScoreBar label="Enemy" score={view.enemyScore} />
 			<button type="button" aria-expanded={helpOpen} onClick={() => setHelpOpen(!helpOpen)}>? How to play</button>

@@ -37,9 +37,8 @@ function useLocalNow(): number {
 }
 
 /** The galaxy and system maps for one game; the viewed system is local state, and the click handlers for ship orders are not wired up yet. */
-function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: LiveEvents }) {
+function Maps({ gameId, data, live, localNow }: { gameId: string; data: GameData; live: LiveEvents; localNow: number }) {
 	const { game, ids } = toGameState(data.map, data.view);
-	const localNow = useLocalNow();
 	const [systemId, setSystemId] = useState(game.systems[0]?.id ?? 0);
 	const [pickedId, setPickedId] = useState<string>();
 	useEscape(pickedId !== undefined ? () => setPickedId(undefined) : undefined);
@@ -47,6 +46,8 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 	// every planet in every system, then the one matching the picked id
 	const picked = data.map.systems.flatMap((entry) => entry.planets).find((planet) => planet.id === pickedId);
 	const nowMs = syncedNowMs(game.nowMs, data.fetchedAtMs, localNow);
+	// Game time ticks forward locally every second; each fresh answer from the server resets it to the real value.
+	const gameTime = Math.floor(nowMs / MS_PER_SECOND);
 	const system = game.systems.find((candidate) => candidate.id === systemId) ?? game.systems[0];
 	const viewed = game.planets.find((planet) => planet.systemId === system?.id);
 
@@ -64,13 +65,13 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 			<SolarMap game={game} system={system} viewed={viewed} nowMs={nowMs} onSelect={(planet) => setPickedId(ids.idOf(planet.id))} />
 			</div>
 			<div className="game-side">
-			{picked && <PlanetDetails gameId={gameId} planet={picked} holding={holding} gameTime={data.view.gameTime} />}
-			{holding && <FleetSendDialog key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
-			{holding && <TradePanel key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={data.view.gameTime} />}
-			<AttackWarnings fleets={data.view.fleets} gameTime={data.view.gameTime} spotted={live.spotted} />
+			{picked && <PlanetDetails gameId={gameId} planet={picked} holding={holding} gameTime={gameTime} />}
+			{holding && <FleetSendDialog key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={gameTime} />}
+			{holding && <TradePanel key={holding.planet} gameId={gameId} holding={holding} destinations={destinations} gameTime={gameTime} />}
+			<AttackWarnings fleets={data.view.fleets} gameTime={gameTime} spotted={live.spotted} />
 			{live.reconnecting && <p role="status">Reconnecting to live updates…</p>}
 			<BattleToast gameId={gameId} reportId={live.battleReportId} />
-			<FleetList gameId={gameId} fleets={data.view.fleets} gameTime={data.view.gameTime} />
+			<FleetList gameId={gameId} fleets={data.view.fleets} gameTime={gameTime} />
 			</div>
 		</div>
 	);
@@ -79,6 +80,7 @@ function Maps({ gameId, data, live }: { gameId: string; data: GameData; live: Li
 /** The game page: loads the map and the player view, keeps them fresh from SignalR, and draws the top bar and maps. */
 export function GameShell({ gameId }: { gameId: string }) {
 	const router = useRouter();
+	const localNow = useLocalNow();
 	const [missingToken, setMissingToken] = useState(false);
 	const live = useGameEvents(gameId);
 	const { data, error, refetch } = useGameData(gameId);
@@ -101,8 +103,8 @@ export function GameShell({ gameId }: { gameId: string }) {
 
 	return (
 		<main>
-			<GameTopBar view={data.view} />
-			<Maps gameId={gameId} data={data} live={live} />
+			<GameTopBar view={data.view} timeLeftSeconds={Math.max(0, data.view.timeLeftSeconds - Math.floor((localNow - data.fetchedAtMs) / MS_PER_SECOND))} />
+			<Maps gameId={gameId} data={data} live={live} localNow={localNow} />
 		</main>
 	);
 }

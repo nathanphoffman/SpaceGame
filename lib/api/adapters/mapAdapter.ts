@@ -87,7 +87,6 @@ export function toGameState(map: GalaxyMapDto, view: PlayerViewDto): { game: Gam
 		nowMs: view.gameTime * MS_PER_SECOND,
 		systems: systemsOf(map, ids, controls),
 		planets: planetsOf(map, ids, controls),
-		queue: [],
 		fleets: view.fleets.map((fleet) => fleetOf(fleet, ids)),
 	};
 

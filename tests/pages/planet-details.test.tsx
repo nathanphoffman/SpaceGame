@@ -100,7 +100,7 @@ describe("queue and holding", () => {
 		expect(html).toContain("Owner: you");
 		expect(html).toContain("Iron mine L2, Shipyard L1");
 		expect(html).toContain("Scout 3");
-		expect(html).toContain("Fighter ship (cost Iron 50, 60s left)");
+		expect(html).toContain("Fighter ship (cost Iron 50, 0:01:00 left)");
 		expect(html).toContain("Cancel");
 	});
 
